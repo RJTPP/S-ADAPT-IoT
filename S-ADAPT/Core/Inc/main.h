@@ -63,18 +63,20 @@ void Error_Handler(void);
 #define ECHO_GPIO_Port GPIOA
 #define VCP_TX_Pin GPIO_PIN_2
 #define VCP_TX_GPIO_Port GPIOA
-#define LED1_Pin GPIO_PIN_4
-#define LED1_GPIO_Port GPIOA
+#define LDR_Input_Pin GPIO_PIN_4
+#define LDR_Input_GPIO_Port GPIOA
+#define LED_Status_Pin GPIO_PIN_5
+#define LED_Status_GPIO_Port GPIOA
 #define SWDIO_Pin GPIO_PIN_13
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin GPIO_PIN_14
 #define SWCLK_GPIO_Port GPIOA
 #define VCP_RX_Pin GPIO_PIN_15
 #define VCP_RX_GPIO_Port GPIOA
-#define LED2_Pin GPIO_PIN_3
-#define LED2_GPIO_Port GPIOB
-#define LED3_Pin GPIO_PIN_5
-#define LED3_GPIO_Port GPIOB
+#define OLED_I2C_SCL_Pin GPIO_PIN_6
+#define OLED_I2C_SCL_GPIO_Port GPIOB
+#define OLED_I2C_SDA_Pin GPIO_PIN_7
+#define OLED_I2C_SDA_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
