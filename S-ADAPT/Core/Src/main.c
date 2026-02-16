@@ -1,42 +1,25 @@
 /* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ssd1306.h"
+#include "fonts.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -47,7 +30,6 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -57,12 +39,49 @@ static void MX_USART2_UART_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void delay_us(uint32_t us)
+{
+    __HAL_TIM_SET_COUNTER(&htim2, 0);
+    while(__HAL_TIM_GET_COUNTER(&htim2) < us);
+}
 
+uint32_t Ultrasonic_Read(void)
+{
+    uint32_t start = 0, stop = 0;
+    uint32_t t0;
+    const uint32_t timeout_us = 30000; // 30 ms guard timeout
+
+    HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
+    delay_us(2);
+
+    HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_SET);
+    delay_us(10);
+    HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
+
+    // Wait for ECHO pin to go HIGH
+    t0 = __HAL_TIM_GET_COUNTER(&htim2);
+    while(HAL_GPIO_ReadPin(ECHO_GPIO_Port, ECHO_Pin) == GPIO_PIN_RESET) {
+        if((uint32_t)(__HAL_TIM_GET_COUNTER(&htim2) - t0) > timeout_us) {
+            return 0; // Timeout waiting for pulse start
+        }
+    }
+    start = __HAL_TIM_GET_COUNTER(&htim2);
+    
+    // Wait for ECHO pin to go LOW
+    t0 = __HAL_TIM_GET_COUNTER(&htim2);
+    while(HAL_GPIO_ReadPin(ECHO_GPIO_Port, ECHO_Pin) == GPIO_PIN_SET) {
+        if((uint32_t)(__HAL_TIM_GET_COUNTER(&htim2) - t0) > timeout_us) {
+            return 0; // Timeout waiting for pulse end
+        }
+    }
+    stop = __HAL_TIM_GET_COUNTER(&htim2);
+
+    return (uint32_t)(stop - start);
+}
 /* USER CODE END 0 */
 
 /**
@@ -98,13 +117,64 @@ int main(void)
   MX_TIM2_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+    if (!SSD1306_Init()) {
+      // OLED not detected on I2C (usually address/wiring/pull-up issue)
+      while (1) {
+        HAL_GPIO_TogglePin(GPIOA, LED1_Pin);
+        HAL_Delay(200);
+      }
+    }
+    HAL_TIM_Base_Start(&htim2);
+    
+    // Show boot message
+    SSD1306_Fill(Black);
+    SSD1306_SetCursor(10, 10);
+    SSD1306_WriteString("Init OK", Font16x24, White);
+    SSD1306_UpdateScreen();
+    HAL_Delay(1000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    char dist_str[20];
+    uint32_t echo_time = Ultrasonic_Read();
+    uint32_t distance = 0;
+
+    if (echo_time > 0) {
+      distance = echo_time / 58;
+    } else {
+      distance = 999; // Error value
+    }
+
+    if(distance < 10)
+    {
+      HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOB, LED2_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(GPIOB, LED3_Pin, GPIO_PIN_RESET);
+    }
+    else if(distance < 20)
+    {
+      HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOB, LED2_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOB, LED3_Pin, GPIO_PIN_RESET);
+    }
+    else
+    {
+      HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOB, LED2_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(GPIOB, LED3_Pin, GPIO_PIN_SET);
+    }
+
+    // Display on OLED
+    SSD1306_Fill(Black);
+    SSD1306_SetCursor(10, 10);
+    sprintf(dist_str, "Dist: %lu cm", distance);
+    SSD1306_WriteString(dist_str, Font12x12, White);
+    SSD1306_UpdateScreen();
+
+    HAL_Delay(33);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -181,11 +251,9 @@ static void MX_I2C1_Init(void)
 {
 
   /* USER CODE BEGIN I2C1_Init 0 */
-
   /* USER CODE END I2C1_Init 0 */
 
   /* USER CODE BEGIN I2C1_Init 1 */
-
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
   hi2c1.Init.Timing = 0x00B07CB4;
@@ -215,7 +283,6 @@ static void MX_I2C1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN I2C1_Init 2 */
-
   /* USER CODE END I2C1_Init 2 */
 
 }
@@ -229,14 +296,12 @@ static void MX_TIM2_Init(void)
 {
 
   /* USER CODE BEGIN TIM2_Init 0 */
-
   /* USER CODE END TIM2_Init 0 */
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
 
   /* USER CODE BEGIN TIM2_Init 1 */
-
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 31;
@@ -260,7 +325,8 @@ static void MX_TIM2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
-
+  // Keep 1 MHz timer tick for delay_us()/ultrasonic timing after CubeMX regen
+  __HAL_TIM_SET_PRESCALER(&htim2, 31);
   /* USER CODE END TIM2_Init 2 */
 
 }
@@ -274,11 +340,9 @@ static void MX_USART2_UART_Init(void)
 {
 
   /* USER CODE BEGIN USART2_Init 0 */
-
   /* USER CODE END USART2_Init 0 */
 
   /* USER CODE BEGIN USART2_Init 1 */
-
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
   huart2.Init.BaudRate = 115200;
@@ -295,7 +359,6 @@ static void MX_USART2_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART2_Init 2 */
-
   /* USER CODE END USART2_Init 2 */
 
 }
@@ -309,7 +372,6 @@ static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
-
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
@@ -344,12 +406,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
-
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
-
 /* USER CODE END 4 */
 
 /**
@@ -359,11 +419,6 @@ static void MX_GPIO_Init(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
   /* USER CODE END Error_Handler_Debug */
 }
 #ifdef USE_FULL_ASSERT
@@ -377,8 +432,6 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
