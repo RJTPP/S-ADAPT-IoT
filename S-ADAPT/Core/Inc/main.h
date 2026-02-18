@@ -59,8 +59,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define TRIG_Pin GPIO_PIN_0
 #define TRIG_GPIO_Port GPIOA
-#define ECHO_Pin GPIO_PIN_1
-#define ECHO_GPIO_Port GPIOA
+#define ECHO_TIM2_CH2_Pin GPIO_PIN_1
+#define ECHO_TIM2_CH2_GPIO_Port GPIOA
 #define VCP_TX_Pin GPIO_PIN_2
 #define VCP_TX_GPIO_Port GPIOA
 #define LDR_Input_Pin GPIO_PIN_4
