@@ -65,14 +65,14 @@ void Error_Handler(void);
 #define ECHO_TIM2_CH2_GPIO_Port GPIOA
 #define VCP_TX_Pin GPIO_PIN_2
 #define VCP_TX_GPIO_Port GPIOA
-#define LDR_Input_Pin GPIO_PIN_4
-#define LDR_Input_GPIO_Port GPIOA
 #define LED_Status_R_Pin GPIO_PIN_5
 #define LED_Status_R_GPIO_Port GPIOA
 #define LED_Status_G_Pin GPIO_PIN_6
 #define LED_Status_G_GPIO_Port GPIOA
 #define LED_Status_B_Pin GPIO_PIN_7
 #define LED_Status_B_GPIO_Port GPIOA
+#define BUTTON_Pin GPIO_PIN_0
+#define BUTTON_GPIO_Port GPIOB
 #define ENCODER_CLK_EXTI1_Pin GPIO_PIN_1
 #define ENCODER_CLK_EXTI1_GPIO_Port GPIOB
 #define Main_LED_TIM1_CH1_Pin GPIO_PIN_8
