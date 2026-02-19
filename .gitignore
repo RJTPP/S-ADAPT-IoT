@@ -4,3 +4,4 @@ S-ADAPT/Debug/
 S-ADAPT/Release/
 .workspace/
 S-ADAPT/.settings/stm32cubeide.project.prefs
+*.launch
