@@ -6,6 +6,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "app.h"
+#include "debug_print.h"
 #include "status_led.h"
 /* USER CODE END Includes */
 
@@ -84,12 +85,17 @@ int main(void)
   MX_TIM1_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
+  debug_print_init(&huart2);
+  debug_println("Boot start");
+
   if (!app_init(&htim2, TIM_CHANNEL_2))
   {
+    debug_println("app_init failed");
     while (1) {
       status_led_blink_error(200);
     }
   }
+  debug_println("app_init ok");
   /* USER CODE END 2 */
 
   /* Infinite loop */
