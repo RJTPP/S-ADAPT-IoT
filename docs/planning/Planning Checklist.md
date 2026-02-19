@@ -92,6 +92,7 @@ Source references:
 - [ ] Manual adjustment behavior:
 - [ ] Encoder CW increases manual brightness offset.
 - [ ] Encoder CCW decreases manual brightness offset.
+- [ ] Encoder rotation adjusts `manual_offset` only (not LDR sensitivity or curve factor).
 - [ ] Offset is applied on top of AUTO target brightness and clamped to valid PWM range.
 - [ ] Encoder single click toggles light ON/OFF.
 - [ ] Encoder double click resets manual offset to `0` (revert to pure AUTO brightness).

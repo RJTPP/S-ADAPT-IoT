@@ -34,6 +34,7 @@
 - [ ] Boot state keeps main light OFF until user single-click.
 - [ ] Encoder single click toggles main light ON/OFF.
 - [ ] Encoder rotation adjusts manual brightness offset (CW up / CCW down).
+- [ ] Encoder rotation changes offset only (does not change sensitivity/factor parameters).
 - [ ] Double click resets manual offset to `0` (AUTO baseline).
 - [ ] LDR-based AUTO logic remains active after offset reset.
 
