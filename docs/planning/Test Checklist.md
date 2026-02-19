@@ -31,8 +31,11 @@
 - [ ] User near threshold -> `user_present = true`.
 - [ ] User beyond threshold -> standby/off behavior triggers as specified.
 - [ ] Auto mode computes brightness from LDR.
-- [ ] Manual mode ignores LDR and follows encoder input.
-- [ ] Encoder push toggles mode correctly.
+- [ ] Boot state keeps main light OFF until user single-click.
+- [ ] Encoder single click toggles main light ON/OFF.
+- [ ] Encoder rotation adjusts manual brightness offset (CW up / CCW down).
+- [ ] Double click resets manual offset to `0` (AUTO baseline).
+- [ ] LDR-based AUTO logic remains active after offset reset.
 
 ### B2. OLED behavior
 - [ ] Page button cycles pages with wraparound logic.
@@ -52,7 +55,9 @@
 | Presence + bright light | Lamp stays on but at reduced brightness | [ ] |
 | User leaves | Lamp turns off per policy (immediate or timeout) | [ ] |
 | Lighting noise | No visible oscillation/flicker | [ ] |
-| Manual control | Encoder changes brightness smoothly | [ ] |
+| Toggle control | Single click toggles lamp ON/OFF reliably | [ ] |
+| Offset control | Encoder rotation changes brightness smoothly | [ ] |
+| Reset control | Double click resets to AUTO baseline brightness | [ ] |
 
 ## D. Test Log
 | Date | Firmware version/commit | Tester | Notes |

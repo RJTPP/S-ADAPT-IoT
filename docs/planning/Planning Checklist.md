@@ -68,8 +68,8 @@ Source references:
 ## 2. Business Logic
 
 ### Power-on defaults
-- [ ] `Mode = AUTO`
-- [ ] `Brightness = 50%`
+- [ ] `Mode = AUTO` (with `manual_offset = 0`)
+- [ ] `Light = OFF` on boot (PWM output forced to 0 until user action)
 - [ ] `OLED Page = 0`
 
 ### Sampling and filtering
@@ -89,14 +89,16 @@ Source references:
 - [ ] Auto mode:
 - [ ] Read filtered LDR and compute target brightness (dark -> higher PWM, bright -> lower PWM).
 - [ ] Clamp output range (example: 20% to 100%).
-- [ ] Manual mode:
-- [ ] Encoder CW increases brightness.
-- [ ] Encoder CCW decreases brightness.
-- [ ] LDR input is ignored in manual mode.
-- [ ] Encoder push switch toggles mode (`AUTO` <-> `MANUAL`).
+- [ ] Manual adjustment behavior:
+- [ ] Encoder CW increases manual brightness offset.
+- [ ] Encoder CCW decreases manual brightness offset.
+- [ ] Offset is applied on top of AUTO target brightness and clamped to valid PWM range.
+- [ ] Encoder single click toggles light ON/OFF.
+- [ ] Encoder double click resets manual offset to `0` (revert to pure AUTO brightness).
 
 ### Output update logic
 - [ ] Apply PWM output every control tick.
+- [ ] If light state is OFF, force output to 0 regardless of auto/offset calculation.
 - [ ] Apply smoothing/hysteresis/ramp to avoid flicker and abrupt jumps.
 - [ ] Update RGB LED according to system state.
 
@@ -115,4 +117,7 @@ Source references:
 - [ ] Presence + low light test passes.
 - [ ] No presence timeout-off test passes.
 - [ ] Small ambient fluctuations do not cause output oscillation.
+- [ ] Single click toggles lamp state reliably.
+- [ ] Double click resets manual offset to AUTO baseline.
+- [ ] Encoder rotation adjusts brightness offset smoothly.
 - [ ] Record test notes for PR.
