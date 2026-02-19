@@ -40,10 +40,13 @@
 
 ### B2. OLED behavior
 - [ ] Page button cycles pages with wraparound logic.
-- [ ] Page 0 shows mode + brightness.
+- [ ] Page 0 shows AUTO + offset + brightness + light ON/OFF state.
 - [ ] Page 1 shows LDR info.
 - [ ] Page 2 shows distance/presence info.
 - [ ] Debug page (if enabled) shows useful internal values.
+- [ ] Encoder rotation shows temporary offset overlay immediately.
+- [ ] Overlay hides after timeout and returns to prior page.
+- [ ] Repeated encoder movement extends/resets overlay timeout correctly.
 
 ### B3. RGB status behavior
 - [ ] Current implementation behavior is documented and verified.
@@ -52,8 +55,8 @@
 ## C. Acceptance Tests (Pass/Fail)
 | Test | Pass Criteria | Result |
 |---|---|---|
-| Presence + low light | Lamp turns on and brightness is appropriate | [ ] |
-| Presence + bright light | Lamp stays on but at reduced brightness | [ ] |
+| Presence + low light | After toggling ON, lamp brightness is appropriate | [ ] |
+| Presence + bright light | After toggling ON, lamp stays on but at reduced brightness | [ ] |
 | User leaves | Lamp turns off per policy (immediate or timeout) | [ ] |
 | Lighting noise | No visible oscillation/flicker | [ ] |
 | Toggle control | Single click toggles lamp ON/OFF reliably | [ ] |

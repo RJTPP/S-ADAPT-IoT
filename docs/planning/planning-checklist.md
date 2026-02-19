@@ -85,11 +85,11 @@ Source references:
 - [ ] If `user_present = FALSE`, force `brightness = 0`.
 - [ ] Optional no-presence timeout behavior is defined (immediate off vs delayed off).
 
-### Mode logic
-- [ ] Auto mode:
+### AUTO + offset logic
+- [ ] AUTO mode:
 - [ ] Read filtered LDR and compute target brightness (dark -> higher PWM, bright -> lower PWM).
 - [ ] Clamp output range (example: 20% to 100%).
-- [ ] Manual adjustment behavior:
+- [ ] Offset adjustment behavior:
 - [ ] Encoder CW increases manual brightness offset.
 - [ ] Encoder CCW decreases manual brightness offset.
 - [ ] Encoder rotation adjusts `manual_offset` only (not LDR sensitivity or curve factor).
@@ -106,11 +106,13 @@ Source references:
 ### Output behavior
 - [ ] OLED includes:
 - [ ] Brightness %
-- [ ] Current mode
+- [ ] Current control profile (`AUTO + offset`) and light ON/OFF state
 - [ ] Distance
 - [ ] Ambient light value (raw and/or filtered)
 - [ ] Multiple OLED pages are implemented.
 - [ ] Extra button cycles pages: `page = (page + 1) % TOTAL_PAGES`.
+- [ ] Encoder rotation triggers temporary OLED offset overlay (e.g., for ~1200 ms).
+- [ ] Overlay timeout resets on each new encoder step and returns to previous page when expired.
 - [ ] Status LED behavior is explicitly documented (kept for now).
 - [ ] Optional UART debug output for tuning thresholds and filters.
 

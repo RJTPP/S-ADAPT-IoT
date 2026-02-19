@@ -50,5 +50,5 @@ flowchart TD
 
 ## Planned Direction
 - Keep module boundaries stable.
-- Add business logic layer for AUTO/MANUAL mode and page switching.
+- Add business logic layer for `AUTO + manual_offset`, light ON/OFF toggling, and page switching.
 - Keep hardware drivers separate from policy decisions.
