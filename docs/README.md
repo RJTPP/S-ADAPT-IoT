@@ -2,7 +2,7 @@
 
 ## Architecture
 - [`docs/architecture/Architecture.md`](architecture/Architecture.md)
-- [`docs/architecture/Business Logic.md`](architecture/Business%20Logic.md)
+- [`docs/architecture/business-logic.md`](architecture/business-logic.md)
 
 ## Planning
 - [`docs/planning/planning-checklist.md`](planning/planning-checklist.md)

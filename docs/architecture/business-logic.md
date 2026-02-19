@@ -91,9 +91,9 @@ Current code note:
 ```mermaid
 stateDiagram-v2
     [*] --> AUTO_OFF
-    AUTO_OFF --> AUTO_ON: "Single click (light ON)"
-    AUTO_ON --> AUTO_OFF: "Single click (light OFF)"
-    AUTO_ON --> STANDBY: "No user (timeout or immediate rule)"
-    AUTO_OFF --> STANDBY: "No user (optional policy)"
-    STANDBY --> AUTO_OFF: "User returns; wait for single click"
+    AUTO_OFF --> AUTO_ON: Single click (light ON)
+    AUTO_ON --> AUTO_OFF: Single click (light OFF)
+    AUTO_ON --> STANDBY: No user (timeout or immediate rule)
+    AUTO_OFF --> STANDBY: No user (optional policy)
+    STANDBY --> AUTO_OFF: User returns - wait for single click
 ```
