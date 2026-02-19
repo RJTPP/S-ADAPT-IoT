@@ -17,7 +17,7 @@ This document defines the current firmware architecture and hardware-to-code map
 | Encoder CLK | User input | PB1 | `ENCODER_CLK_EXTI1_Pin` |
 | Encoder DT | User input | PA10 | `ENCODER_DT_EXTI10_Pin` |
 | Encoder SW | User input | PA9 | `SW_Pin` |
-| Extra button | Page/mode input | PB0 | `BUTTON_Pin` |
+| Extra button | Page switch input | PB0 | `BUTTON_Pin` |
 
 ## Firmware Modules
 | Module | Main Files | Responsibility |
