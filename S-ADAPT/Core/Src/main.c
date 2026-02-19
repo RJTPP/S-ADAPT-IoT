@@ -5,9 +5,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "ssd1306.h"
-#include "fonts.h"
-#include <stdio.h>
+#include "app.h"
+#include "status_led.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,45 +47,6 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void delay_us(uint32_t us)
-{
-    __HAL_TIM_SET_COUNTER(&htim2, 0);
-    while(__HAL_TIM_GET_COUNTER(&htim2) < us);
-}
-
-uint32_t Ultrasonic_Read(void)
-{
-    uint32_t start = 0, stop = 0;
-    uint32_t t0;
-    const uint32_t timeout_us = 30000; // 30 ms guard timeout
-
-    HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
-    delay_us(2);
-
-    HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_SET);
-    delay_us(10);
-    HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
-
-    // Wait for ECHO pin to go HIGH
-    t0 = __HAL_TIM_GET_COUNTER(&htim2);
-    while(HAL_GPIO_ReadPin(ECHO_GPIO_Port, ECHO_Pin) == GPIO_PIN_RESET) {
-        if((uint32_t)(__HAL_TIM_GET_COUNTER(&htim2) - t0) > timeout_us) {
-            return 0; // Timeout waiting for pulse start
-        }
-    }
-    start = __HAL_TIM_GET_COUNTER(&htim2);
-    
-    // Wait for ECHO pin to go LOW
-    t0 = __HAL_TIM_GET_COUNTER(&htim2);
-    while(HAL_GPIO_ReadPin(ECHO_GPIO_Port, ECHO_Pin) == GPIO_PIN_SET) {
-        if((uint32_t)(__HAL_TIM_GET_COUNTER(&htim2) - t0) > timeout_us) {
-            return 0; // Timeout waiting for pulse end
-        }
-    }
-    stop = __HAL_TIM_GET_COUNTER(&htim2);
-
-    return (uint32_t)(stop - start);
-}
 /* USER CODE END 0 */
 
 /**
@@ -124,64 +84,19 @@ int main(void)
   MX_TIM1_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-    if (!SSD1306_Init()) {
-      // OLED not detected on I2C (usually address/wiring/pull-up issue)
-      while (1) {
-        HAL_GPIO_TogglePin(GPIOA, LED1_Pin);
-        HAL_Delay(200);
-      }
+  if (!app_init(&htim2, TIM_CHANNEL_2))
+  {
+    while (1) {
+      status_led_blink_error(200);
     }
-    HAL_TIM_Base_Start(&htim2);
-    
-    // Show boot message
-    SSD1306_Fill(Black);
-    SSD1306_SetCursor(10, 10);
-    SSD1306_WriteString("Init OK", Font16x24, White);
-    SSD1306_UpdateScreen();
-    HAL_Delay(1000);
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    char dist_str[20];
-    uint32_t echo_time = Ultrasonic_Read();
-    uint32_t distance = 0;
-
-    if (echo_time > 0) {
-      distance = echo_time / 58;
-    } else {
-      distance = 999; // Error value
-    }
-
-    if(distance < 10)
-    {
-      HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED2_Pin, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOB, LED3_Pin, GPIO_PIN_RESET);
-    }
-    else if(distance < 20)
-    {
-      HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED2_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED3_Pin, GPIO_PIN_RESET);
-    }
-    else
-    {
-      HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED2_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED3_Pin, GPIO_PIN_SET);
-    }
-
-    // Display on OLED
-    SSD1306_Fill(Black);
-    SSD1306_SetCursor(10, 10);
-    sprintf(dist_str, "Dist: %lu cm", distance);
-    SSD1306_WriteString(dist_str, Font12x12, White);
-    SSD1306_UpdateScreen();
-
-    HAL_Delay(33);
+    app_step();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
