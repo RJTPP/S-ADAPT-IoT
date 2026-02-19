@@ -8,6 +8,7 @@
 #include "app.h"
 #include "debug_print.h"
 #include "status_led.h"
+#include "ultrasonic.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -109,23 +110,24 @@ int main(void)
   /* USER CODE BEGIN 2 */
   debug_print_init(&huart2);
   debug_println("Boot start");
-  i2c_scan();
-
-  if (!app_init(&htim2, TIM_CHANNEL_2))
-  {
-    debug_println("app_init failed");
-    while (1) {
-      status_led_blink_error(200);
-    }
-  }
-  debug_println("app_init ok");
+  debug_println("US only mode");
+  ultrasonic_init(&htim2, TIM_CHANNEL_2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    app_step();
+    ultrasonic_status_t us_status;
+    uint32_t echo_us = ultrasonic_read_echo_us(30000U);
+    uint32_t distance_cm = (echo_us == 0U) ? 999U : (echo_us / 58U);
+    us_status = ultrasonic_get_last_status();
+
+    debug_println("echo_us=%lu dist_cm=%lu status=%s",
+                  (unsigned long)echo_us,
+                  (unsigned long)distance_cm,
+                  ultrasonic_status_to_string(us_status));
+    HAL_Delay(200);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
