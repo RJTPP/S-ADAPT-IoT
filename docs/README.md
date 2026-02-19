@@ -5,8 +5,8 @@
 - [`docs/architecture/Business Logic.md`](architecture/Business%20Logic.md)
 
 ## Planning
-- [`docs/planning/Planning Checklist.md`](planning/Planning%20Checklist.md)
-- [`docs/planning/Test Checklist.md`](planning/Test%20Checklist.md)
+- [`docs/planning/planning-checklist.md`](planning/planning-checklist.md)
+- [`docs/planning/test-checklist.md`](planning/test-checklist.md)
 
 ## References
 - [`docs/references/Project Proposal.md`](references/Project%20Proposal.md)
