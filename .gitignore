@@ -1,2 +1,5 @@
 .DS_Store
 AGENTS.md
+S-ADAPT/Debug/
+S-ADAPT/Release/
+.workspace/

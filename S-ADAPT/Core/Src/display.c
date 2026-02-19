@@ -22,8 +22,13 @@ void display_show_boot(void)
 void display_show_distance_cm(uint32_t distance_cm)
 {
     char dist_str[20];
+    int n;
 
-    (void)snprintf(dist_str, sizeof(dist_str), "Dist: %lu cm", (unsigned long)distance_cm);
+    n = snprintf(dist_str, sizeof(dist_str), "Dist: %lu cm", (unsigned long)distance_cm);
+    if (n < 0) {
+        return;
+    }
+
     SSD1306_Fill(Black);
     SSD1306_SetCursor(10, 10);
     SSD1306_WriteString(dist_str, Font12x12, White);
