@@ -6,7 +6,6 @@
 
 ## Planning
 - [`docs/planning/Planning Checklist.md`](planning/Planning%20Checklist.md)
-- [`docs/planning/Calibration.md`](planning/Calibration.md)
 - [`docs/planning/Test Checklist.md`](planning/Test%20Checklist.md)
 
 ## References
