@@ -1,8 +1,8 @@
 # S-ADAPT Planning Checklist
 
 Source references:
-- `docs/Project Proposal.md`
-- `docs/Schematic_S-ADAPT.png`
+- `docs/references/Project Proposal.md`
+- `docs/references/Schematic_S-ADAPT.png`
 - Feature summary and logic notes from latest planning input.
 
 ## 1. Hardware Handling Code

@@ -37,3 +37,9 @@ Planned / not yet complete:
 - LDR + voltage divider
 - LED driver stage (transistor/MOSFET) for PWM output
 
+## Documentation
+
+- Docs index: `docs/README.md`
+- Architecture and logic: `docs/architecture/`
+- Planning and validation: `docs/planning/`
+- Proposal and schematic references: `docs/references/`
