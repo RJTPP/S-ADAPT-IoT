@@ -109,6 +109,7 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   debug_print_init(&huart2);
+  debug_print_set_level(DEBUG_PRINT_DEBUG);
   debug_println("Boot start");
   debug_println("US only mode");
   ultrasonic_init(&htim2, TIM_CHANNEL_2);
@@ -123,10 +124,10 @@ int main(void)
     uint32_t distance_cm = (echo_us == 0U) ? 999U : (echo_us / 58U);
     us_status = ultrasonic_get_last_status();
 
-    debug_println("echo_us=%lu dist_cm=%lu status=%s",
-                  (unsigned long)echo_us,
-                  (unsigned long)distance_cm,
-                  ultrasonic_status_to_string(us_status));
+    debug_logln(DEBUG_PRINT_DEBUG, "echo_us=%lu dist_cm=%lu status=%s",
+                (unsigned long)echo_us,
+                (unsigned long)distance_cm,
+                ultrasonic_status_to_string(us_status));
     HAL_Delay(200);
     /* USER CODE END WHILE */
 
