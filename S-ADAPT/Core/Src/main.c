@@ -48,6 +48,17 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static uint8_t wait_for_ic_capture(uint32_t timeout_us)
+{
+    uint32_t t0 = __HAL_TIM_GET_COUNTER(&htim2);
+    while (__HAL_TIM_GET_FLAG(&htim2, TIM_FLAG_CC2) == RESET) {
+        if ((uint32_t)(__HAL_TIM_GET_COUNTER(&htim2) - t0) > timeout_us) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 void delay_us(uint32_t us)
 {
     __HAL_TIM_SET_COUNTER(&htim2, 0);
@@ -57,8 +68,11 @@ void delay_us(uint32_t us)
 uint32_t Ultrasonic_Read(void)
 {
     uint32_t start = 0, stop = 0;
-    uint32_t t0;
     const uint32_t timeout_us = 30000; // 30 ms guard timeout
+
+    __HAL_TIM_SET_COUNTER(&htim2, 0);
+    __HAL_TIM_SET_CAPTUREPOLARITY(&htim2, TIM_CHANNEL_2, TIM_INPUTCHANNELPOLARITY_RISING);
+    __HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_CC2);
 
     HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
     delay_us(2);
@@ -67,25 +81,29 @@ uint32_t Ultrasonic_Read(void)
     delay_us(10);
     HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
 
-    // Wait for ECHO pin to go HIGH
-    t0 = __HAL_TIM_GET_COUNTER(&htim2);
-    while(HAL_GPIO_ReadPin(ECHO_GPIO_Port, ECHO_Pin) == GPIO_PIN_RESET) {
-        if((uint32_t)(__HAL_TIM_GET_COUNTER(&htim2) - t0) > timeout_us) {
-            return 0; // Timeout waiting for pulse start
-        }
+    // Capture rising edge (pulse start)
+    if (!wait_for_ic_capture(timeout_us)) {
+        return 0;
     }
-    start = __HAL_TIM_GET_COUNTER(&htim2);
-    
-    // Wait for ECHO pin to go LOW
-    t0 = __HAL_TIM_GET_COUNTER(&htim2);
-    while(HAL_GPIO_ReadPin(ECHO_GPIO_Port, ECHO_Pin) == GPIO_PIN_SET) {
-        if((uint32_t)(__HAL_TIM_GET_COUNTER(&htim2) - t0) > timeout_us) {
-            return 0; // Timeout waiting for pulse end
-        }
-    }
-    stop = __HAL_TIM_GET_COUNTER(&htim2);
+    start = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_2);
 
-    return (uint32_t)(stop - start);
+    __HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_CC2);
+    __HAL_TIM_SET_CAPTUREPOLARITY(&htim2, TIM_CHANNEL_2, TIM_INPUTCHANNELPOLARITY_FALLING);
+
+    // Capture falling edge (pulse end)
+    if (!wait_for_ic_capture(timeout_us)) {
+        __HAL_TIM_SET_CAPTUREPOLARITY(&htim2, TIM_CHANNEL_2, TIM_INPUTCHANNELPOLARITY_RISING);
+        return 0;
+    }
+    stop = HAL_TIM_ReadCapturedValue(&htim2, TIM_CHANNEL_2);
+    __HAL_TIM_SET_CAPTUREPOLARITY(&htim2, TIM_CHANNEL_2, TIM_INPUTCHANNELPOLARITY_RISING);
+
+    if (stop >= start) {
+        return (uint32_t)(stop - start);
+    } else {
+        // Handle 32-bit timer rollover between edges
+        return (uint32_t)((0xFFFFFFFFu - start) + stop + 1u);
+    }
 }
 /* USER CODE END 0 */
 
@@ -132,7 +150,8 @@ int main(void)
       }
     }
     HAL_TIM_Base_Start(&htim2);
-    
+    HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_2);
+
     // Show boot message
     SSD1306_Fill(Black);
     SSD1306_SetCursor(10, 10);
