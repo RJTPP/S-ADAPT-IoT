@@ -3,6 +3,7 @@
 Source references:
 - `docs/Project Proposal.md`
 - `docs/Schematic_S-ADAPT.png`
+- Feature summary and logic notes from latest planning input.
 
 ## 1. Hardware Handling Code
 
@@ -13,6 +14,9 @@ Source references:
 - [ ] `PB6/PB7` = OLED I2C (`SCL/SDA`)
 - [ ] `PA8` = PWM output for main LED driver (`TIM1_CH1`)
 - [ ] Confirm LDR analog pin and ADC channel mapping are consistent.
+- [ ] Verify encoder and button pin mapping for:
+- [ ] Encoder `CLK`, `DT`, `SW`
+- [ ] Extra button for OLED page switching
 
 ### Per-hardware checklist
 - [ ] NUCLEO-L432KC core clocks/peripherals initialized as expected after boot.
@@ -30,8 +34,14 @@ Source references:
 - [ ] PWM duty changes match commanded brightness.
 - [ ] LED fully turns off at 0% and reaches expected max brightness.
 - [ ] No visible flicker at normal operating brightness.
+- [ ] MOSFET gate resistor and pull-down behavior validated (clean switching).
 - [ ] RGB status LED module:
-- [ ] Distance-status indication behavior is correct (kept for now).
+- [ ] State color mapping works:
+- [ ] Blue = Auto mode
+- [ ] Green = Manual mode
+- [ ] Red = No user / standby
+- [ ] Purple = Setup / special mode
+- [ ] Transition plan from current distance-based indication to state-based indication is defined.
 - [ ] Error blink path works on forced init failure.
 - [ ] Encoder module (`CLK/DT/SW`) inputs:
 - [ ] Pin reads/interrupts are stable and debounced as needed.
@@ -40,13 +50,14 @@ Source references:
 - [ ] Press/release logic is stable (no false toggles).
 - [ ] +5V / +3.3V rails and decoupling:
 - [ ] Voltage levels are within expected range under load.
+- [ ] 470 uF and 0.1 uF decoupling behavior validated under LED load changes.
 - [ ] Power-up does not cause OLED/sensor brownout or random resets.
 
 ### Driver/module readiness
 - [ ] Keep modules clean and single-purpose (`ultrasonic`, `display`, `status_led`, `app`).
 - [ ] Ensure ultrasonic capture handles timeout and noisy/overcapture cases.
 - [ ] Ensure OLED init and updates are stable via I2C (no blocking failure loops except fatal init).
-- [ ] Keep distance LED indicator behavior for now (as currently implemented).
+- [ ] Keep current distance-based RGB behavior for now until state-based RGB mapping is implemented.
 
 ### Hardware-level validation
 - [ ] Build `Debug` successfully.
@@ -56,20 +67,47 @@ Source references:
 
 ## 2. Business Logic
 
+### Power-on defaults
+- [ ] `Mode = AUTO`
+- [ ] `Brightness = 50%`
+- [ ] `OLED Page = 0`
+
 ### Sampling and filtering
 - [ ] LDR sampling loop at 50 ms (+/- 10%).
 - [ ] Ultrasonic sampling loop at 100 ms (+/- 10%).
 - [ ] Moving average filter for LDR.
 - [ ] Median/outlier filtering for ultrasonic.
 
-### Decision logic
-- [ ] Define and document presence threshold (cm).
-- [ ] If user present and ambient is low: light on with computed PWM brightness.
-- [ ] If user absent for 30 s: transition to standby/off.
-- [ ] Add hysteresis for brightness updates to prevent flicker.
+### Presence and safety logic
+- [ ] Define and document presence threshold (target: ~80 cm, tune on board).
+- [ ] `distance < threshold` -> `user_present = TRUE`
+- [ ] `distance >= threshold` -> `user_present = FALSE`
+- [ ] If `user_present = FALSE`, force `brightness = 0`.
+- [ ] Optional no-presence timeout behavior is defined (immediate off vs delayed off).
+
+### Mode logic
+- [ ] Auto mode:
+- [ ] Read filtered LDR and compute target brightness (dark -> higher PWM, bright -> lower PWM).
+- [ ] Clamp output range (example: 20% to 100%).
+- [ ] Manual mode:
+- [ ] Encoder CW increases brightness.
+- [ ] Encoder CCW decreases brightness.
+- [ ] LDR input is ignored in manual mode.
+- [ ] Encoder push switch toggles mode (`AUTO` <-> `MANUAL`).
+
+### Output update logic
+- [ ] Apply PWM output every control tick.
+- [ ] Apply smoothing/hysteresis/ramp to avoid flicker and abrupt jumps.
+- [ ] Update RGB LED according to system state.
 
 ### Output behavior
-- [ ] OLED shows distance, light percentage, and mode (`Active`/`Standby`).
+- [ ] OLED includes:
+- [ ] Brightness %
+- [ ] Current mode
+- [ ] Distance
+- [ ] Ambient light value (raw and/or filtered)
+- [ ] Multiple OLED pages are implemented.
+- [ ] Extra button cycles pages: `page = (page + 1) % TOTAL_PAGES`.
 - [ ] Status LED behavior is explicitly documented (kept for now).
 - [ ] Optional UART debug output for tuning thresholds and filters.
 
