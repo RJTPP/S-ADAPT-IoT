@@ -21,6 +21,22 @@ static uint32_t capture_flag_from_channel(uint32_t channel)
     }
 }
 
+static uint32_t capture_overcapture_flag_from_channel(uint32_t channel)
+{
+    switch (channel) {
+        case TIM_CHANNEL_1:
+            return TIM_FLAG_CC1OF;
+        case TIM_CHANNEL_2:
+            return TIM_FLAG_CC2OF;
+        case TIM_CHANNEL_3:
+            return TIM_FLAG_CC3OF;
+        case TIM_CHANNEL_4:
+            return TIM_FLAG_CC4OF;
+        default:
+            return 0U;
+    }
+}
+
 static uint8_t wait_for_capture(uint32_t capture_flag, uint32_t timeout_us)
 {
     uint32_t t0;
@@ -63,6 +79,7 @@ uint32_t ultrasonic_read_echo_us(uint32_t timeout_us)
     uint32_t start;
     uint32_t stop;
     uint32_t capture_flag;
+    uint32_t overcapture_flag;
     uint32_t period;
 
     if (s_echo_tim == NULL) {
@@ -70,13 +87,15 @@ uint32_t ultrasonic_read_echo_us(uint32_t timeout_us)
     }
 
     capture_flag = capture_flag_from_channel(s_echo_channel);
-    if (capture_flag == 0U) {
+    overcapture_flag = capture_overcapture_flag_from_channel(s_echo_channel);
+    if (capture_flag == 0U || overcapture_flag == 0U) {
         return 0U;
     }
 
     __HAL_TIM_SET_COUNTER(s_echo_tim, 0U);
     __HAL_TIM_SET_CAPTUREPOLARITY(s_echo_tim, s_echo_channel, TIM_INPUTCHANNELPOLARITY_RISING);
     __HAL_TIM_CLEAR_FLAG(s_echo_tim, capture_flag);
+    __HAL_TIM_CLEAR_FLAG(s_echo_tim, overcapture_flag);
 
     HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
     delay_us(2U);
@@ -87,12 +106,22 @@ uint32_t ultrasonic_read_echo_us(uint32_t timeout_us)
     if (!wait_for_capture(capture_flag, timeout_us)) {
         return 0U;
     }
+    if (__HAL_TIM_GET_FLAG(s_echo_tim, overcapture_flag) != RESET) {
+        __HAL_TIM_CLEAR_FLAG(s_echo_tim, overcapture_flag);
+        return 0U;
+    }
     start = HAL_TIM_ReadCapturedValue(s_echo_tim, s_echo_channel);
 
     __HAL_TIM_CLEAR_FLAG(s_echo_tim, capture_flag);
+    __HAL_TIM_CLEAR_FLAG(s_echo_tim, overcapture_flag);
     __HAL_TIM_SET_CAPTUREPOLARITY(s_echo_tim, s_echo_channel, TIM_INPUTCHANNELPOLARITY_FALLING);
 
     if (!wait_for_capture(capture_flag, timeout_us)) {
+        __HAL_TIM_SET_CAPTUREPOLARITY(s_echo_tim, s_echo_channel, TIM_INPUTCHANNELPOLARITY_RISING);
+        return 0U;
+    }
+    if (__HAL_TIM_GET_FLAG(s_echo_tim, overcapture_flag) != RESET) {
+        __HAL_TIM_CLEAR_FLAG(s_echo_tim, overcapture_flag);
         __HAL_TIM_SET_CAPTUREPOLARITY(s_echo_tim, s_echo_channel, TIM_INPUTCHANNELPOLARITY_RISING);
         return 0U;
     }
