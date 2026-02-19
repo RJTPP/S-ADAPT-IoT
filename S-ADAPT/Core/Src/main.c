@@ -127,7 +127,7 @@ int main(void)
     if (!SSD1306_Init()) {
       // OLED not detected on I2C (usually address/wiring/pull-up issue)
       while (1) {
-        HAL_GPIO_TogglePin(GPIOA, LED1_Pin);
+        HAL_GPIO_TogglePin(LED_Status_R_GPIO_Port, LED_Status_R_Pin);
         HAL_Delay(200);
       }
     }
@@ -157,21 +157,21 @@ int main(void)
 
     if(distance < 10)
     {
-      HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED2_Pin, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOB, LED3_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(LED_Status_R_GPIO_Port, LED_Status_R_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(LED_Status_G_GPIO_Port, LED_Status_G_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(LED_Status_B_GPIO_Port, LED_Status_B_Pin, GPIO_PIN_RESET);
     }
     else if(distance < 20)
     {
-      HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED2_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED3_Pin, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(LED_Status_R_GPIO_Port, LED_Status_R_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(LED_Status_G_GPIO_Port, LED_Status_G_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(LED_Status_B_GPIO_Port, LED_Status_B_Pin, GPIO_PIN_RESET);
     }
     else
     {
-      HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED2_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED3_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(LED_Status_R_GPIO_Port, LED_Status_R_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(LED_Status_G_GPIO_Port, LED_Status_G_Pin, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(LED_Status_B_GPIO_Port, LED_Status_B_Pin, GPIO_PIN_SET);
     }
 
     // Display on OLED
