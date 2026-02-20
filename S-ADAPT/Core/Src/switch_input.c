@@ -24,7 +24,7 @@ typedef struct
 
 static const switch_config_t s_switch_configs[SWITCH_INPUT_COUNT] = {
     {BUTTON_GPIO_Port, BUTTON_Pin, SWITCH_INPUT_BUTTON},
-    {SW_GPIO_Port, SW_Pin, SWITCH_INPUT_SW2},
+    {ENCODER_PRESS_GPIO_Port, ENCODER_PRESS_Pin, SWITCH_INPUT_SW2},
 };
 
 static switch_state_t s_switch_states[SWITCH_INPUT_COUNT];
