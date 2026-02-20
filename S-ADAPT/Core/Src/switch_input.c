@@ -1,5 +1,6 @@
 #include "switch_input.h"
 
+#include "input_utils.h"
 #include "main.h"
 
 #define SWITCH_SAMPLE_PERIOD_MS 10U
@@ -35,29 +36,9 @@ static uint8_t s_queue_head = 0U;
 static uint8_t s_queue_tail = 0U;
 static uint8_t s_queue_count = 0U;
 
-static uint32_t irq_lock(void)
-{
-    uint32_t primask = __get_PRIMASK();
-    __disable_irq();
-    return primask;
-}
-
-static void irq_unlock(uint32_t primask)
-{
-    if (primask == 0U) {
-        __enable_irq();
-    }
-}
-
-static uint8_t gpio_level(GPIO_TypeDef *port, uint16_t pin)
-{
-    GPIO_PinState state = HAL_GPIO_ReadPin(port, pin);
-    return (state == GPIO_PIN_SET) ? 1U : 0U;
-}
-
 static void init_switch_state(switch_state_t *state, const switch_config_t *config)
 {
-    uint8_t level = gpio_level(config->port, config->pin);
+    uint8_t level = input_gpio_level(config->port, config->pin);
     state->stable_level = level;
     state->candidate_level = level;
     state->candidate_ticks = 0U;
@@ -68,7 +49,7 @@ static void queue_push(switch_input_id_t input, uint8_t level)
     switch_input_event_t event;
     uint32_t primask;
 
-    primask = irq_lock();
+    primask = input_irq_lock();
     if (s_queue_count < SWITCH_EVENT_QUEUE_SIZE) {
         event.input = input;
         event.level = level;
@@ -78,12 +59,12 @@ static void queue_push(switch_input_id_t input, uint8_t level)
         s_queue_tail = (uint8_t)((s_queue_tail + 1U) % SWITCH_EVENT_QUEUE_SIZE);
         s_queue_count++;
     }
-    irq_unlock(primask);
+    input_irq_unlock(primask);
 }
 
 static void process_switch(switch_state_t *state, const switch_config_t *config)
 {
-    uint8_t raw_level = gpio_level(config->port, config->pin);
+    uint8_t raw_level = input_gpio_level(config->port, config->pin);
 
     if (raw_level != state->candidate_level) {
         state->candidate_level = raw_level;
@@ -140,15 +121,15 @@ uint8_t switch_input_pop_event(switch_input_event_t *out_event)
         return 0U;
     }
 
-    primask = irq_lock();
+    primask = input_irq_lock();
     if (s_queue_count == 0U) {
-        irq_unlock(primask);
+        input_irq_unlock(primask);
         return 0U;
     }
 
     *out_event = s_event_queue[s_queue_head];
     s_queue_head = (uint8_t)((s_queue_head + 1U) % SWITCH_EVENT_QUEUE_SIZE);
     s_queue_count--;
-    irq_unlock(primask);
+    input_irq_unlock(primask);
     return 1U;
 }
