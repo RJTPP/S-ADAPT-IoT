@@ -65,15 +65,20 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
                 flat_condition = ((prev_ready != 0U) && (abs_step_delta_cm <= s_policy_cfg.presence_flat_band_cm)) ? 1U : 0U;
                 motion_condition = ((prev_ready != 0U) && (abs_step_delta_cm >= s_policy_cfg.presence_motion_delta_cm)) ? 1U : 0U;
 
-                if (away_condition != 0U) {
-                    s_app.sensors.away_streak_ms += s_timing_cfg.us_sample_ms;
+                if (s_app.sensors.last_valid_presence != 0U) {
+                    if (away_condition != 0U) {
+                        s_app.sensors.away_streak_ms += s_timing_cfg.us_sample_ms;
+                    } else {
+                        s_app.sensors.away_streak_ms = 0U;
+                    }
+
+                    if (flat_condition != 0U) {
+                        s_app.sensors.flat_streak_ms += s_timing_cfg.us_sample_ms;
+                    } else {
+                        s_app.sensors.flat_streak_ms = 0U;
+                    }
                 } else {
                     s_app.sensors.away_streak_ms = 0U;
-                }
-
-                if (flat_condition != 0U) {
-                    s_app.sensors.flat_streak_ms += s_timing_cfg.us_sample_ms;
-                } else {
                     s_app.sensors.flat_streak_ms = 0U;
                 }
 
@@ -115,10 +120,15 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
                         (s_app.sensors.near_ref_streak_ms >= s_policy_cfg.presence_return_confirm_ms)) {
                         s_app.sensors.last_valid_presence = 1U;
                         s_app.sensors.near_ref_streak_ms = 0U;
+                        s_app.sensors.away_streak_ms = 0U;
+                        s_app.sensors.flat_streak_ms = 0U;
                         s_app.sensors.no_user_reason = 0U;
                     } else if ((s_app.sensors.no_user_reason == 2U) &&
-                               (s_app.sensors.motion_streak_ms >= s_policy_cfg.presence_resume_motion_ms)) {
+                               (motion_condition != 0U)) {
                         s_app.sensors.last_valid_presence = 1U;
+                        s_app.sensors.motion_streak_ms = 0U;
+                        s_app.sensors.away_streak_ms = 0U;
+                        s_app.sensors.flat_streak_ms = 0U;
                         s_app.sensors.no_user_reason = 0U;
                     }
                 }
