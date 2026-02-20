@@ -1,6 +1,6 @@
-#include "switch_input.h"
+#include "input/switch_input.h"
 
-#include "input_utils.h"
+#include "input/input_utils.h"
 #include "main.h"
 
 #define SWITCH_SAMPLE_PERIOD_MS 10U

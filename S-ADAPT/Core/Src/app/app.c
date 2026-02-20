@@ -1,9 +1,9 @@
-#include "app.h"
+#include "app/app.h"
 
-#include "debug_print.h"
-#include "display.h"
-#include "status_led.h"
-#include "ultrasonic.h"
+#include "support/debug_print.h"
+#include "bsp/display.h"
+#include "bsp/status_led.h"
+#include "sensors/ultrasonic.h"
 
 #define APP_ECHO_TIMEOUT_US    30000U
 #define APP_DISTANCE_ERROR_CM  999U

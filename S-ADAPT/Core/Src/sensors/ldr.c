@@ -1,4 +1,4 @@
-#include "ldr.h"
+#include "sensors/ldr.h"
 
 static ADC_HandleTypeDef *s_ldr_adc = NULL;
 
