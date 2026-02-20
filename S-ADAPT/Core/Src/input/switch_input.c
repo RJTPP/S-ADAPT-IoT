@@ -102,7 +102,7 @@ void switch_input_tick(uint32_t now_ms)
 {
     uint32_t i;
 
-    if ((uint32_t)(now_ms - s_last_sample_ms) < SWITCH_SAMPLE_PERIOD_MS) {
+    if (input_has_elapsed_ms(now_ms, s_last_sample_ms, SWITCH_SAMPLE_PERIOD_MS) == 0U) {
         return;
     }
 
