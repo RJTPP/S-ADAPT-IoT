@@ -136,9 +136,6 @@ uint8_t app_init(TIM_HandleTypeDef *echo_tim, uint32_t echo_channel)
     debug_logln(DEBUG_PRINT_INFO, "display disabled for bring-up");
 #endif
 
-    s_app.boot_start_ms = HAL_GetTick();
-    s_app.last_tick_ms = s_app.boot_start_ms;
-
     return ok;
 }
 
