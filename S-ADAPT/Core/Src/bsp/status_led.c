@@ -39,6 +39,9 @@ static void apply_state_color(status_led_state_t state)
         case STATUS_LED_STATE_BOOT_SETUP:
             apply_color(1U, 0U, 1U); /* Purple */
             break;
+        case STATUS_LED_STATE_LIGHT_OFF:
+            apply_color(1U, 0U, 0U); /* Red */
+            break;
         case STATUS_LED_STATE_AUTO:
             apply_color(0U, 0U, 1U); /* Blue */
             break;
@@ -46,7 +49,7 @@ static void apply_state_color(status_led_state_t state)
             apply_color(0U, 1U, 0U); /* Green */
             break;
         case STATUS_LED_STATE_NO_USER:
-            apply_color(1U, 0U, 0U); /* Red */
+            apply_color(1U, 1U, 0U); /* Yellow */
             break;
         case STATUS_LED_STATE_FAULT_FATAL:
             /* Fault state is handled by blink logic. */

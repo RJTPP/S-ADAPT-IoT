@@ -6,13 +6,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "support/debug_print.h"
-#include "input/encoder_input.h"
-#include "sensors/ldr.h"
-#include "bsp/main_led.h"
-#include "bsp/status_led.h"
-#include "bsp/display.h"
-#include "input/switch_input.h"
-#include "sensors/ultrasonic.h"
+#include "app/app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -21,14 +15,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define LDR_SAMPLE_PERIOD_MS     50U
-#define US_SAMPLE_PERIOD_MS      1000U
-#define US_ECHO_TIMEOUT_US       30000U
-#define US_DISTANCE_ERROR_CM     999U
-#define RGB_DEBUG_PERIOD_MS      1000U
-#define OLED_DEBUG_PERIOD_MS     1000U
-#define OLED_DEBUG_ENABLE        1U
-#define MAIN_LED_DEBUG_PERIOD_MS 1000U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,17 +32,6 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-static uint32_t s_last_ldr_sample_ms = 0U;
-static uint32_t s_last_us_sample_ms = 0U;
-static uint32_t s_last_rgb_ms = 0U;
-static uint32_t s_last_main_led_ms = 0U;
-static uint16_t s_last_ldr_raw = 0U;
-static ldr_status_t s_last_ldr_status = LDR_STATUS_NOT_INIT;
-static status_led_state_t s_rgb_state = STATUS_LED_STATE_BOOT_SETUP;
-static uint8_t s_main_led_sweep_index = 0U;
-static uint32_t s_last_distance_cm = US_DISTANCE_ERROR_CM;
-static uint32_t s_last_oled_ms = 0U;
-static uint8_t s_display_ready = 0U;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -72,72 +47,6 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static const char *switch_name(switch_input_id_t input)
-{
-  return (input == SWITCH_INPUT_BUTTON) ? "BUTTON" : "SW2";
-}
-
-static const char *encoder_event_name(encoder_event_type_t type)
-{
-  switch (type)
-  {
-    case ENCODER_EVENT_CW:
-      return "cw";
-    case ENCODER_EVENT_CCW:
-      return "ccw";
-    case ENCODER_EVENT_SW_PRESSED:
-      return "sw_pressed";
-    case ENCODER_EVENT_SW_RELEASED:
-      return "sw_released";
-    default:
-      return "unknown";
-  }
-}
-
-static const char *rgb_state_name(status_led_state_t state)
-{
-  switch (state)
-  {
-    case STATUS_LED_STATE_BOOT_SETUP:
-      return "boot_setup";
-    case STATUS_LED_STATE_AUTO:
-      return "auto";
-    case STATUS_LED_STATE_OFFSET_POSITIVE:
-      return "offset_positive";
-    case STATUS_LED_STATE_NO_USER:
-      return "no_user";
-    case STATUS_LED_STATE_FAULT_FATAL:
-      return "fault_fatal";
-    default:
-      return "unknown";
-  }
-}
-
-static status_led_state_t next_rgb_debug_state(status_led_state_t current_state)
-{
-  switch (current_state)
-  {
-    case STATUS_LED_STATE_AUTO:
-      return STATUS_LED_STATE_OFFSET_POSITIVE;
-    case STATUS_LED_STATE_OFFSET_POSITIVE:
-      return STATUS_LED_STATE_NO_USER;
-    case STATUS_LED_STATE_NO_USER:
-      return STATUS_LED_STATE_BOOT_SETUP;
-    case STATUS_LED_STATE_BOOT_SETUP:
-    default:
-      return STATUS_LED_STATE_AUTO;
-  }
-}
-
-static uint8_t next_main_led_sweep_percent(void)
-{
-  static const uint8_t sweep_table[] = {0U, 25U, 50U, 75U, 100U};
-  uint8_t percent;
-
-  percent = sweep_table[s_main_led_sweep_index];
-  s_main_led_sweep_index = (uint8_t)((s_main_led_sweep_index + 1U) % (sizeof(sweep_table) / sizeof(sweep_table[0])));
-  return percent;
-}
 /* USER CODE END 0 */
 
 /**
@@ -177,133 +86,30 @@ int main(void)
   debug_print_init(&huart2);
   debug_print_set_level(DEBUG_PRINT_DEBUG);
   debug_println("Boot start");
-  debug_println("Hardware debug mode");
-  ldr_init(&hadc1);
-  ultrasonic_init(&htim2, TIM_CHANNEL_2);
-  switch_input_init();
-  encoder_input_init();
-  status_led_init();
-  main_led_init(&htim1, TIM_CHANNEL_1);
+  debug_println("App mode");
   {
-    main_led_status_t main_led_status = main_led_start();
-    debug_logln(DEBUG_PRINT_INFO, "dbg main_led start=%s", main_led_status_to_string(main_led_status));
-    if (main_led_status == MAIN_LED_STATUS_OK) {
-      main_led_status = main_led_set_enabled(1U);
-      debug_logln(DEBUG_PRINT_INFO, "dbg main_led enable=%s", main_led_status_to_string(main_led_status));
+    app_hw_config_t hw = {
+      .ldr_adc = &hadc1,
+      .echo_tim = &htim2,
+      .echo_channel = TIM_CHANNEL_2,
+      .main_led_tim = &htim1,
+      .main_led_channel = TIM_CHANNEL_1
+    };
+
+    if (app_init(&hw) == 0U)
+    {
+      debug_logln(DEBUG_PRINT_ERROR, "app init degraded mode");
+      app_set_fatal_fault(1U);
+      debug_logln(DEBUG_PRINT_ERROR, "safe mode: fatal fault indication active");
     }
-    main_led_status = main_led_set_percent(0U);
-    debug_logln(DEBUG_PRINT_INFO, "dbg main_led duty=%u status=%s",
-                (unsigned int)main_led_get_percent(),
-                main_led_status_to_string(main_led_status));
   }
-  s_last_ldr_status = LDR_STATUS_NOT_INIT;
-  s_last_ldr_raw = 0U;
-  s_rgb_state = STATUS_LED_STATE_BOOT_SETUP;
-  s_main_led_sweep_index = 0U;
-  s_last_distance_cm = US_DISTANCE_ERROR_CM;
-  s_last_ldr_sample_ms = HAL_GetTick();
-  s_last_us_sample_ms = HAL_GetTick();
-  s_last_rgb_ms = HAL_GetTick();
-  s_last_main_led_ms = HAL_GetTick();
-  s_last_oled_ms = HAL_GetTick();
-#if OLED_DEBUG_ENABLE
-  if (display_init() != 0U)
-  {
-    s_display_ready = 1U;
-    display_show_boot();
-    debug_logln(DEBUG_PRINT_INFO, "dbg oled=ready");
-  }
-  else
-  {
-    s_display_ready = 0U;
-    debug_logln(DEBUG_PRINT_ERROR, "dbg oled=init_failed");
-  }
-#else
-  s_display_ready = 0U;
-#endif
-  debug_logln(DEBUG_PRINT_INFO, "dbg led_state=%s", rgb_state_name(s_rgb_state));
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    uint32_t now_ms = HAL_GetTick();
-    switch_input_event_t switch_event;
-    encoder_event_t encoder_event;
-    ultrasonic_status_t us_status;
-    uint32_t echo_us = 0U;
-    uint32_t distance_cm = US_DISTANCE_ERROR_CM;
-
-    status_led_tick(now_ms);
-
-    switch_input_tick(now_ms);
-    while (switch_input_pop_event(&switch_event) != 0U)
-    {
-      debug_logln(DEBUG_PRINT_DEBUG, "dbg event=switch id=%s state=%s level=%u",
-                  switch_name(switch_event.input),
-                  (switch_event.pressed != 0U) ? "pressed" : "released",
-                  (unsigned int)switch_event.level);
-    }
-
-    encoder_input_tick(now_ms);
-    while (encoder_input_pop_event(&encoder_event) != 0U)
-    {
-      debug_logln(DEBUG_PRINT_DEBUG, "dbg event=encoder type=%s sw_level=%u",
-                  encoder_event_name(encoder_event.type),
-                  (unsigned int)encoder_event.sw_level);
-    }
-
-    if ((uint32_t)(now_ms - s_last_ldr_sample_ms) >= LDR_SAMPLE_PERIOD_MS)
-    {
-      s_last_ldr_sample_ms = now_ms;
-      s_last_ldr_status = ldr_read_raw(&s_last_ldr_raw);
-    }
-
-    if ((uint32_t)(now_ms - s_last_us_sample_ms) >= US_SAMPLE_PERIOD_MS)
-    {
-      s_last_us_sample_ms = now_ms;
-      echo_us = ultrasonic_read_echo_us(US_ECHO_TIMEOUT_US);
-      distance_cm = (echo_us == 0U) ? US_DISTANCE_ERROR_CM : (echo_us / 58U);
-      us_status = ultrasonic_get_last_status();
-      s_last_distance_cm = distance_cm;
-
-      debug_logln(DEBUG_PRINT_DEBUG, "dbg sample ldr_raw=%u ldr_status=%s echo_us=%lu dist_cm=%lu us_status=%s",
-                  (unsigned int)s_last_ldr_raw,
-                  ldr_status_to_string(s_last_ldr_status),
-                  (unsigned long)echo_us,
-                  (unsigned long)distance_cm,
-                  ultrasonic_status_to_string(us_status));
-    }
-
-    if ((uint32_t)(now_ms - s_last_rgb_ms) >= RGB_DEBUG_PERIOD_MS)
-    {
-      s_last_rgb_ms = now_ms;
-      s_rgb_state = next_rgb_debug_state(s_rgb_state);
-      status_led_set_state(s_rgb_state);
-      debug_logln(DEBUG_PRINT_INFO, "dbg led_state=%s", rgb_state_name(s_rgb_state));
-    }
-
-    if ((uint32_t)(now_ms - s_last_main_led_ms) >= MAIN_LED_DEBUG_PERIOD_MS)
-    {
-      uint8_t sweep_percent;
-      main_led_status_t main_led_status;
-
-      s_last_main_led_ms = now_ms;
-      sweep_percent = next_main_led_sweep_percent();
-      main_led_status = main_led_set_percent(sweep_percent);
-      debug_logln(DEBUG_PRINT_INFO, "dbg main_led duty=%u status=%s",
-                  (unsigned int)main_led_get_percent(),
-                  main_led_status_to_string(main_led_status));
-    }
-
-    if ((s_display_ready != 0U) && ((uint32_t)(now_ms - s_last_oled_ms) >= OLED_DEBUG_PERIOD_MS))
-    {
-      s_last_oled_ms = now_ms;
-      display_show_distance_cm(s_last_distance_cm);
-      debug_logln(DEBUG_PRINT_DEBUG, "dbg oled dist_cm=%lu", (unsigned long)s_last_distance_cm);
-    }
-
+    app_step();
     HAL_Delay(1);
     /* USER CODE END WHILE */
 
