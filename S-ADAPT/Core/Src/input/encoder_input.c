@@ -1,6 +1,6 @@
-#include "encoder_input.h"
+#include "input/encoder_input.h"
 
-#include "input_utils.h"
+#include "input/input_utils.h"
 #include "main.h"
 
 #if defined(ENCODER_PRESS_GPIO_Port) && defined(ENCODER_PRESS_Pin)

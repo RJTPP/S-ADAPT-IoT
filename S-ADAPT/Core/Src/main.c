@@ -5,12 +5,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "debug_print.h"
-#include "encoder_input.h"
-#include "ldr.h"
-#include "status_led.h"
-#include "switch_input.h"
-#include "ultrasonic.h"
+#include "support/debug_print.h"
+#include "input/encoder_input.h"
+#include "sensors/ldr.h"
+#include "bsp/status_led.h"
+#include "input/switch_input.h"
+#include "sensors/ultrasonic.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
