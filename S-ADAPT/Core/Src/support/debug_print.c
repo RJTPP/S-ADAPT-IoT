@@ -3,12 +3,35 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define DEBUG_PRINT_FORMAT_BUFFER_SIZE 512U
+#define DEBUG_PRINT_UART_CHUNK_SIZE    64U
+
 static UART_HandleTypeDef *s_debug_uart = NULL;
 static debug_print_level_t s_debug_level = DEBUG_PRINT_INFO;
 
+static void debug_uart_transmit_chunked(const uint8_t *data, uint16_t len)
+{
+    uint16_t offset = 0U;
+
+    if ((s_debug_uart == NULL) || (data == NULL) || (len == 0U)) {
+        return;
+    }
+
+    while (offset < len) {
+        uint16_t chunk_len = (uint16_t)(len - offset);
+
+        if (chunk_len > DEBUG_PRINT_UART_CHUNK_SIZE) {
+            chunk_len = DEBUG_PRINT_UART_CHUNK_SIZE;
+        }
+
+        HAL_UART_Transmit(s_debug_uart, (uint8_t *)&data[offset], chunk_len, 100U);
+        offset = (uint16_t)(offset + chunk_len);
+    }
+}
+
 static void debug_vprint(debug_print_level_t level, uint8_t with_newline, const char *fmt, va_list args)
 {
-    char buffer[128];
+    char buffer[DEBUG_PRINT_FORMAT_BUFFER_SIZE];
     int len;
 
     if (s_debug_uart == NULL || fmt == NULL) {
@@ -24,19 +47,19 @@ static void debug_vprint(debug_print_level_t level, uint8_t with_newline, const 
     }
 
     if (with_newline != 0U) {
-        if ((size_t)len > (sizeof(buffer) - 3U)) {
-            len = (int)(sizeof(buffer) - 3U);
+        if ((size_t)len > (DEBUG_PRINT_FORMAT_BUFFER_SIZE - 3U)) {
+            len = (int)(DEBUG_PRINT_FORMAT_BUFFER_SIZE - 3U);
         }
         buffer[len++] = '\r';
         buffer[len++] = '\n';
         buffer[len] = '\0';
     } else {
-        if ((size_t)len > (sizeof(buffer) - 1U)) {
-            len = (int)(sizeof(buffer) - 1U);
+        if ((size_t)len > (DEBUG_PRINT_FORMAT_BUFFER_SIZE - 1U)) {
+            len = (int)(DEBUG_PRINT_FORMAT_BUFFER_SIZE - 1U);
         }
     }
 
-    HAL_UART_Transmit(s_debug_uart, (uint8_t *)buffer, (uint16_t)len, 100U);
+    debug_uart_transmit_chunked((const uint8_t *)buffer, (uint16_t)len);
 }
 
 void debug_print_init(UART_HandleTypeDef *huart)
