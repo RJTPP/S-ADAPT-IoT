@@ -93,7 +93,7 @@ void encoder_input_tick(uint32_t now_ms)
 {
     uint8_t sw_level;
 
-    if ((uint32_t)(now_ms - s_last_sw_sample_ms) < ENCODER_SW_SAMPLE_MS) {
+    if (input_has_elapsed_ms(now_ms, s_last_sw_sample_ms, ENCODER_SW_SAMPLE_MS) == 0U) {
         return;
     }
     s_last_sw_sample_ms = now_ms;
