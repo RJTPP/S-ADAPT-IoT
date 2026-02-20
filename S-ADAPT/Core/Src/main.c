@@ -117,17 +117,8 @@ int main(void)
 
     if ((uint32_t)(now_ms - s_last_us_sample_ms) >= US_SAMPLE_PERIOD_MS)
     {
-      ultrasonic_status_t us_status;
-      uint32_t echo_us = ultrasonic_read_echo_us(US_ECHO_TIMEOUT_US);
-      uint32_t distance_cm = (echo_us == 0U) ? US_DISTANCE_ERROR_CM : (echo_us / 58U);
-
       s_last_us_sample_ms = now_ms;
-      us_status = ultrasonic_get_last_status();
-
-      debug_logln(DEBUG_PRINT_DEBUG, "echo_us=%lu dist_cm=%lu status=%s",
-                  (unsigned long)echo_us,
-                  (unsigned long)distance_cm,
-                  ultrasonic_status_to_string(us_status));
+      (void)ultrasonic_read_echo_us(US_ECHO_TIMEOUT_US);
     }
 
     HAL_Delay(1);
@@ -508,11 +499,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(ENCODER_CLK_EXTI1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : SW_Pin */
-  GPIO_InitStruct.Pin = SW_Pin;
+  /*Configure GPIO pin : ENCODER_PRESS_Pin */
+  GPIO_InitStruct.Pin = ENCODER_PRESS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(SW_GPIO_Port, &GPIO_InitStruct);
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(ENCODER_PRESS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : ENCODER_DT_EXTI10_Pin */
   GPIO_InitStruct.Pin = ENCODER_DT_EXTI10_Pin;
