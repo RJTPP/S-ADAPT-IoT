@@ -4,6 +4,10 @@ Source references:
 - `docs/references/Project Proposal.md`
 - `docs/references/Schematic_S-ADAPT.png`
 - Feature summary and logic notes from latest planning input.
+- Firmware module layout refactor:
+  - `S-ADAPT/Core/Inc/{app,bsp,sensors,input,support}`
+  - `S-ADAPT/Core/Src/{app,bsp,sensors,input,support}`
+  - Qualified includes from `Core/Inc` root (for example `#include "sensors/ultrasonic.h"`).
 
 ## 1. Hardware Handling Code
 
@@ -41,7 +45,7 @@ Source references:
 - [ ] Green = Manual mode
 - [ ] Red = No user / standby
 - [ ] Purple = Setup / special mode
-- [ ] Transition plan from current distance-based indication to state-based indication is defined.
+- [ ] Confirm implemented state-based RGB mapping matches behavior spec (distance-only legacy mapping removed).
 - [ ] Error blink path works on forced init failure.
 - [ ] Encoder module (`CLK/DT/SW`) inputs:
 - [ ] Pin reads/interrupts are stable and debounced as needed.
@@ -57,10 +61,13 @@ Source references:
 - [ ] Keep modules clean and single-purpose (`ultrasonic`, `display`, `status_led`, `app`).
 - [ ] Ensure ultrasonic capture handles timeout and noisy/overcapture cases.
 - [ ] Ensure OLED init and updates are stable via I2C (no blocking failure loops except fatal init).
-- [ ] Keep current distance-based RGB behavior for now until state-based RGB mapping is implemented.
+- [ ] Keep module includes namespaced by domain (`app/...`, `bsp/...`, `sensors/...`, `input/...`, `support/...`).
+- [ ] Ensure no direct includes depend on legacy flat header paths.
 
 ### Hardware-level validation
+- [ ] Run CubeIDE clean/rebuild after file moves to regenerate build metadata (`sources.mk`/`subdir.mk`).
 - [ ] Build `Debug` successfully.
+- [ ] Build `Release` successfully.
 - [ ] Verify ultrasonic distance updates on target board.
 - [ ] Verify OLED text updates on target board.
 - [ ] Verify PWM output to LED driver hardware path.
