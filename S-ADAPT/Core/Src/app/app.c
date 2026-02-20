@@ -7,6 +7,7 @@
 #include "bsp/status_led.h"
 #include "input/encoder_input.h"
 #include "input/switch_input.h"
+#include "input/input_utils.h"
 #include "sensors/ldr.h"
 #include "sensors/ultrasonic.h"
 
@@ -195,11 +196,6 @@ static int32_t clamp_offset(int32_t offset)
     return offset;
 }
 
-static inline uint8_t has_elapsed_ms(uint32_t now_ms, uint32_t last_ms, uint32_t period_ms)
-{
-    return ((uint32_t)(now_ms - last_ms) >= period_ms) ? 1U : 0U;
-}
-
 static uint8_t compute_auto_percent_from_ldr(uint16_t filtered_raw)
 {
     uint32_t scaled = ((uint32_t)filtered_raw * 100U) / 4095U;
@@ -282,7 +278,7 @@ static status_led_state_t app_evaluate_state(uint32_t now_ms)
         return STATUS_LED_STATE_FAULT_FATAL;
     }
 
-    if (has_elapsed_ms(now_ms, s_app.timing.boot_start_ms, s_policy_cfg.boot_setup_ms) == 0U) {
+    if (input_has_elapsed_ms(now_ms, s_app.timing.boot_start_ms, s_policy_cfg.boot_setup_ms) == 0U) {
         return STATUS_LED_STATE_BOOT_SETUP;
     }
 
@@ -307,7 +303,7 @@ static void app_handle_click_timeout(uint32_t now_ms)
         return;
     }
 
-    if (has_elapsed_ms(now_ms, s_app.click.deadline_ms, s_policy_cfg.double_click_ms) == 0U) {
+    if (input_has_elapsed_ms(now_ms, s_app.click.deadline_ms, s_policy_cfg.double_click_ms) == 0U) {
         return;
     }
 
@@ -468,14 +464,9 @@ uint8_t app_init(const app_hw_config_t *hw)
     return ok;
 }
 
-void app_step(void)
+static void app_process_switch_events(uint32_t now_ms)
 {
-    uint32_t now_ms = HAL_GetTick();
     switch_input_event_t switch_event;
-    encoder_event_t encoder_event;
-    int32_t target_percent_i32;
-
-    status_led_tick(now_ms);
 
     switch_input_tick(now_ms);
     while (switch_input_pop_event(&switch_event) != 0U) {
@@ -484,6 +475,11 @@ void app_step(void)
                     (switch_event.pressed != 0U) ? "pressed" : "released",
                     (unsigned int)switch_event.level);
     }
+}
+
+static void app_process_encoder_events(uint32_t now_ms)
+{
+    encoder_event_t encoder_event;
 
     encoder_input_tick(now_ms);
     while (encoder_input_pop_event(&encoder_event) != 0U) {
@@ -492,10 +488,11 @@ void app_step(void)
                     (unsigned int)encoder_event.sw_level);
         app_handle_encoder_event(&encoder_event);
     }
+}
 
-    app_handle_click_timeout(now_ms);
-
-    if (has_elapsed_ms(now_ms, s_app.timing.last_ldr_sample_ms, s_timing_cfg.ldr_sample_ms) != 0U) {
+static void app_sample_ldr_if_due(uint32_t now_ms)
+{
+    if (input_has_elapsed_ms(now_ms, s_app.timing.last_ldr_sample_ms, s_timing_cfg.ldr_sample_ms) != 0U) {
         s_app.timing.last_ldr_sample_ms += s_timing_cfg.ldr_sample_ms;
         s_app.sensors.last_ldr_status = ldr_read_raw(&s_app.sensors.last_ldr_raw);
         if (s_app.sensors.last_ldr_status == LDR_STATUS_OK) {
@@ -503,8 +500,11 @@ void app_step(void)
                 filter_moving_average_u16_push(&s_app.sensors.ldr_ma, s_app.sensors.last_ldr_raw);
         }
     }
+}
 
-    if (has_elapsed_ms(now_ms, s_app.timing.last_us_sample_ms, s_timing_cfg.us_sample_ms) != 0U) {
+static void app_sample_ultrasonic_if_due(uint32_t now_ms)
+{
+    if (input_has_elapsed_ms(now_ms, s_app.timing.last_us_sample_ms, s_timing_cfg.us_sample_ms) != 0U) {
         uint32_t distance_cm;
 
         s_app.timing.last_us_sample_ms += s_timing_cfg.us_sample_ms;
@@ -519,11 +519,21 @@ void app_step(void)
             s_app.sensors.last_valid_presence = (s_app.sensors.last_distance_filtered_cm < s_policy_cfg.presence_cm) ? 1U : 0U;
         }
     }
+}
 
-    if (has_elapsed_ms(now_ms, s_app.timing.last_control_tick_ms, s_timing_cfg.control_tick_ms) == 0U) {
-        return;
+static uint8_t app_control_tick_due(uint32_t now_ms)
+{
+    if (input_has_elapsed_ms(now_ms, s_app.timing.last_control_tick_ms, s_timing_cfg.control_tick_ms) == 0U) {
+        return 0U;
     }
+
     s_app.timing.last_control_tick_ms += s_timing_cfg.control_tick_ms;
+    return 1U;
+}
+
+static void app_update_output_control(void)
+{
+    int32_t target_percent_i32;
 
     s_app.control.auto_percent = compute_auto_percent_from_ldr(s_app.sensors.last_ldr_filtered);
 
@@ -538,18 +548,27 @@ void app_step(void)
     s_app.control.ramped_output_percent = apply_output_ramp(s_app.control.hysteresis_output_percent);
     s_app.control.output_percent = s_app.control.ramped_output_percent;
     (void)main_led_set_percent(s_app.control.output_percent);
+}
 
+static void app_update_rgb(uint32_t now_ms)
+{
     s_app.control.rgb_state = app_evaluate_state(now_ms);
     status_led_set_state(s_app.control.rgb_state);
     status_led_tick(now_ms);
+}
 
+static void app_update_oled_if_due(uint32_t now_ms)
+{
     if ((s_app.platform.display_ready != 0U) &&
-        (has_elapsed_ms(now_ms, s_app.timing.last_oled_ms, s_timing_cfg.oled_update_ms) != 0U)) {
+        (input_has_elapsed_ms(now_ms, s_app.timing.last_oled_ms, s_timing_cfg.oled_update_ms) != 0U)) {
         s_app.timing.last_oled_ms = now_ms;
         display_show_distance_cm(s_app.sensors.last_valid_distance_cm);
     }
+}
 
-    if (has_elapsed_ms(now_ms, s_app.timing.last_log_ms, s_timing_cfg.log_ms) != 0U) {
+static void app_log_summary_if_due(uint32_t now_ms)
+{
+    if (input_has_elapsed_ms(now_ms, s_app.timing.last_log_ms, s_timing_cfg.log_ms) != 0U) {
         s_app.timing.last_log_ms = now_ms;
         debug_logln(DEBUG_PRINT_INFO,
                     "dbg summary ldr_raw=%u ldr_filt=%u ldr_status=%s dist_cm_raw_last_valid=%lu dist_cm_filt=%lu us_status=%s present=%u light_on=%u offset=%ld auto=%u target_out=%u hyst_out=%u applied_out=%u rgb=%s",
@@ -568,4 +587,25 @@ void app_step(void)
                     (unsigned int)s_app.control.output_percent,
                     status_led_state_to_string(s_app.control.rgb_state));
     }
+}
+
+void app_step(void)
+{
+    uint32_t now_ms = HAL_GetTick();
+
+    status_led_tick(now_ms);
+    app_process_switch_events(now_ms);
+    app_process_encoder_events(now_ms);
+    app_handle_click_timeout(now_ms);
+    app_sample_ldr_if_due(now_ms);
+    app_sample_ultrasonic_if_due(now_ms);
+
+    if (app_control_tick_due(now_ms) == 0U) {
+        return;
+    }
+
+    app_update_output_control();
+    app_update_rgb(now_ms);
+    app_update_oled_if_due(now_ms);
+    app_log_summary_if_due(now_ms);
 }
