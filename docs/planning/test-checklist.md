@@ -43,9 +43,11 @@
 - [ ] `ldr_filt` responds smoother than `ldr_raw` under small ambient changes.
 - [ ] `dist_cm_filt` rejects one-sample ultrasonic spikes better than raw.
 - [ ] Output hysteresis deadband works:
-- [ ] target change `<3%` does not update applied PWM.
-- [ ] target change `>=3%` updates applied PWM.
-- [ ] Forced-off paths (manual OFF / no-user) still drive output immediately to `0%`.
+- [ ] target change `<5%` does not update hysteresis output.
+- [ ] target change `>=5%` updates hysteresis output.
+- [ ] Output ramp works:
+- [ ] applied output changes by at most `2%` per `50 ms` control tick.
+- [ ] Forced-off paths (manual OFF / no-user) ramp down smoothly to `0%`.
 
 ### B2. OLED behavior
 - [ ] Page button cycles pages with wraparound logic.

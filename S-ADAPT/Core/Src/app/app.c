@@ -30,6 +30,7 @@ typedef struct
     uint32_t us_timeout_us;
     uint8_t ldr_ma_window_size;
     uint8_t output_hysteresis_band_percent;
+    uint8_t output_ramp_step_percent;
 } app_policy_cfg_t;
 
 #ifndef APP_ENABLE_DISPLAY
@@ -54,6 +55,7 @@ static const app_policy_cfg_t s_policy_cfg = {
     .us_timeout_us = 30000U,
     .ldr_ma_window_size = 8U,
     .output_hysteresis_band_percent = 5U,
+    .output_ramp_step_percent = 2U,
 };
 
 typedef struct
@@ -87,9 +89,12 @@ typedef struct
     int32_t manual_offset;
     uint8_t auto_percent;
     uint8_t target_output_percent;
+    uint8_t hysteresis_output_percent;
+    uint8_t ramped_output_percent;
     uint8_t output_percent;
     uint8_t last_applied_output_percent;
     uint8_t output_hysteresis_initialized;
+    uint8_t ramp_initialized;
     status_led_state_t rgb_state;
     uint8_t fatal_fault;
 } app_control_state_t;
@@ -217,6 +222,38 @@ static uint8_t apply_output_hysteresis(uint8_t target_percent)
     return s_app.control.last_applied_output_percent;
 }
 
+static uint8_t apply_output_ramp(uint8_t desired_percent)
+{
+    uint8_t current;
+    uint8_t step = s_policy_cfg.output_ramp_step_percent;
+
+    if (s_app.control.ramp_initialized == 0U) {
+        s_app.control.ramped_output_percent = desired_percent;
+        s_app.control.ramp_initialized = 1U;
+        return desired_percent;
+    }
+
+    current = s_app.control.ramped_output_percent;
+    if (desired_percent > current) {
+        uint8_t delta = (uint8_t)(desired_percent - current);
+        if (delta > step) {
+            current = (uint8_t)(current + step);
+        } else {
+            current = desired_percent;
+        }
+    } else if (desired_percent < current) {
+        uint8_t delta = (uint8_t)(current - desired_percent);
+        if (delta > step) {
+            current = (uint8_t)(current - step);
+        } else {
+            current = desired_percent;
+        }
+    }
+
+    s_app.control.ramped_output_percent = current;
+    return current;
+}
+
 static status_led_state_t app_evaluate_state(uint32_t now_ms)
 {
     if (s_app.control.fatal_fault != 0U) {
@@ -339,9 +376,12 @@ uint8_t app_init(const app_hw_config_t *hw)
     s_app.control.manual_offset = 0;
     s_app.control.auto_percent = 0U;
     s_app.control.target_output_percent = 0U;
+    s_app.control.hysteresis_output_percent = 0U;
+    s_app.control.ramped_output_percent = 0U;
     s_app.control.output_percent = 0U;
     s_app.control.last_applied_output_percent = 0U;
     s_app.control.output_hysteresis_initialized = 0U;
+    s_app.control.ramp_initialized = 0U;
     s_app.control.fatal_fault = 0U;
     s_app.control.rgb_state = STATUS_LED_STATE_BOOT_SETUP;
 
@@ -467,7 +507,9 @@ void app_step(void)
         s_app.control.target_output_percent = 0U;
     }
 
-    s_app.control.output_percent = apply_output_hysteresis(s_app.control.target_output_percent);
+    s_app.control.hysteresis_output_percent = apply_output_hysteresis(s_app.control.target_output_percent);
+    s_app.control.ramped_output_percent = apply_output_ramp(s_app.control.hysteresis_output_percent);
+    s_app.control.output_percent = s_app.control.ramped_output_percent;
     (void)main_led_set_percent(s_app.control.output_percent);
 
     s_app.control.rgb_state = app_evaluate_state(now_ms);
@@ -483,7 +525,7 @@ void app_step(void)
     if ((uint32_t)(now_ms - s_app.timing.last_log_ms) >= s_timing_cfg.log_ms) {
         s_app.timing.last_log_ms = now_ms;
         debug_logln(DEBUG_PRINT_INFO,
-                    "dbg summary ldr_raw=%u ldr_filt=%u ldr_status=%s dist_cm_raw_last_valid=%lu dist_cm_filt=%lu us_status=%s present=%u light_on=%u offset=%ld auto=%u target_out=%u applied_out=%u rgb=%s",
+                    "dbg summary ldr_raw=%u ldr_filt=%u ldr_status=%s dist_cm_raw_last_valid=%lu dist_cm_filt=%lu us_status=%s present=%u light_on=%u offset=%ld auto=%u target_out=%u hyst_out=%u applied_out=%u rgb=%s",
                     (unsigned int)s_app.sensors.last_ldr_raw,
                     (unsigned int)s_app.sensors.last_ldr_filtered,
                     ldr_status_to_string(s_app.sensors.last_ldr_status),
@@ -495,6 +537,7 @@ void app_step(void)
                     (long)s_app.control.manual_offset,
                     (unsigned int)s_app.control.auto_percent,
                     (unsigned int)s_app.control.target_output_percent,
+                    (unsigned int)s_app.control.hysteresis_output_percent,
                     (unsigned int)s_app.control.output_percent,
                     status_led_state_to_string(s_app.control.rgb_state));
     }

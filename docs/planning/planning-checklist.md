@@ -124,8 +124,9 @@ Source references:
 
 ### Output update logic
 - [x] Apply PWM output every control tick.
-- [x] If light state is OFF, force output to 0 regardless of auto/offset calculation.
+- [x] If light state is OFF, output ramps down to 0 with configured slew limit.
 - [x] Apply smoothing/hysteresis/ramp to avoid flicker and abrupt jumps.
+- [x] Output ramp limiter implemented (2% per 50 ms tick).
 - [x] Update RGB LED according to system state.
 
 ### Output behavior
