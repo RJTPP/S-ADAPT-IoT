@@ -7,7 +7,8 @@
 /* USER CODE BEGIN Includes */
 #include "debug_print.h"
 #include "encoder_input.h"
-#include "status_led.h"
+#include "ldr.h"
+#include "switch_input.h"
 #include "ultrasonic.h"
 /* USER CODE END Includes */
 
@@ -17,6 +18,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define LDR_SAMPLE_PERIOD_MS     50U
 #define US_SAMPLE_PERIOD_MS      100U
 #define US_ECHO_TIMEOUT_US       30000U
 #define US_DISTANCE_ERROR_CM     999U
@@ -37,7 +39,10 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+static uint32_t s_last_ldr_sample_ms = 0U;
 static uint32_t s_last_us_sample_ms = 0U;
+static uint16_t s_last_ldr_raw = 0U;
+static ldr_status_t s_last_ldr_status = LDR_STATUS_NOT_INIT;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -53,6 +58,27 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static const char *switch_name(switch_input_id_t input)
+{
+  return (input == SWITCH_INPUT_BUTTON) ? "BUTTON" : "SW2";
+}
+
+static const char *encoder_event_name(encoder_event_type_t type)
+{
+  switch (type)
+  {
+    case ENCODER_EVENT_CW:
+      return "cw";
+    case ENCODER_EVENT_CCW:
+      return "ccw";
+    case ENCODER_EVENT_SW_PRESSED:
+      return "sw_pressed";
+    case ENCODER_EVENT_SW_RELEASED:
+      return "sw_released";
+    default:
+      return "unknown";
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -92,9 +118,14 @@ int main(void)
   debug_print_init(&huart2);
   debug_print_set_level(DEBUG_PRINT_DEBUG);
   debug_println("Boot start");
-  debug_println("US + encoder mode");
+  debug_println("Hardware debug mode");
+  ldr_init(&hadc1);
   ultrasonic_init(&htim2, TIM_CHANNEL_2);
+  switch_input_init();
   encoder_input_init();
+  s_last_ldr_status = LDR_STATUS_NOT_INIT;
+  s_last_ldr_raw = 0U;
+  s_last_ldr_sample_ms = HAL_GetTick();
   s_last_us_sample_ms = HAL_GetTick();
   /* USER CODE END 2 */
 
@@ -103,42 +134,45 @@ int main(void)
   while (1)
   {
     uint32_t now_ms = HAL_GetTick();
+    switch_input_event_t switch_event;
     encoder_event_t encoder_event;
+    ultrasonic_status_t us_status;
+    uint32_t echo_us = 0U;
+    uint32_t distance_cm = US_DISTANCE_ERROR_CM;
+
+    switch_input_tick(now_ms);
+    while (switch_input_pop_event(&switch_event) != 0U)
+    {
+      debug_logln(DEBUG_PRINT_DEBUG, "dbg event=switch id=%s state=%s level=%u",
+                  switch_name(switch_event.input),
+                  (switch_event.pressed != 0U) ? "pressed" : "released",
+                  (unsigned int)switch_event.level);
+    }
 
     encoder_input_tick(now_ms);
     while (encoder_input_pop_event(&encoder_event) != 0U)
     {
-      switch (encoder_event.type)
-      {
-        case ENCODER_EVENT_CW:
-          debug_logln(DEBUG_PRINT_DEBUG, "encoder event=cw");
-          break;
-        case ENCODER_EVENT_CCW:
-          debug_logln(DEBUG_PRINT_DEBUG, "encoder event=ccw");
-          break;
-        case ENCODER_EVENT_SW_PRESSED:
-          debug_logln(DEBUG_PRINT_DEBUG, "encoder event=sw_pressed level=%u",
-                      (unsigned int)encoder_event.sw_level);
-          break;
-        case ENCODER_EVENT_SW_RELEASED:
-          debug_logln(DEBUG_PRINT_DEBUG, "encoder event=sw_released level=%u",
-                      (unsigned int)encoder_event.sw_level);
-          break;
-        default:
-          break;
-      }
+      debug_logln(DEBUG_PRINT_DEBUG, "dbg event=encoder type=%s sw_level=%u",
+                  encoder_event_name(encoder_event.type),
+                  (unsigned int)encoder_event.sw_level);
+    }
+
+    if ((uint32_t)(now_ms - s_last_ldr_sample_ms) >= LDR_SAMPLE_PERIOD_MS)
+    {
+      s_last_ldr_sample_ms = now_ms;
+      s_last_ldr_status = ldr_read_raw(&s_last_ldr_raw);
     }
 
     if ((uint32_t)(now_ms - s_last_us_sample_ms) >= US_SAMPLE_PERIOD_MS)
     {
-      ultrasonic_status_t us_status;
-      uint32_t echo_us = ultrasonic_read_echo_us(US_ECHO_TIMEOUT_US);
-      uint32_t distance_cm = (echo_us == 0U) ? US_DISTANCE_ERROR_CM : (echo_us / 58U);
-
       s_last_us_sample_ms = now_ms;
+      echo_us = ultrasonic_read_echo_us(US_ECHO_TIMEOUT_US);
+      distance_cm = (echo_us == 0U) ? US_DISTANCE_ERROR_CM : (echo_us / 58U);
       us_status = ultrasonic_get_last_status();
 
-      debug_logln(DEBUG_PRINT_DEBUG, "echo_us=%lu dist_cm=%lu status=%s",
+      debug_logln(DEBUG_PRINT_DEBUG, "dbg sample ldr_raw=%u ldr_status=%s echo_us=%lu dist_cm=%lu us_status=%s",
+                  (unsigned int)s_last_ldr_raw,
+                  ldr_status_to_string(s_last_ldr_status),
                   (unsigned long)echo_us,
                   (unsigned long)distance_cm,
                   ultrasonic_status_to_string(us_status));
