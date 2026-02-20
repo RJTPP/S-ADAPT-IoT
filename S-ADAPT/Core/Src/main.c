@@ -91,6 +91,8 @@ int main(void)
   if (app_init(&hadc1, &htim2, TIM_CHANNEL_2, &htim1, TIM_CHANNEL_1) == 0U)
   {
     debug_logln(DEBUG_PRINT_ERROR, "app init degraded mode");
+    app_set_fatal_fault(1U);
+    debug_logln(DEBUG_PRINT_ERROR, "safe mode: fatal fault indication active");
   }
   /* USER CODE END 2 */
 

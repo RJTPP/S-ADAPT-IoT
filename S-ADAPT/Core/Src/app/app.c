@@ -161,7 +161,11 @@ static status_led_state_t app_evaluate_state(uint32_t now_ms)
 
 static void app_handle_click_timeout(uint32_t now_ms)
 {
-    if ((s_app.click_pending == 0U) || ((int32_t)(now_ms - s_app.click_deadline_ms) < 0)) {
+    if (s_app.click_pending == 0U) {
+        return;
+    }
+
+    if ((uint32_t)(now_ms - s_app.click_deadline_ms) < APP_DOUBLE_CLICK_MS) {
         return;
     }
 
@@ -196,13 +200,13 @@ static void app_handle_encoder_event(const encoder_event_t *event)
         case ENCODER_EVENT_SW_RELEASED:
             s_app.last_release_ms = event->timestamp_ms;
             if ((s_app.click_pending != 0U) &&
-                ((int32_t)(event->timestamp_ms - s_app.click_deadline_ms) <= 0)) {
+                ((uint32_t)(event->timestamp_ms - s_app.click_deadline_ms) < APP_DOUBLE_CLICK_MS)) {
                 s_app.manual_offset = 0;
                 s_app.click_pending = 0U;
                 debug_logln(DEBUG_PRINT_INFO, "dbg click=double offset=%ld", (long)s_app.manual_offset);
             } else {
                 s_app.click_pending = 1U;
-                s_app.click_deadline_ms = event->timestamp_ms + APP_DOUBLE_CLICK_MS;
+                s_app.click_deadline_ms = event->timestamp_ms;
             }
             break;
 
@@ -278,6 +282,11 @@ uint8_t app_init(ADC_HandleTypeDef *ldr_adc,
                 main_led_status_to_string(main_led_status));
     if (main_led_status != MAIN_LED_STATUS_OK) {
         ok = 0U;
+    }
+
+    if (ok == 0U) {
+        app_set_fatal_fault(1U);
+        debug_logln(DEBUG_PRINT_ERROR, "app init fault -> fatal fault enabled");
     }
 
 #if APP_ENABLE_DISPLAY
