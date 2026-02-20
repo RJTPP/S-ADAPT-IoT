@@ -30,11 +30,11 @@
 ### B1. Presence and mode behavior
 - [ ] OFF->ON captures fallback reference then first valid filtered distance.
 - [ ] Away rule: `distance > ref + 20` for ~30s triggers pre-off dim.
-- [ ] Flat rule: near-reference stable distance for ~120s triggers pre-off dim.
-- [ ] Pre-off dim behavior: output becomes `min(current,15%)` and stays for ~10s.
+- [ ] Flat rule: low step-to-step movement (`abs(step)<=1`) for ~120s triggers pre-off dim.
+- [ ] Pre-off dim behavior: output becomes `min(current,15%)` and stays for configured duration.
 - [ ] Recovery during pre-off cancels no-user transition.
-- [ ] Away recovery: return near reference resumes present.
-- [ ] Flat recovery: sustained motion (~5s) resumes present.
+- [ ] Away recovery: return near reference (`ref+10` band) and hold for ~1.5s resumes present.
+- [ ] Flat recovery: single movement spike (`abs(step)>=1`) resumes present.
 - [ ] Auto mode computes brightness from LDR.
 - [ ] Boot state keeps main light OFF until user single-click.
 - [ ] Encoder single click toggles main light ON/OFF.

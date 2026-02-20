@@ -107,10 +107,10 @@ Source references:
 ### Presence and safety logic
 - [x] Capture reference distance on each OFF->ON click.
 - [x] Away detection: `distance > ref + 20 cm` for 30s -> no-user candidate.
-- [x] Stale/flat detection near reference for 120s -> no-user candidate.
+- [x] Stale/flat detection from low step-to-step movement (`abs(step) <= 1 cm`) for 120s -> no-user candidate.
 - [x] Pre-off dim phase: `min(current,15%)` for 10s before no-user commit.
-- [x] Recovery from away/no-user near reference.
-- [x] Recovery from flat/no-user via sustained motion window.
+- [x] Recovery from away/no-user near reference (`ref + 10 cm`) with short confirm delay.
+- [x] Recovery from flat/no-user on movement spike (`abs(step) >= 1 cm`).
 - [x] If `user_present = FALSE`, force `brightness = 0`.
 
 ### AUTO + offset logic
