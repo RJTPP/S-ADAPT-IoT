@@ -8,6 +8,7 @@
 #include "support/debug_print.h"
 #include "input/encoder_input.h"
 #include "sensors/ldr.h"
+#include "bsp/main_led.h"
 #include "bsp/status_led.h"
 #include "bsp/display.h"
 #include "input/switch_input.h"
@@ -27,6 +28,7 @@
 #define RGB_DEBUG_PERIOD_MS      1000U
 #define OLED_DEBUG_PERIOD_MS     1000U
 #define OLED_DEBUG_ENABLE        1U
+#define MAIN_LED_DEBUG_PERIOD_MS 1000U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -47,9 +49,11 @@ UART_HandleTypeDef huart2;
 static uint32_t s_last_ldr_sample_ms = 0U;
 static uint32_t s_last_us_sample_ms = 0U;
 static uint32_t s_last_rgb_ms = 0U;
+static uint32_t s_last_main_led_ms = 0U;
 static uint16_t s_last_ldr_raw = 0U;
 static ldr_status_t s_last_ldr_status = LDR_STATUS_NOT_INIT;
 static status_led_state_t s_rgb_state = STATUS_LED_STATE_BOOT_SETUP;
+static uint8_t s_main_led_sweep_index = 0U;
 static uint32_t s_last_distance_cm = US_DISTANCE_ERROR_CM;
 static uint32_t s_last_oled_ms = 0U;
 static uint8_t s_display_ready = 0U;
@@ -124,6 +128,16 @@ static status_led_state_t next_rgb_debug_state(status_led_state_t current_state)
       return STATUS_LED_STATE_AUTO;
   }
 }
+
+static uint8_t next_main_led_sweep_percent(void)
+{
+  static const uint8_t sweep_table[] = {0U, 25U, 50U, 75U, 100U};
+  uint8_t percent;
+
+  percent = sweep_table[s_main_led_sweep_index];
+  s_main_led_sweep_index = (uint8_t)((s_main_led_sweep_index + 1U) % (sizeof(sweep_table) / sizeof(sweep_table[0])));
+  return percent;
+}
 /* USER CODE END 0 */
 
 /**
@@ -169,13 +183,28 @@ int main(void)
   switch_input_init();
   encoder_input_init();
   status_led_init();
+  main_led_init(&htim1, TIM_CHANNEL_1);
+  {
+    main_led_status_t main_led_status = main_led_start();
+    debug_logln(DEBUG_PRINT_INFO, "dbg main_led start=%s", main_led_status_to_string(main_led_status));
+    if (main_led_status == MAIN_LED_STATUS_OK) {
+      main_led_status = main_led_set_enabled(1U);
+      debug_logln(DEBUG_PRINT_INFO, "dbg main_led enable=%s", main_led_status_to_string(main_led_status));
+    }
+    main_led_status = main_led_set_percent(0U);
+    debug_logln(DEBUG_PRINT_INFO, "dbg main_led duty=%u status=%s",
+                (unsigned int)main_led_get_percent(),
+                main_led_status_to_string(main_led_status));
+  }
   s_last_ldr_status = LDR_STATUS_NOT_INIT;
   s_last_ldr_raw = 0U;
   s_rgb_state = STATUS_LED_STATE_BOOT_SETUP;
+  s_main_led_sweep_index = 0U;
   s_last_distance_cm = US_DISTANCE_ERROR_CM;
   s_last_ldr_sample_ms = HAL_GetTick();
   s_last_us_sample_ms = HAL_GetTick();
   s_last_rgb_ms = HAL_GetTick();
+  s_last_main_led_ms = HAL_GetTick();
   s_last_oled_ms = HAL_GetTick();
 #if OLED_DEBUG_ENABLE
   if (display_init() != 0U)
@@ -253,6 +282,19 @@ int main(void)
       s_rgb_state = next_rgb_debug_state(s_rgb_state);
       status_led_set_state(s_rgb_state);
       debug_logln(DEBUG_PRINT_INFO, "dbg led_state=%s", rgb_state_name(s_rgb_state));
+    }
+
+    if ((uint32_t)(now_ms - s_last_main_led_ms) >= MAIN_LED_DEBUG_PERIOD_MS)
+    {
+      uint8_t sweep_percent;
+      main_led_status_t main_led_status;
+
+      s_last_main_led_ms = now_ms;
+      sweep_percent = next_main_led_sweep_percent();
+      main_led_status = main_led_set_percent(sweep_percent);
+      debug_logln(DEBUG_PRINT_INFO, "dbg main_led duty=%u status=%s",
+                  (unsigned int)main_led_get_percent(),
+                  main_led_status_to_string(main_led_status));
     }
 
     if ((s_display_ready != 0U) && ((uint32_t)(now_ms - s_last_oled_ms) >= OLED_DEBUG_PERIOD_MS))
