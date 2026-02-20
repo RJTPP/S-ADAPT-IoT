@@ -8,6 +8,7 @@
 #include "app.h"
 #include "debug_print.h"
 #include "status_led.h"
+#include "switch_input.h"
 #include "ultrasonic.h"
 /* USER CODE END Includes */
 
@@ -17,6 +18,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define US_SAMPLE_PERIOD_MS      100U
+#define US_ECHO_TIMEOUT_US       30000U
+#define US_DISTANCE_ERROR_CM     999U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -34,6 +38,7 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+static uint32_t s_last_us_sample_ms = 0U;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -111,24 +116,46 @@ int main(void)
   debug_print_init(&huart2);
   debug_print_set_level(DEBUG_PRINT_DEBUG);
   debug_println("Boot start");
-  debug_println("US only mode");
+  debug_println("US + switch mode");
   ultrasonic_init(&htim2, TIM_CHANNEL_2);
+  switch_input_init();
+  s_last_us_sample_ms = HAL_GetTick();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    ultrasonic_status_t us_status;
-    uint32_t echo_us = ultrasonic_read_echo_us(30000U);
-    uint32_t distance_cm = (echo_us == 0U) ? 999U : (echo_us / 58U);
-    us_status = ultrasonic_get_last_status();
+    uint32_t now_ms = HAL_GetTick();
+    switch_input_event_t switch_event;
 
-    debug_logln(DEBUG_PRINT_DEBUG, "echo_us=%lu dist_cm=%lu status=%s",
-                (unsigned long)echo_us,
-                (unsigned long)distance_cm,
-                ultrasonic_status_to_string(us_status));
-    HAL_Delay(200);
+    switch_input_tick(now_ms);
+    while (switch_input_pop_event(&switch_event) != 0U)
+    {
+      const char *name = (switch_event.input == SWITCH_INPUT_BUTTON) ? "BUTTON" : "SW2";
+      const char *event_name = (switch_event.pressed != 0U) ? "pressed" : "released";
+      debug_logln(DEBUG_PRINT_DEBUG, "switch=%s event=%s level=%u",
+                  name,
+                  event_name,
+                  (unsigned int)switch_event.level);
+    }
+
+    if ((uint32_t)(now_ms - s_last_us_sample_ms) >= US_SAMPLE_PERIOD_MS)
+    {
+      ultrasonic_status_t us_status;
+      uint32_t echo_us = ultrasonic_read_echo_us(US_ECHO_TIMEOUT_US);
+      uint32_t distance_cm = (echo_us == 0U) ? US_DISTANCE_ERROR_CM : (echo_us / 58U);
+
+      s_last_us_sample_ms = now_ms;
+      us_status = ultrasonic_get_last_status();
+
+      debug_logln(DEBUG_PRINT_DEBUG, "echo_us=%lu dist_cm=%lu status=%s",
+                  (unsigned long)echo_us,
+                  (unsigned long)distance_cm,
+                  ultrasonic_status_to_string(us_status));
+    }
+
+    HAL_Delay(1);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
