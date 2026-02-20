@@ -35,6 +35,20 @@ static uint8_t s_queue_head = 0U;
 static uint8_t s_queue_tail = 0U;
 static uint8_t s_queue_count = 0U;
 
+static uint32_t irq_lock(void)
+{
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    return primask;
+}
+
+static void irq_unlock(uint32_t primask)
+{
+    if (primask == 0U) {
+        __enable_irq();
+    }
+}
+
 static uint8_t gpio_level(GPIO_TypeDef *port, uint16_t pin)
 {
     GPIO_PinState state = HAL_GPIO_ReadPin(port, pin);
@@ -52,18 +66,19 @@ static void init_switch_state(switch_state_t *state, const switch_config_t *conf
 static void queue_push(switch_input_id_t input, uint8_t level)
 {
     switch_input_event_t event;
+    uint32_t primask;
 
-    if (s_queue_count >= SWITCH_EVENT_QUEUE_SIZE) {
-        return;
+    primask = irq_lock();
+    if (s_queue_count < SWITCH_EVENT_QUEUE_SIZE) {
+        event.input = input;
+        event.level = level;
+        event.pressed = (level == 0U) ? 1U : 0U;
+
+        s_event_queue[s_queue_tail] = event;
+        s_queue_tail = (uint8_t)((s_queue_tail + 1U) % SWITCH_EVENT_QUEUE_SIZE);
+        s_queue_count++;
     }
-
-    event.input = input;
-    event.level = level;
-    event.pressed = (level == 0U) ? 1U : 0U;
-
-    s_event_queue[s_queue_tail] = event;
-    s_queue_tail = (uint8_t)((s_queue_tail + 1U) % SWITCH_EVENT_QUEUE_SIZE);
-    s_queue_count++;
+    irq_unlock(primask);
 }
 
 static void process_switch(switch_state_t *state, const switch_config_t *config)
@@ -119,12 +134,21 @@ void switch_input_tick(uint32_t now_ms)
 
 uint8_t switch_input_pop_event(switch_input_event_t *out_event)
 {
-    if ((out_event == NULL) || (s_queue_count == 0U)) {
+    uint32_t primask;
+
+    if (out_event == NULL) {
+        return 0U;
+    }
+
+    primask = irq_lock();
+    if (s_queue_count == 0U) {
+        irq_unlock(primask);
         return 0U;
     }
 
     *out_event = s_event_queue[s_queue_head];
     s_queue_head = (uint8_t)((s_queue_head + 1U) % SWITCH_EVENT_QUEUE_SIZE);
     s_queue_count--;
+    irq_unlock(primask);
     return 1U;
 }
