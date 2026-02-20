@@ -6,88 +6,84 @@
 - OLED multi-page status display.
 - RGB LED indicates system state.
 
-## Power-On Defaults
+## Current Implementation Snapshot (RGB-First Phase)
+- RGB state machine is implemented and active.
+- App loop uses a 100 ms software tick (`APP_LOOP_TICK_MS`).
+- Presence cache uses ultrasonic validity checks and only updates on valid reads.
+- OLED displays distance when display init succeeds.
+- Fatal init path enables non-blocking red blink via status LED module.
+- Temporary RGB validation mode is enabled by default (`APP_RGB_TEST_MODE = 1`).
+
+## Power-On Defaults (Current)
 - `Mode = AUTO`
 - `manual_offset = 0`
-- `Light = OFF` (PWM forced to 0 until user toggles ON)
-- `OLED Page = 0`
+- `Light = OFF` (represented by `light_enabled = 0`)
+- `distance_cm` initialized to error value (`999`)
 
-## Core State Variables
+## Core State Variables (Current Subset)
 - `mode`: `AUTO`
 - `light_enabled`: boolean ON/OFF
 - `manual_offset`: signed brightness offset (e.g. `-30..+30`)
-- `user_present`: boolean from distance threshold
-- `distance_cm`: filtered ultrasonic distance
-- `ldr_raw` / `ldr_filtered`
-- `auto_brightness_percent`: `0..100`
-- `final_brightness_percent`: `0..100`
-- `oled_page`: `0..N-1`
-- `last_presence_ms`: timestamp for optional delayed standby
+- `last_valid_presence`: boolean from distance threshold (`80 cm`)
+- `last_valid_distance_cm`: last valid ultrasonic value
+- `fatal_fault`: fatal status flag for RGB blink override
 
-## Main Control Flow
+## Main Control Flow (Current)
 ```mermaid
 flowchart TD
-    A["Read sensors"] --> B{"distance < threshold?"}
-    B -- "No" --> C["user_present = false"]
-    C --> D["final_brightness = 0 (or standby timeout logic)"]
-    B -- "Yes" --> E["user_present = true"]
-    E --> F["Compute AUTO brightness from filtered LDR"]
-    F --> G["Apply manual_offset (clamp to valid range)"]
-    G --> H{"light_enabled?"}
-    H -- "No" --> I["final_brightness = 0"]
-    H -- "Yes" --> J["final_brightness = clamped(auto + offset)"]
-    I --> K["Apply smoothing/hysteresis"]
-    J --> K
-    K --> L["Set PWM duty"]
-    L --> M["Update OLED page"]
-    M --> N["Update RGB status LED"]
+    A["app_step()"] --> B["status_led_tick(now_ms)"]
+    B --> C{"100 ms elapsed?"}
+    C -- "No" --> D["Return"]
+    C -- "Yes" --> E["Read ultrasonic + status"]
+    E --> F{"Valid read?"}
+    F -- "Yes" --> G["Update last_valid_distance and last_valid_presence"]
+    F -- "No" --> H["Keep previous cached presence/distance"]
+    G --> I["Optional OLED distance update"]
+    H --> I
+    I --> J["Evaluate runtime RGB state priority"]
+    J --> K["Optional test override cycle"]
+    K --> L["status_led_set_state()"]
+    L --> M["status_led_tick(now_ms)"]
 ```
 
-## AUTO Brightness Logic
-- Input: filtered LDR.
-- Rule: darker room -> higher brightness, brighter room -> lower brightness.
-- Recommended map: `auto_brightness = map(ldr_filtered, dark->100, bright->20)`.
-- Clamp output to configured min/max.
-
-## Encoder Logic
-- Encoder CW: increment `manual_offset`.
-- Encoder CCW: decrement `manual_offset`.
-- Offset is applied on top of AUTO brightness and clamped.
-- Single click: toggle light ON/OFF.
-- Double click: reset `manual_offset = 0`.
-
-## Presence Logic
+## Presence Logic (Current)
 - Threshold example: `80 cm` (calibrate on real hardware).
-- If not present:
-- immediate off: `final_brightness = 0`
-- or delayed off: apply timeout window (e.g., 30 s)
+- Presence cache only changes when ultrasonic returns `ULTRASONIC_STATUS_OK`.
+- On transient ultrasonic failure, cached presence is held (no RGB flicker from invalid samples).
 
-## OLED Page Logic
-- Extra button increments page index.
-- Formula: `page = (page + 1) % TOTAL_PAGES`.
-- Suggested pages:
-- Page 0: AUTO + offset + final brightness
-- Page 1: LDR raw/filtered
-- Page 2: distance + presence
-- Page 3: debug/system info
+## RGB Mapping (Current)
+- `BOOT_SETUP` -> Purple
+- `AUTO` -> Blue
+- `OFFSET_POSITIVE` -> Green
+- `NO_USER` -> Red
+- `FAULT_FATAL` -> blinking Red
 
-## Temporary Offset Overlay (UX)
-- On encoder rotation, OLED should temporarily override current page with an offset UI.
-- Overlay content example: `Offset: +12%` and resulting brightness.
-- Overlay timeout example: `~1200 ms` after the last encoder step.
-- If encoder rotates again before timeout, extend/restart overlay timeout.
-- After timeout, return to the previously active OLED page.
+## RGB Priority (Current)
+1. `FAULT_FATAL`
+2. `BOOT_SETUP` for first `1000 ms` after init
+3. `NO_USER` when `light_enabled == 1` and `last_valid_presence == 0`
+4. `OFFSET_POSITIVE` when `light_enabled == 1` and `manual_offset > 0`
+5. `AUTO`
 
-## RGB Status Mapping (Target)
-- Blue: AUTO running
-- Green: light enabled with positive offset
-- Red: `No user / standby`
-- Purple: setup/special/debug mode
+## Temporary RGB Validation Mode
+- Compile-time flag: `APP_RGB_TEST_MODE`.
+- Current setting: enabled for board validation.
+- Behavior when enabled:
+- every `1000 ms`, override runtime color with cycle:
+- `AUTO -> OFFSET_POSITIVE -> NO_USER -> BOOT_SETUP -> repeat`
+- `FAULT_FATAL` still has highest priority and is not overridden.
 
-Current code note:
-- Distance-based RGB thresholds are still active and should be migrated to state-based mapping in a dedicated task.
+## Legacy Compatibility Status
+- `status_led_set_for_distance()` remains as a deprecated wrapper for legacy callers.
+- `status_led_blink_error()` remains as a shim and routes into non-blocking fatal blink handling.
 
-## State Diagram
+## Remaining Work To Reach Full Target Logic
+- Add LDR sampling and filtered AUTO brightness computation.
+- Apply PWM output control path with clamp/smoothing.
+- Implement encoder/button input logic (single click, double click, offset steps).
+- Implement OLED multi-page and temporary offset overlay behavior.
+
+## Target State Diagram (Planned)
 ```mermaid
 stateDiagram-v2
     [*] --> AUTO_OFF
