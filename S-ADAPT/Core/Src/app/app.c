@@ -31,6 +31,8 @@ typedef struct
     uint8_t ldr_ma_window_size;
     uint8_t output_hysteresis_band_percent;
     uint8_t output_ramp_step_percent;
+    uint8_t output_ramp_step_on_percent;
+    uint8_t output_ramp_step_off_percent;
 } app_policy_cfg_t;
 
 #ifndef APP_ENABLE_DISPLAY
@@ -56,6 +58,8 @@ static const app_policy_cfg_t s_policy_cfg = {
     .ldr_ma_window_size = 8U,
     .output_hysteresis_band_percent = 5U,
     .output_ramp_step_percent = 2U,
+    .output_ramp_step_on_percent = 5U,
+    .output_ramp_step_off_percent = 8U,
 };
 
 typedef struct
@@ -225,7 +229,7 @@ static uint8_t apply_output_hysteresis(uint8_t target_percent)
 static uint8_t apply_output_ramp(uint8_t desired_percent)
 {
     uint8_t current;
-    uint8_t step = s_policy_cfg.output_ramp_step_percent;
+    uint8_t step;
 
     if (s_app.control.ramp_initialized == 0U) {
         s_app.control.ramped_output_percent = desired_percent;
@@ -234,6 +238,16 @@ static uint8_t apply_output_ramp(uint8_t desired_percent)
     }
 
     current = s_app.control.ramped_output_percent;
+    step = s_policy_cfg.output_ramp_step_percent;
+    if ((current == 0U) && (desired_percent > 0U)) {
+        step = s_policy_cfg.output_ramp_step_on_percent;
+    } else if ((desired_percent == 0U) && (current > 0U)) {
+        step = s_policy_cfg.output_ramp_step_off_percent;
+    }
+    if (step == 0U) {
+        step = 1U;
+    }
+
     if (desired_percent > current) {
         uint8_t delta = (uint8_t)(desired_percent - current);
         if (delta > step) {
