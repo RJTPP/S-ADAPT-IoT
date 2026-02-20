@@ -42,11 +42,14 @@
 ### B1.1 Stability filter behavior
 - [ ] `ldr_filt` responds smoother than `ldr_raw` under small ambient changes.
 - [ ] `dist_cm_filt` rejects one-sample ultrasonic spikes better than raw.
+- [ ] Control loop runs at ~33 ms while LDR remains decoupled at ~50 ms and ultrasonic at ~100 ms.
 - [ ] Output hysteresis deadband works:
 - [ ] target change `<5%` does not update hysteresis output.
 - [ ] target change `>=5%` updates hysteresis output.
 - [ ] Output ramp works:
-- [ ] applied output changes by at most `2%` per `50 ms` control tick.
+- [ ] normal tracking changes by at most `1%` per `33 ms` tick.
+- [ ] turn-on transitions use up to `3%` per `33 ms` tick.
+- [ ] turn-off transitions use up to `5%` per `33 ms` tick.
 - [ ] Forced-off paths (manual OFF / no-user) ramp down smoothly to `0%`.
 
 ### B2. OLED behavior
