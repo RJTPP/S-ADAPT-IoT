@@ -4,6 +4,8 @@
 #define APP_ENABLE_DISPLAY 1U
 #endif
 
+/* Bring-up aid: when enabled, shorten presence/pre-off timers for faster hardware testing. */
+/* Set to 0U for production timing behavior. */
 #ifndef APP_PRESENCE_DEBUG_TIMERS
 #define APP_PRESENCE_DEBUG_TIMERS 1U
 #endif
