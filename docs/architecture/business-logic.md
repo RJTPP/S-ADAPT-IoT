@@ -6,13 +6,12 @@
 - OLED multi-page status display.
 - RGB LED indicates system state.
 
-## Current Implementation Snapshot (RGB-First Phase)
-- RGB state machine is implemented and active.
-- App loop uses a 100 ms software tick (`APP_LOOP_TICK_MS`).
-- Presence cache uses ultrasonic validity checks and only updates on valid reads.
-- OLED displays distance when display init succeeds.
-- Fatal init path enables non-blocking red blink via status LED module.
-- Temporary RGB validation mode is enabled by default (`APP_RGB_TEST_MODE = 1`).
+## Current Implementation Snapshot (Driver-First Phase)
+- Runtime owner is currently `main.c` (hardware bring-up mode), not `app.c`.
+- Hardware drivers are integrated: LDR, ultrasonic, switch, encoder, RGB status LED, OLED facade, main LED PWM.
+- Main LED is currently validated via deterministic debug duty sweep (`0/25/50/75/100%` every 1 s).
+- OLED debug heartbeat/update path is active when display init succeeds.
+- RGB debug state cycle is active at 1 s cadence for hardware verification.
 
 ## Power-On Defaults (Current)
 - `Mode = AUTO`
@@ -78,10 +77,20 @@ flowchart TD
 - `status_led_blink_error()` remains as a shim and routes into non-blocking fatal blink handling.
 
 ## Remaining Work To Reach Full Target Logic
-- Add LDR sampling and filtered AUTO brightness computation.
-- Apply PWM output control path with clamp/smoothing.
-- Implement encoder/button input logic (single click, double click, offset steps).
-- Implement OLED multi-page and temporary offset overlay behavior.
+- Baseline business logic first:
+- integrate `light_enabled`, presence gate, `AUTO + manual_offset`, and PWM output from control decision.
+- keep deterministic, easy-to-debug tick schedule while integrating.
+- Then add stabilization utils:
+- moving average for LDR.
+- median/outlier handling for ultrasonic.
+- hysteresis (Schmitt-trigger style thresholds) for state transitions and no-user flicker control.
+- Then implement UX behaviors:
+- encoder single click/double click policy, rotation offset behavior, OLED page/overlay behavior.
+
+## Implementation Order (Locked for Next Phase)
+1. Baseline control loop (no advanced filtering): correct behavior first.
+2. Filtering/hysteresis utilities: improve stability without changing intent.
+3. UI polish and tuning: OLED page model, debug reduction, threshold tuning on board.
 
 ## Target State Diagram (Planned)
 ```mermaid

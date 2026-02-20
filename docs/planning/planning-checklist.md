@@ -11,6 +11,14 @@ Source references:
 
 ## 1. Hardware Handling Code
 
+### Current bring-up snapshot (driver-first)
+- [x] RGB status LED state mapping is implemented and board-verified.
+- [x] LDR raw ADC driver is integrated and sampled in runtime loop.
+- [x] Switch input module is integrated with software debounce.
+- [x] Encoder input module is integrated (EXTI-based CLK path).
+- [x] Main LED PWM driver module is integrated (`TIM1_CH1`) with 1 s duty sweep debug.
+- [x] OLED init/debug path is available and can run in OLED-only debug mode.
+
 ### Pin and peripheral setup
 - [ ] Verify mapping in code matches schematic:
 - [ ] `PA0` = HC-SR04 `TRIG` (GPIO output)
@@ -41,7 +49,7 @@ Source references:
 - [ ] ADC raw values move correctly with light changes.
 - [ ] Scaled light percentage range is reasonable and monotonic.
 - [ ] Main LED module + MOSFET driver:
-- [ ] PWM duty changes match commanded brightness.
+- [x] PWM duty changes match commanded brightness.
 - [ ] LED fully turns off at 0% and reaches expected max brightness.
 - [ ] No visible flicker at normal operating brightness.
 - [ ] MOSFET gate resistor and pull-down behavior validated (clean switching).
@@ -77,7 +85,7 @@ Source references:
 - [ ] Build `Release` successfully.
 - [ ] Verify ultrasonic distance updates on target board.
 - [ ] Verify OLED text updates on target board.
-- [ ] Verify PWM output to LED driver hardware path.
+- [x] Verify PWM output to LED driver hardware path.
 
 ## 2. Business Logic
 
@@ -87,10 +95,12 @@ Source references:
 - [ ] `OLED Page = 0`
 
 ### Sampling and filtering
-- [ ] LDR sampling loop at 50 ms (+/- 10%).
+- [x] LDR sampling loop at 50 ms (+/- 10%).
 - [ ] Ultrasonic sampling loop at 100 ms (+/- 10%).
+- [ ] Temporary debug cadence note: ultrasonic is currently set to 1000 ms in `main.c` bring-up mode.
 - [ ] Moving average filter for LDR.
 - [ ] Median/outlier filtering for ultrasonic.
+- [ ] Hysteresis (Schmitt-trigger style thresholds) for stable state transitions.
 
 ### Presence and safety logic
 - [ ] Define and document presence threshold (target: ~80 cm, tune on board).

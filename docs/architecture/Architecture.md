@@ -23,10 +23,11 @@ This document defines the current firmware architecture and hardware-to-code map
 | Module | Main Files | Responsibility |
 |---|---|---|
 | Switch input debounce | `S-ADAPT/Core/Src/input/switch_input.c` | Poll `BUTTON`/`SW2`, debounce transitions, queue switch events |
+| Main LED PWM driver | `S-ADAPT/Core/Src/bsp/main_led.c` | TIM1 CH1 PWM output control (`0..100%`) for MOSFET-driven lamp |
 | Ultrasonic driver | `S-ADAPT/Core/Src/sensors/ultrasonic.c` | TRIG pulse, TIM2 input capture, timeout/noise handling, distance conversion |
 | Display driver facade | `S-ADAPT/Core/Src/bsp/display.c` | OLED init and rendering calls via `ssd1306.c` |
 | Status LED control | `S-ADAPT/Core/Src/bsp/status_led.c` | RGB indication and error blink support |
-| Platform runtime | `S-ADAPT/Core/Src/main.c` | CubeMX init, runtime scheduling, switch event logging, ultrasonic logging |
+| Platform runtime | `S-ADAPT/Core/Src/main.c` | CubeMX init, runtime scheduling, bring-up debug loops/logs for LDR/US/RGB/OLED/main LED |
 | App orchestration (future) | `S-ADAPT/Core/Src/app/app.c` | Reserved for higher-level business logic orchestration |
 
 ## Runtime Data Flow
@@ -43,8 +44,10 @@ flowchart TD
     I -- "Yes" --> J["ultrasonic_read_echo_us() + distance conversion + UART sample log"]
     D --> K{"1000 ms elapsed?"}
     K -- "Yes" --> L["status_led_set_state(next debug state) + UART led_state log"]
-    D --> M{"1000 ms elapsed and OLED ready?"}
-    M -- "Yes" --> N["display_show_distance_cm(last distance) + UART oled log"]
+    D --> M{"1000 ms elapsed?"}
+    M -- "Yes" --> N["main_led_set_percent(next sweep step) + UART main_led log"]
+    D --> O{"1000 ms elapsed and OLED ready?"}
+    O -- "Yes" --> P["display_show_distance_cm(last distance) + UART oled log"]
 ```
 
 ## Timing Model (Current)
@@ -67,5 +70,7 @@ flowchart TD
 ## Planned Direction
 - Keep module boundaries stable.
 - Keep hardware drivers separate from policy decisions.
-- Add LDR and PWM hardware bring-up modules to the same scheduling model.
+- Hardware bring-up is mostly complete; next is baseline business logic integration.
+- Implement baseline control loop first (presence gate + LDR->brightness + ON/OFF + offset application).
+- Add moving-average/median/hysteresis immediately after baseline loop is stable on hardware.
 - Move scheduling/orchestration from `main.c` to `app.c` when business logic integration starts.
