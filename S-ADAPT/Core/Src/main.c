@@ -9,6 +9,7 @@
 #include "input/encoder_input.h"
 #include "sensors/ldr.h"
 #include "bsp/status_led.h"
+#include "bsp/display.h"
 #include "input/switch_input.h"
 #include "sensors/ultrasonic.h"
 /* USER CODE END Includes */
@@ -24,6 +25,8 @@
 #define US_ECHO_TIMEOUT_US       30000U
 #define US_DISTANCE_ERROR_CM     999U
 #define RGB_DEBUG_PERIOD_MS      1000U
+#define OLED_DEBUG_PERIOD_MS     1000U
+#define OLED_DEBUG_ENABLE        1U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -47,6 +50,9 @@ static uint32_t s_last_rgb_ms = 0U;
 static uint16_t s_last_ldr_raw = 0U;
 static ldr_status_t s_last_ldr_status = LDR_STATUS_NOT_INIT;
 static status_led_state_t s_rgb_state = STATUS_LED_STATE_BOOT_SETUP;
+static uint32_t s_last_distance_cm = US_DISTANCE_ERROR_CM;
+static uint32_t s_last_oled_ms = 0U;
+static uint8_t s_display_ready = 0U;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -166,9 +172,26 @@ int main(void)
   s_last_ldr_status = LDR_STATUS_NOT_INIT;
   s_last_ldr_raw = 0U;
   s_rgb_state = STATUS_LED_STATE_BOOT_SETUP;
+  s_last_distance_cm = US_DISTANCE_ERROR_CM;
   s_last_ldr_sample_ms = HAL_GetTick();
   s_last_us_sample_ms = HAL_GetTick();
   s_last_rgb_ms = HAL_GetTick();
+  s_last_oled_ms = HAL_GetTick();
+#if OLED_DEBUG_ENABLE
+  if (display_init() != 0U)
+  {
+    s_display_ready = 1U;
+    display_show_boot();
+    debug_logln(DEBUG_PRINT_INFO, "dbg oled=ready");
+  }
+  else
+  {
+    s_display_ready = 0U;
+    debug_logln(DEBUG_PRINT_ERROR, "dbg oled=init_failed");
+  }
+#else
+  s_display_ready = 0U;
+#endif
   debug_logln(DEBUG_PRINT_INFO, "dbg led_state=%s", rgb_state_name(s_rgb_state));
   /* USER CODE END 2 */
 
@@ -214,6 +237,7 @@ int main(void)
       echo_us = ultrasonic_read_echo_us(US_ECHO_TIMEOUT_US);
       distance_cm = (echo_us == 0U) ? US_DISTANCE_ERROR_CM : (echo_us / 58U);
       us_status = ultrasonic_get_last_status();
+      s_last_distance_cm = distance_cm;
 
       debug_logln(DEBUG_PRINT_DEBUG, "dbg sample ldr_raw=%u ldr_status=%s echo_us=%lu dist_cm=%lu us_status=%s",
                   (unsigned int)s_last_ldr_raw,
@@ -229,6 +253,13 @@ int main(void)
       s_rgb_state = next_rgb_debug_state(s_rgb_state);
       status_led_set_state(s_rgb_state);
       debug_logln(DEBUG_PRINT_INFO, "dbg led_state=%s", rgb_state_name(s_rgb_state));
+    }
+
+    if ((s_display_ready != 0U) && ((uint32_t)(now_ms - s_last_oled_ms) >= OLED_DEBUG_PERIOD_MS))
+    {
+      s_last_oled_ms = now_ms;
+      display_show_distance_cm(s_last_distance_cm);
+      debug_logln(DEBUG_PRINT_DEBUG, "dbg oled dist_cm=%lu", (unsigned long)s_last_distance_cm);
     }
 
     HAL_Delay(1);
