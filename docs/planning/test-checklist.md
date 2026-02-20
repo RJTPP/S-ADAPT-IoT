@@ -37,6 +37,15 @@
 - [ ] Encoder rotation changes offset only (does not change sensitivity/factor parameters).
 - [ ] Double click resets manual offset to `0` (AUTO baseline).
 - [ ] LDR-based AUTO logic remains active after offset reset.
+- [ ] Presence behavior remains baseline threshold logic (no hysteresis in this phase).
+
+### B1.1 Stability filter behavior
+- [ ] `ldr_filt` responds smoother than `ldr_raw` under small ambient changes.
+- [ ] `dist_cm_filt` rejects one-sample ultrasonic spikes better than raw.
+- [ ] Output hysteresis deadband works:
+- [ ] target change `<3%` does not update applied PWM.
+- [ ] target change `>=3%` updates applied PWM.
+- [ ] Forced-off paths (manual OFF / no-user) still drive output immediately to `0%`.
 
 ### B2. OLED behavior
 - [ ] Page button cycles pages with wraparound logic.

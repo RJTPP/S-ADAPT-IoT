@@ -98,9 +98,10 @@ Source references:
 ### Sampling and filtering
 - [x] LDR sampling loop at 50 ms (+/- 10%).
 - [x] Ultrasonic sampling loop at 100 ms (+/- 10%).
-- [ ] Moving average filter for LDR.
-- [ ] Median/outlier filtering for ultrasonic.
-- [ ] Hysteresis (Schmitt-trigger style thresholds) for stable state transitions.
+- [x] Moving average filter for LDR.
+- [x] Median/outlier filtering for ultrasonic.
+- [x] Hysteresis (Schmitt-trigger style thresholds) for stable brightness updates.
+- [ ] Presence hysteresis (optional, deferred).
 
 ### Presence and safety logic
 - [x] Define and document presence threshold (target: ~80 cm, tune on board).
@@ -124,7 +125,7 @@ Source references:
 ### Output update logic
 - [x] Apply PWM output every control tick.
 - [x] If light state is OFF, force output to 0 regardless of auto/offset calculation.
-- [ ] Apply smoothing/hysteresis/ramp to avoid flicker and abrupt jumps.
+- [x] Apply smoothing/hysteresis/ramp to avoid flicker and abrupt jumps.
 - [x] Update RGB LED according to system state.
 
 ### Output behavior
