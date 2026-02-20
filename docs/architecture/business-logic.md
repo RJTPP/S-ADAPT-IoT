@@ -9,6 +9,10 @@
 ## Current Implementation Snapshot (Baseline Logic Phase)
 - Runtime owner is now `app.c` (`app_init` + `app_step`).
 - Main LED output is driven by baseline policy (`AUTO + manual_offset`) instead of debug sweep.
+- Stability layer is active:
+- LDR moving average (`N=8`).
+- Ultrasonic median filter (`N=3`) for distance/presence input.
+- PWM output hysteresis deadband (`±3%`) on final output updates.
 - Encoder switch release drives single/double click behavior:
 - single click toggles light ON/OFF (after double-click window timeout).
 - double click resets `manual_offset` to `0`.
@@ -47,18 +51,21 @@ flowchart TD
     J -- "No" --> I
     K --> L["Compute auto_percent from LDR"]
     I --> L
-    L --> M["Apply manual_offset + clamp 0..100"]
-    M --> N["Apply gates: light_off or no_user -> 0%"]
-    N --> O["main_led_set_percent(output)"]
-    O --> P["Evaluate RGB state priority"]
-    P --> Q["status_led_set_state + tick"]
-    Q --> R["1 s summary UART log (+ optional OLED update)"]
+    L --> M["Apply manual_offset + clamp 0..100 target"]
+    M --> N["Apply gates: light_off or no_user -> target=0%"]
+    N --> O["Apply output hysteresis (±3%)"]
+    O --> P["main_led_set_percent(applied_output)"]
+    P --> Q["Evaluate RGB state priority"]
+    Q --> R["status_led_set_state + tick"]
+    R --> S["1 s summary UART log (+ optional OLED update)"]
 ```
 
 ## Presence Logic (Current)
 - Threshold example: `80 cm` (calibrate on real hardware).
 - Presence cache only changes when ultrasonic returns `ULTRASONIC_STATUS_OK`.
+- Presence decision input is median-filtered ultrasonic distance (`N=3`).
 - On transient ultrasonic failure, cached presence is held (no RGB flicker from invalid samples).
+- Presence hysteresis is not enabled in this phase (deferred).
 
 ## RGB Mapping (Current)
 - `BOOT_SETUP` -> Purple
@@ -85,10 +92,7 @@ flowchart TD
 - `status_led_blink_error()` remains as a shim and routes into non-blocking fatal blink handling.
 
 ## Remaining Work To Reach Full Target Logic
-- Stabilization utilities:
-- moving average for LDR.
-- median/outlier handling for ultrasonic.
-- hysteresis (Schmitt-trigger style thresholds) for state transitions and no-user flicker control.
+- Presence-level hysteresis (if needed after tuning) is deferred.
 - UX extensions:
 - OLED multi-page model and temporary offset overlay behavior.
 - Additional UI tuning and threshold calibration.
