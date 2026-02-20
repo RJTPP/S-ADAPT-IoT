@@ -12,7 +12,8 @@
 - Stability layer is active:
 - LDR moving average (`N=8`).
 - Ultrasonic median filter (`N=3`) for distance/presence input.
-- PWM output hysteresis deadband (`±3%`) on final output updates.
+- PWM output hysteresis deadband (`±5%`).
+- PWM output ramp limiter (normal `1%`, turn-on `3%`, turn-off `5%` per control tick) applied after hysteresis.
 - Encoder switch release drives single/double click behavior:
 - single click toggles light ON/OFF (after double-click window timeout).
 - double click resets `manual_offset` to `0`.
@@ -41,23 +42,27 @@ flowchart TD
     A["app_step()"] --> B["Process switch/encoder events"]
     B --> C["Handle click timeout (single-click commit)"]
     C --> D{"50 ms elapsed?"}
-    D -- "No" --> E["Return"]
-    D -- "Yes" --> F["Read LDR raw"]
-    F --> G{"100 ms elapsed?"}
+    D -- "Yes" --> E["Read LDR raw"]
+    D -- "No" --> F["Keep prior LDR cache"]
+    E --> G{"100 ms elapsed?"}
+    F --> G
     G -- "Yes" --> H["Read ultrasonic + status"]
     G -- "No" --> I["Keep prior ultrasonic cache"]
     H --> J{"Valid read?"}
     J -- "Yes" --> K["Update distance/presence cache"]
     J -- "No" --> I
-    K --> L["Compute auto_percent from LDR"]
+    K --> L{"33 ms elapsed?"}
     I --> L
-    L --> M["Apply manual_offset + clamp 0..100 target"]
-    M --> N["Apply gates: light_off or no_user -> target=0%"]
-    N --> O["Apply output hysteresis (±3%)"]
-    O --> P["main_led_set_percent(applied_output)"]
-    P --> Q["Evaluate RGB state priority"]
-    Q --> R["status_led_set_state + tick"]
-    R --> S["1 s summary UART log (+ optional OLED update)"]
+    L -- "No" --> M["Return"]
+    L -- "Yes" --> N["Compute auto_percent from LDR"]
+    N --> O["Apply manual_offset + clamp 0..100 target"]
+    O --> P["Apply gates: light_off or no_user -> target=0%"]
+    P --> Q["Apply output hysteresis (±5%)"]
+    Q --> R["Apply output ramp (1/3/5 per 33 ms)"]
+    R --> S["main_led_set_percent(applied_output)"]
+    S --> T["Evaluate RGB state priority"]
+    T --> U["status_led_set_state + tick"]
+    U --> V["1 s summary UART log (+ optional OLED update)"]
 ```
 
 ## Presence Logic (Current)
@@ -66,6 +71,8 @@ flowchart TD
 - Presence decision input is median-filtered ultrasonic distance (`N=3`).
 - On transient ultrasonic failure, cached presence is held (no RGB flicker from invalid samples).
 - Presence hysteresis is not enabled in this phase (deferred).
+- Forced-off paths (`manual OFF` / `no-user`) now ramp down output to 0 (not immediate cut).
+- Runtime cadence: control `33 ms`, LDR sampling `50 ms` (decoupled), ultrasonic sampling `100 ms`.
 
 ## RGB Mapping (Current)
 - `BOOT_SETUP` -> Purple
