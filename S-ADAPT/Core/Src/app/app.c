@@ -210,7 +210,7 @@ static uint8_t apply_output_hysteresis(uint8_t target_percent)
         diff = (uint8_t)(s_app.control.last_applied_output_percent - target_percent);
     }
 
-    if (diff >= s_policy_cfg.output_hysteresis_band_percent) {
+    if ((target_percent == 0U) || (diff >= s_policy_cfg.output_hysteresis_band_percent)) {
         s_app.control.last_applied_output_percent = target_percent;
     }
 
@@ -465,8 +465,6 @@ void app_step(void)
 
     if ((s_app.control.light_enabled == 0U) || (s_app.sensors.last_valid_presence == 0U)) {
         s_app.control.target_output_percent = 0U;
-        s_app.control.last_applied_output_percent = 0U;
-        s_app.control.output_hysteresis_initialized = 1U;
     }
 
     s_app.control.output_percent = apply_output_hysteresis(s_app.control.target_output_percent);

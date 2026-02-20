@@ -48,17 +48,15 @@ uint16_t filter_moving_average_u16_push(filter_moving_average_u16_t *f, uint16_t
         return sample;
     }
 
-    if (f->count < f->window_size) {
-        f->buffer[f->index] = sample;
-        f->sum += sample;
-        f->count++;
-        f->index = (uint8_t)((f->index + 1U) % f->window_size);
-    } else {
+    if (f->count >= f->window_size) {
         f->sum -= f->buffer[f->index];
-        f->buffer[f->index] = sample;
-        f->sum += sample;
-        f->index = (uint8_t)((f->index + 1U) % f->window_size);
+    } else {
+        f->count++;
     }
+
+    f->buffer[f->index] = sample;
+    f->sum += sample;
+    f->index = (uint8_t)((f->index + 1U) % f->window_size);
 
     return (uint16_t)(f->sum / f->count);
 }
