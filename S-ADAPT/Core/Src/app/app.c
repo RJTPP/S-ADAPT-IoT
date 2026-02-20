@@ -4,6 +4,22 @@
 #define APP_ENABLE_DISPLAY 1U
 #endif
 
+#ifndef APP_PRESENCE_DEBUG_TIMERS
+#define APP_PRESENCE_DEBUG_TIMERS 1U
+#endif
+
+#if APP_PRESENCE_DEBUG_TIMERS
+#define APP_PRESENCE_AWAY_TIMEOUT_MS 5000U
+#define APP_PRESENCE_STALE_TIMEOUT_MS 15000U
+#define APP_PRESENCE_RESUME_MOTION_MS 2000U
+#define APP_PRESENCE_PREOFF_DIM_MS 3000U
+#else
+#define APP_PRESENCE_AWAY_TIMEOUT_MS 30000U
+#define APP_PRESENCE_STALE_TIMEOUT_MS 120000U
+#define APP_PRESENCE_RESUME_MOTION_MS 5000U
+#define APP_PRESENCE_PREOFF_DIM_MS 10000U
+#endif
+
 const app_timing_cfg_t s_timing_cfg = {
     .control_tick_ms = 33U,
     .ldr_sample_ms = 50U,
@@ -28,13 +44,13 @@ const app_policy_cfg_t s_policy_cfg = {
     .presence_ref_fallback_cm = 60U,
     .presence_body_margin_cm = 20U,
     .presence_return_band_cm = 1U,
-    .presence_away_timeout_ms = 30000U,
+    .presence_away_timeout_ms = APP_PRESENCE_AWAY_TIMEOUT_MS,
     .presence_flat_band_cm = 1U,
     .presence_motion_delta_cm = 2U,
-    .presence_stale_timeout_ms = 120000U,
-    .presence_resume_motion_ms = 5000U,
+    .presence_stale_timeout_ms = APP_PRESENCE_STALE_TIMEOUT_MS,
+    .presence_resume_motion_ms = APP_PRESENCE_RESUME_MOTION_MS,
     .presence_preoff_dim_percent = 15U,
-    .presence_preoff_dim_ms = 10000U,
+    .presence_preoff_dim_ms = APP_PRESENCE_PREOFF_DIM_MS,
 };
 
 app_ctx_t s_app;
