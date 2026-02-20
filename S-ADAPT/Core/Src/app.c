@@ -12,6 +12,10 @@
 #define APP_PRESENCE_CM        80U
 #define APP_RGB_TEST_MODE      1
 #define APP_TEST_STATE_MS      1000U
+/* Set to 1 to enable OLED init/update; keep 0 for LED bring-up. */
+#ifndef APP_ENABLE_DISPLAY
+#define APP_ENABLE_DISPLAY     0
+#endif
 
 typedef struct
 {
@@ -119,6 +123,7 @@ uint8_t app_init(TIM_HandleTypeDef *echo_tim, uint32_t echo_channel)
     status_led_init();
     ultrasonic_init(echo_tim, echo_channel);
 
+#if APP_ENABLE_DISPLAY
     if (!display_init()) {
         ok = 0U;
         app_set_fatal_fault(1U);
@@ -127,6 +132,9 @@ uint8_t app_init(TIM_HandleTypeDef *echo_tim, uint32_t echo_channel)
         s_app.display_ready = 1U;
         display_show_boot();
     }
+#else
+    debug_logln(DEBUG_PRINT_INFO, "display disabled for bring-up");
+#endif
 
     s_app.boot_start_ms = HAL_GetTick();
     s_app.last_tick_ms = s_app.boot_start_ms;
