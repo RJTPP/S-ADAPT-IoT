@@ -53,7 +53,7 @@ static const app_policy_cfg_t s_policy_cfg = {
     .distance_error_cm = 999U,
     .us_timeout_us = 30000U,
     .ldr_ma_window_size = 8U,
-    .output_hysteresis_band_percent = 3U,
+    .output_hysteresis_band_percent = 5U,
 };
 
 typedef struct
