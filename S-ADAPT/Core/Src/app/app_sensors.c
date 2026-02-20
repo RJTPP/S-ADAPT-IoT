@@ -28,7 +28,6 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
 
         if ((distance_cm != s_policy_cfg.distance_error_cm) && (s_app.sensors.last_us_status == ULTRASONIC_STATUS_OK)) {
             uint32_t ref_distance_cm;
-            uint32_t abs_ref_delta_cm;
             uint32_t abs_step_delta_cm = 0U;
             uint8_t prev_ready;
             uint8_t away_condition;
@@ -55,7 +54,6 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
                 s_app.sensors.presence_candidate_no_user = 0U;
             } else {
                 ref_distance_cm = s_app.sensors.ref_valid != 0U ? s_app.sensors.ref_distance_cm : s_policy_cfg.presence_ref_fallback_cm;
-                abs_ref_delta_cm = abs_diff_u32(s_app.sensors.last_distance_filtered_cm, ref_distance_cm);
                 prev_ready = s_app.sensors.prev_valid_distance_ready;
                 if (prev_ready != 0U) {
                     abs_step_delta_cm = abs_diff_u32(s_app.sensors.last_distance_filtered_cm, s_app.sensors.prev_valid_distance_cm);

@@ -75,13 +75,13 @@ flowchart TD
 - Away detection:
 - if `distance > ref + 20 cm` continuously for `30 s`, trigger no-user candidate.
 - Stale detection:
-- if near-reference flat distance (band `±1 cm`) remains stable for `120 s`, trigger no-user candidate.
+- if step-to-step movement stays within `±1 cm` for `120 s`, trigger no-user candidate.
 - Pre-off dim before no-user commit:
-- drive output to `min(current_output,15%)` for `10 s`.
+- drive output to `min(current_output,15%)` for `10 s` (debug-tunable in build config).
 - if user returns/moves during this window, cancel pre-off and keep present.
 - Recovery after no-user:
-- away reason: return when `distance <= ref + 1 cm`
-- flat reason: return when motion (`>=2 cm`) is sustained for `5 s`.
+- away reason: return when `distance <= ref + 10 cm` for ~`1.5 s` confirm window.
+- flat reason: return on movement spike (`>=1 cm` step delta) with tolerant decay behavior.
 - On transient ultrasonic failure, keep last valid presence and do not advance timers.
 
 ## RGB Mapping (Current)
