@@ -195,6 +195,11 @@ static int32_t clamp_offset(int32_t offset)
     return offset;
 }
 
+static inline uint8_t has_elapsed_ms(uint32_t now_ms, uint32_t last_ms, uint32_t period_ms)
+{
+    return ((uint32_t)(now_ms - last_ms) >= period_ms) ? 1U : 0U;
+}
+
 static uint8_t compute_auto_percent_from_ldr(uint16_t filtered_raw)
 {
     uint32_t scaled = ((uint32_t)filtered_raw * 100U) / 4095U;
@@ -277,7 +282,7 @@ static status_led_state_t app_evaluate_state(uint32_t now_ms)
         return STATUS_LED_STATE_FAULT_FATAL;
     }
 
-    if ((uint32_t)(now_ms - s_app.timing.boot_start_ms) < s_policy_cfg.boot_setup_ms) {
+    if (has_elapsed_ms(now_ms, s_app.timing.boot_start_ms, s_policy_cfg.boot_setup_ms) == 0U) {
         return STATUS_LED_STATE_BOOT_SETUP;
     }
 
@@ -302,7 +307,7 @@ static void app_handle_click_timeout(uint32_t now_ms)
         return;
     }
 
-    if ((uint32_t)(now_ms - s_app.click.deadline_ms) < s_policy_cfg.double_click_ms) {
+    if (has_elapsed_ms(now_ms, s_app.click.deadline_ms, s_policy_cfg.double_click_ms) == 0U) {
         return;
     }
 
@@ -490,7 +495,7 @@ void app_step(void)
 
     app_handle_click_timeout(now_ms);
 
-    if ((uint32_t)(now_ms - s_app.timing.last_ldr_sample_ms) >= s_timing_cfg.ldr_sample_ms) {
+    if (has_elapsed_ms(now_ms, s_app.timing.last_ldr_sample_ms, s_timing_cfg.ldr_sample_ms) != 0U) {
         s_app.timing.last_ldr_sample_ms += s_timing_cfg.ldr_sample_ms;
         s_app.sensors.last_ldr_status = ldr_read_raw(&s_app.sensors.last_ldr_raw);
         if (s_app.sensors.last_ldr_status == LDR_STATUS_OK) {
@@ -499,7 +504,7 @@ void app_step(void)
         }
     }
 
-    if ((uint32_t)(now_ms - s_app.timing.last_us_sample_ms) >= s_timing_cfg.us_sample_ms) {
+    if (has_elapsed_ms(now_ms, s_app.timing.last_us_sample_ms, s_timing_cfg.us_sample_ms) != 0U) {
         uint32_t distance_cm;
 
         s_app.timing.last_us_sample_ms += s_timing_cfg.us_sample_ms;
@@ -515,7 +520,7 @@ void app_step(void)
         }
     }
 
-    if ((uint32_t)(now_ms - s_app.timing.last_control_tick_ms) < s_timing_cfg.control_tick_ms) {
+    if (has_elapsed_ms(now_ms, s_app.timing.last_control_tick_ms, s_timing_cfg.control_tick_ms) == 0U) {
         return;
     }
     s_app.timing.last_control_tick_ms += s_timing_cfg.control_tick_ms;
@@ -539,12 +544,12 @@ void app_step(void)
     status_led_tick(now_ms);
 
     if ((s_app.platform.display_ready != 0U) &&
-        ((uint32_t)(now_ms - s_app.timing.last_oled_ms) >= s_timing_cfg.oled_update_ms)) {
+        (has_elapsed_ms(now_ms, s_app.timing.last_oled_ms, s_timing_cfg.oled_update_ms) != 0U)) {
         s_app.timing.last_oled_ms = now_ms;
         display_show_distance_cm(s_app.sensors.last_valid_distance_cm);
     }
 
-    if ((uint32_t)(now_ms - s_app.timing.last_log_ms) >= s_timing_cfg.log_ms) {
+    if (has_elapsed_ms(now_ms, s_app.timing.last_log_ms, s_timing_cfg.log_ms) != 0U) {
         s_app.timing.last_log_ms = now_ms;
         debug_logln(DEBUG_PRINT_INFO,
                     "dbg summary ldr_raw=%u ldr_filt=%u ldr_status=%s dist_cm_raw_last_valid=%lu dist_cm_filt=%lu us_status=%s present=%u light_on=%u offset=%ld auto=%u target_out=%u hyst_out=%u applied_out=%u rgb=%s",
