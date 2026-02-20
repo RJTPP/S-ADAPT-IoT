@@ -7,8 +7,6 @@
 /* USER CODE BEGIN Includes */
 #include "app.h"
 #include "debug_print.h"
-#include "status_led.h"
-#include "ultrasonic.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,32 +43,10 @@ static void MX_I2C1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
-static void i2c_scan(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static void i2c_scan(void)
-{
-  uint8_t addr;
-  uint8_t found = 0U;
-
-  debug_println("I2C scan start");
-  for (addr = 0x03U; addr <= 0x77U; addr++)
-  {
-    if (HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)(addr << 1), 2U, 20U) == HAL_OK)
-    {
-      debug_println("I2C device: 0x%02X", addr);
-      found = 1U;
-    }
-  }
-
-  if (!found)
-  {
-    debug_println("I2C device: none");
-  }
-  debug_println("I2C scan end");
-}
 /* USER CODE END 0 */
 
 /**
@@ -81,6 +57,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+  uint8_t app_ok = 0U;
 
   /* USER CODE END 1 */
 
@@ -111,24 +88,19 @@ int main(void)
   debug_print_init(&huart2);
   debug_print_set_level(DEBUG_PRINT_DEBUG);
   debug_println("Boot start");
-  debug_println("US only mode");
-  ultrasonic_init(&htim2, TIM_CHANNEL_2);
+  app_ok = app_init(&htim2, TIM_CHANNEL_2);
+  if (app_ok == 0U)
+  {
+    app_set_fatal_fault(1U);
+    debug_println("App init degraded mode");
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    ultrasonic_status_t us_status;
-    uint32_t echo_us = ultrasonic_read_echo_us(30000U);
-    uint32_t distance_cm = (echo_us == 0U) ? 999U : (echo_us / 58U);
-    us_status = ultrasonic_get_last_status();
-
-    debug_logln(DEBUG_PRINT_DEBUG, "echo_us=%lu dist_cm=%lu status=%s",
-                (unsigned long)echo_us,
-                (unsigned long)distance_cm,
-                ultrasonic_status_to_string(us_status));
-    HAL_Delay(200);
+    app_step();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
