@@ -16,7 +16,7 @@ This document defines the current firmware architecture and hardware-to-code map
 | RGB Status B | Status indication | PA7 | `LED_Status_B_Pin` |
 | Encoder CLK | User input | PB1 | `ENCODER_CLK_EXTI1_Pin` |
 | Encoder DT | User input | PA10 | `ENCODER_DT_EXTI10_Pin` |
-| Encoder SW | User input | PA9 | `SW_Pin` |
+| Encoder SW | User input | PA9 | `ENCODER_PRESS_Pin` |
 | Extra button | Page switch input | PB0 | `BUTTON_Pin` |
 
 ## Firmware Modules
@@ -50,15 +50,6 @@ flowchart TD
 ## Timing Model (Current)
 | Activity | Current cadence |
 |---|---|
-| Main loop pacing | `HAL_Delay(1)` |
-| Switch sampling | 10 ms (`SWITCH_SAMPLE_PERIOD_MS`) |
-| Switch debounce confirmation | 30 ms (`SWITCH_DEBOUNCE_TICKS` x sample period) |
-| Ultrasonic measurement | 100 ms (`US_SAMPLE_PERIOD_MS`) |
-| UART switch logs | On debounced transitions only |
-| UART ultrasonic logs | Once per ultrasonic tick |
-
-## Planned Direction
-- Keep module boundaries stable.
 | Main loop pacing | `HAL_Delay(1)` |
 | Switch sampling | 10 ms (`SWITCH_SAMPLE_PERIOD_MS`) |
 | Switch debounce confirmation | 30 ms (`SWITCH_DEBOUNCE_TICKS` x sample period) |

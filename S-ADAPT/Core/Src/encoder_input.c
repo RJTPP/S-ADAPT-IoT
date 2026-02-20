@@ -1,5 +1,6 @@
 #include "encoder_input.h"
 
+#include "input_utils.h"
 #include "main.h"
 
 #if defined(ENCODER_PRESS_GPIO_Port) && defined(ENCODER_PRESS_Pin)
@@ -33,33 +34,9 @@ static uint8_t s_queue_head = 0U;
 static uint8_t s_queue_tail = 0U;
 static uint8_t s_queue_count = 0U;
 
-static GPIO_PinState read_pin(GPIO_TypeDef *port, uint16_t pin)
-{
-    return HAL_GPIO_ReadPin(port, pin);
-}
-
-static uint8_t read_pin_level(GPIO_TypeDef *port, uint16_t pin)
-{
-    return (read_pin(port, pin) == GPIO_PIN_SET) ? 1U : 0U;
-}
-
-static uint32_t critical_enter(void)
-{
-    uint32_t primask = __get_PRIMASK();
-    __disable_irq();
-    return primask;
-}
-
-static void critical_exit(uint32_t primask)
-{
-    if (primask == 0U) {
-        __enable_irq();
-    }
-}
-
 static void queue_push(encoder_event_type_t type, uint32_t now_ms, uint8_t sw_level)
 {
-    uint32_t primask = critical_enter();
+    uint32_t primask = input_irq_lock();
 
     if (s_queue_count < ENCODER_EVENT_QUEUE_SIZE) {
         encoder_event_t event;
@@ -72,13 +49,13 @@ static void queue_push(encoder_event_type_t type, uint32_t now_ms, uint8_t sw_le
         s_queue_count++;
     }
 
-    critical_exit(primask);
+    input_irq_unlock(primask);
 }
 
 void encoder_input_init(void)
 {
-    uint32_t primask = critical_enter();
-    uint8_t sw_level = read_pin_level(ENCODER_SW_GPIO_Port, ENCODER_SW_Pin);
+    uint32_t primask = input_irq_lock();
+    uint8_t sw_level = input_gpio_level(ENCODER_SW_GPIO_Port, ENCODER_SW_Pin);
 
     s_sw_state.stable_level = sw_level;
     s_sw_state.candidate_level = sw_level;
@@ -91,7 +68,7 @@ void encoder_input_init(void)
     s_queue_tail = 0U;
     s_queue_count = 0U;
 
-    critical_exit(primask);
+    input_irq_unlock(primask);
 }
 
 void encoder_input_tick(uint32_t now_ms)
@@ -103,7 +80,7 @@ void encoder_input_tick(uint32_t now_ms)
     }
     s_last_sw_sample_ms = now_ms;
 
-    sw_level = read_pin_level(ENCODER_SW_GPIO_Port, ENCODER_SW_Pin);
+    sw_level = input_gpio_level(ENCODER_SW_GPIO_Port, ENCODER_SW_Pin);
     if (sw_level != s_sw_state.candidate_level) {
         s_sw_state.candidate_level = sw_level;
         s_sw_state.candidate_ticks = 1U;
@@ -134,7 +111,7 @@ void encoder_input_on_clk_edge_isr(void)
     }
     s_last_clk_edge_ms = now_ms;
 
-    dt_level = read_pin_level(ENCODER_DT_EXTI10_GPIO_Port, ENCODER_DT_EXTI10_Pin);
+    dt_level = input_gpio_level(ENCODER_DT_EXTI10_GPIO_Port, ENCODER_DT_EXTI10_Pin);
     sw_level = s_sw_state.stable_level;
 
     queue_push((dt_level == 0U) ? ENCODER_EVENT_CW : ENCODER_EVENT_CCW, now_ms, sw_level);
@@ -148,15 +125,15 @@ uint8_t encoder_input_pop_event(encoder_event_t *out_event)
         return 0U;
     }
 
-    primask = critical_enter();
+    primask = input_irq_lock();
     if (s_queue_count == 0U) {
-        critical_exit(primask);
+        input_irq_unlock(primask);
         return 0U;
     }
 
     *out_event = s_event_queue[s_queue_head];
     s_queue_head = (uint8_t)((s_queue_head + 1U) % ENCODER_EVENT_QUEUE_SIZE);
     s_queue_count--;
-    critical_exit(primask);
+    input_irq_unlock(primask);
     return 1U;
 }
