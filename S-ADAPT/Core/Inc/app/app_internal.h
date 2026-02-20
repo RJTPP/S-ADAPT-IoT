@@ -40,6 +40,7 @@ typedef struct
     uint32_t presence_ref_fallback_cm;
     uint32_t presence_body_margin_cm;
     uint32_t presence_return_band_cm;
+    uint32_t presence_return_confirm_ms;
     uint32_t presence_away_timeout_ms;
     uint32_t presence_flat_band_cm;
     uint32_t presence_motion_delta_cm;
@@ -79,6 +80,7 @@ typedef struct
     uint32_t away_streak_ms;
     uint32_t flat_streak_ms;
     uint32_t motion_streak_ms;
+    uint32_t near_ref_streak_ms;
     uint8_t no_user_reason;
     uint8_t presence_candidate_no_user;
 

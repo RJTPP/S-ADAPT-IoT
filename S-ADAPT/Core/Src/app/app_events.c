@@ -58,6 +58,7 @@ void app_handle_click_timeout(uint32_t now_ms)
         s_app.sensors.away_streak_ms = 0U;
         s_app.sensors.flat_streak_ms = 0U;
         s_app.sensors.motion_streak_ms = 0U;
+        s_app.sensors.near_ref_streak_ms = 0U;
         s_app.sensors.no_user_reason = 0U;
         s_app.sensors.presence_candidate_no_user = 0U;
         s_app.sensors.last_valid_presence = 1U;
@@ -68,6 +69,7 @@ void app_handle_click_timeout(uint32_t now_ms)
         s_app.sensors.away_streak_ms = 0U;
         s_app.sensors.flat_streak_ms = 0U;
         s_app.sensors.motion_streak_ms = 0U;
+        s_app.sensors.near_ref_streak_ms = 0U;
         s_app.sensors.no_user_reason = 0U;
         s_app.sensors.presence_candidate_no_user = 0U;
         s_app.control.preoff_active = 0U;

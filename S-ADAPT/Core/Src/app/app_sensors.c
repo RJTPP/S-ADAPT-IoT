@@ -51,6 +51,7 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
                 s_app.sensors.away_streak_ms = 0U;
                 s_app.sensors.flat_streak_ms = 0U;
                 s_app.sensors.motion_streak_ms = 0U;
+                s_app.sensors.near_ref_streak_ms = 0U;
                 s_app.sensors.presence_candidate_no_user = 0U;
             } else {
                 ref_distance_cm = s_app.sensors.ref_valid != 0U ? s_app.sensors.ref_distance_cm : s_policy_cfg.presence_ref_fallback_cm;
@@ -82,10 +83,22 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
                     if (motion_condition != 0U) {
                         s_app.sensors.motion_streak_ms += s_timing_cfg.us_sample_ms;
                     } else {
-                        s_app.sensors.motion_streak_ms = 0U;
+                        if (s_app.sensors.motion_streak_ms > s_timing_cfg.us_sample_ms) {
+                            s_app.sensors.motion_streak_ms -= s_timing_cfg.us_sample_ms;
+                        } else {
+                            s_app.sensors.motion_streak_ms = 0U;
+                        }
                     }
                 } else {
                     s_app.sensors.motion_streak_ms = 0U;
+                }
+
+                if ((s_app.sensors.last_valid_presence == 0U) &&
+                    (s_app.sensors.no_user_reason == 1U) &&
+                    (s_app.sensors.last_distance_filtered_cm <= (ref_distance_cm + s_policy_cfg.presence_return_band_cm))) {
+                    s_app.sensors.near_ref_streak_ms += s_timing_cfg.us_sample_ms;
+                } else {
+                    s_app.sensors.near_ref_streak_ms = 0U;
                 }
 
                 s_app.sensors.presence_candidate_no_user = 0U;
@@ -100,8 +113,9 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
                     }
                 } else {
                     if ((s_app.sensors.no_user_reason == 1U) &&
-                        (s_app.sensors.last_distance_filtered_cm <= (ref_distance_cm + s_policy_cfg.presence_return_band_cm))) {
+                        (s_app.sensors.near_ref_streak_ms >= s_policy_cfg.presence_return_confirm_ms)) {
                         s_app.sensors.last_valid_presence = 1U;
+                        s_app.sensors.near_ref_streak_ms = 0U;
                         s_app.sensors.no_user_reason = 0U;
                     } else if ((s_app.sensors.no_user_reason == 2U) &&
                                (s_app.sensors.motion_streak_ms >= s_policy_cfg.presence_resume_motion_ms)) {

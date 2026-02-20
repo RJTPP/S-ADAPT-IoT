@@ -46,6 +46,7 @@ const app_policy_cfg_t s_policy_cfg = {
     .presence_ref_fallback_cm = 60U,
     .presence_body_margin_cm = 20U,
     .presence_return_band_cm = 1U,
+    .presence_return_confirm_ms = 1500U,
     .presence_away_timeout_ms = APP_PRESENCE_AWAY_TIMEOUT_MS,
     .presence_flat_band_cm = 1U,
     .presence_motion_delta_cm = 2U,
@@ -100,6 +101,7 @@ uint8_t app_init(const app_hw_config_t *hw)
     s_app.sensors.away_streak_ms = 0U;
     s_app.sensors.flat_streak_ms = 0U;
     s_app.sensors.motion_streak_ms = 0U;
+    s_app.sensors.near_ref_streak_ms = 0U;
     s_app.sensors.no_user_reason = 0U;
     s_app.sensors.presence_candidate_no_user = 0U;
 
