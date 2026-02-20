@@ -35,6 +35,8 @@ static int32_t clamp_offset(int32_t offset)
 
 void app_handle_click_timeout(uint32_t now_ms)
 {
+    uint8_t was_light_enabled;
+
     if (s_app.click.pending == 0U) {
         return;
     }
@@ -44,7 +46,35 @@ void app_handle_click_timeout(uint32_t now_ms)
     }
 
     s_app.click.pending = 0U;
+    was_light_enabled = s_app.control.light_enabled;
     s_app.control.light_enabled = (s_app.control.light_enabled == 0U) ? 1U : 0U;
+
+    if ((was_light_enabled == 0U) && (s_app.control.light_enabled != 0U)) {
+        s_app.sensors.ref_distance_cm = s_policy_cfg.presence_ref_fallback_cm;
+        s_app.sensors.ref_valid = 1U;
+        s_app.sensors.ref_pending_capture = 1U;
+        s_app.sensors.using_fallback_ref = 1U;
+        s_app.sensors.prev_valid_distance_ready = 0U;
+        s_app.sensors.away_streak_ms = 0U;
+        s_app.sensors.flat_streak_ms = 0U;
+        s_app.sensors.motion_streak_ms = 0U;
+        s_app.sensors.no_user_reason = 0U;
+        s_app.sensors.presence_candidate_no_user = 0U;
+        s_app.sensors.last_valid_presence = 1U;
+        s_app.control.preoff_active = 0U;
+        s_app.control.preoff_start_ms = 0U;
+        s_app.control.preoff_dim_target_percent = 0U;
+    } else if ((was_light_enabled != 0U) && (s_app.control.light_enabled == 0U)) {
+        s_app.sensors.away_streak_ms = 0U;
+        s_app.sensors.flat_streak_ms = 0U;
+        s_app.sensors.motion_streak_ms = 0U;
+        s_app.sensors.no_user_reason = 0U;
+        s_app.sensors.presence_candidate_no_user = 0U;
+        s_app.control.preoff_active = 0U;
+        s_app.control.preoff_start_ms = 0U;
+        s_app.control.preoff_dim_target_percent = 0U;
+    }
+
     debug_logln(DEBUG_PRINT_INFO, "dbg click=single light_on=%u", (unsigned int)s_app.control.light_enabled);
 }
 

@@ -26,7 +26,6 @@ typedef struct
 typedef struct
 {
     uint32_t boot_setup_ms;
-    uint32_t presence_cm;
     uint32_t double_click_ms;
     int32_t offset_step;
     int32_t offset_min;
@@ -38,6 +37,16 @@ typedef struct
     uint8_t output_ramp_step_percent;
     uint8_t output_ramp_step_on_percent;
     uint8_t output_ramp_step_off_percent;
+    uint32_t presence_ref_fallback_cm;
+    uint32_t presence_body_margin_cm;
+    uint32_t presence_return_band_cm;
+    uint32_t presence_away_timeout_ms;
+    uint32_t presence_flat_band_cm;
+    uint32_t presence_motion_delta_cm;
+    uint32_t presence_stale_timeout_ms;
+    uint32_t presence_resume_motion_ms;
+    uint8_t presence_preoff_dim_percent;
+    uint32_t presence_preoff_dim_ms;
 } app_policy_cfg_t;
 
 typedef struct
@@ -61,6 +70,17 @@ typedef struct
     uint32_t last_valid_distance_cm;
     ultrasonic_status_t last_us_status;
     uint8_t last_valid_presence;
+    uint32_t ref_distance_cm;
+    uint8_t ref_valid;
+    uint8_t ref_pending_capture;
+    uint8_t using_fallback_ref;
+    uint32_t prev_valid_distance_cm;
+    uint8_t prev_valid_distance_ready;
+    uint32_t away_streak_ms;
+    uint32_t flat_streak_ms;
+    uint32_t motion_streak_ms;
+    uint8_t no_user_reason;
+    uint8_t presence_candidate_no_user;
 
     filter_moving_average_u16_t ldr_ma;
     filter_median3_u32_t dist_median3;
@@ -80,6 +100,9 @@ typedef struct
     uint8_t ramp_initialized;
     status_led_state_t rgb_state;
     uint8_t fatal_fault;
+    uint8_t preoff_active;
+    uint32_t preoff_start_ms;
+    uint8_t preoff_dim_target_percent;
 } app_control_state_t;
 
 typedef struct
@@ -116,7 +139,7 @@ void app_process_encoder_events(uint32_t now_ms);
 void app_sample_ldr_if_due(uint32_t now_ms);
 void app_sample_ultrasonic_if_due(uint32_t now_ms);
 uint8_t app_control_tick_due(uint32_t now_ms);
-void app_update_output_control(void);
+void app_update_output_control(uint32_t now_ms);
 void app_update_rgb(uint32_t now_ms);
 void app_update_oled_if_due(uint32_t now_ms);
 void app_log_summary_if_due(uint32_t now_ms);

@@ -102,14 +102,16 @@ Source references:
 - [x] Moving average filter for LDR.
 - [x] Median/outlier filtering for ultrasonic.
 - [x] Hysteresis (Schmitt-trigger style thresholds) for stable brightness updates.
-- [ ] Presence hysteresis (optional, deferred).
+- [x] Presence engine uses reference capture + timed away/stale detection.
 
 ### Presence and safety logic
-- [x] Define and document presence threshold (target: ~80 cm, tune on board).
-- [x] `distance < threshold` -> `user_present = TRUE`
-- [x] `distance >= threshold` -> `user_present = FALSE`
+- [x] Capture reference distance on each OFF->ON click.
+- [x] Away detection: `distance > ref + 20 cm` for 30s -> no-user candidate.
+- [x] Stale/flat detection near reference for 120s -> no-user candidate.
+- [x] Pre-off dim phase: `min(current,15%)` for 10s before no-user commit.
+- [x] Recovery from away/no-user near reference.
+- [x] Recovery from flat/no-user via sustained motion window.
 - [x] If `user_present = FALSE`, force `brightness = 0`.
-- [ ] Optional no-presence timeout behavior is defined (immediate off vs delayed off).
 
 ### AUTO + offset logic
 - [x] AUTO mode:

@@ -12,6 +12,11 @@ static uint8_t clamp_percent_i32(int32_t value)
     return (uint8_t)value;
 }
 
+static uint8_t min_u8(uint8_t a, uint8_t b)
+{
+    return (a < b) ? a : b;
+}
+
 static uint8_t compute_auto_percent_from_ldr(uint16_t filtered_raw)
 {
     uint32_t scaled = ((uint32_t)filtered_raw * 100U) / 4095U;
@@ -123,7 +128,7 @@ uint8_t app_control_tick_due(uint32_t now_ms)
     return 1U;
 }
 
-void app_update_output_control(void)
+void app_update_output_control(uint32_t now_ms)
 {
     int32_t target_percent_i32;
 
@@ -132,8 +137,34 @@ void app_update_output_control(void)
     target_percent_i32 = (int32_t)s_app.control.auto_percent + s_app.control.manual_offset;
     s_app.control.target_output_percent = clamp_percent_i32(target_percent_i32);
 
-    if ((s_app.control.light_enabled == 0U) || (s_app.sensors.last_valid_presence == 0U)) {
+    if (s_app.control.light_enabled == 0U) {
+        s_app.control.preoff_active = 0U;
+        s_app.sensors.presence_candidate_no_user = 0U;
         s_app.control.target_output_percent = 0U;
+    } else {
+        if ((s_app.control.preoff_active == 0U) &&
+            (s_app.sensors.last_valid_presence != 0U) &&
+            (s_app.sensors.presence_candidate_no_user != 0U)) {
+            s_app.control.preoff_active = 1U;
+            s_app.control.preoff_start_ms = now_ms;
+            s_app.control.preoff_dim_target_percent = min_u8(s_app.control.output_percent, s_policy_cfg.presence_preoff_dim_percent);
+        }
+
+        if (s_app.control.preoff_active != 0U) {
+            if (s_app.sensors.presence_candidate_no_user == 0U) {
+                s_app.control.preoff_active = 0U;
+            } else if (input_has_elapsed_ms(now_ms, s_app.control.preoff_start_ms, s_policy_cfg.presence_preoff_dim_ms) != 0U) {
+                s_app.control.preoff_active = 0U;
+                s_app.sensors.last_valid_presence = 0U;
+                s_app.sensors.presence_candidate_no_user = 0U;
+            }
+        }
+
+        if (s_app.control.preoff_active != 0U) {
+            s_app.control.target_output_percent = s_app.control.preoff_dim_target_percent;
+        } else if (s_app.sensors.last_valid_presence == 0U) {
+            s_app.control.target_output_percent = 0U;
+        }
     }
 
     s_app.control.hysteresis_output_percent = apply_output_hysteresis(s_app.control.target_output_percent);

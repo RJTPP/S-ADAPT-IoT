@@ -28,8 +28,13 @@
 ## B. Business Logic Tests
 
 ### B1. Presence and mode behavior
-- [ ] User near threshold -> `user_present = true`.
-- [ ] User beyond threshold -> standby/off behavior triggers as specified.
+- [ ] OFF->ON captures fallback reference then first valid filtered distance.
+- [ ] Away rule: `distance > ref + 20` for ~30s triggers pre-off dim.
+- [ ] Flat rule: near-reference stable distance for ~120s triggers pre-off dim.
+- [ ] Pre-off dim behavior: output becomes `min(current,15%)` and stays for ~10s.
+- [ ] Recovery during pre-off cancels no-user transition.
+- [ ] Away recovery: return near reference resumes present.
+- [ ] Flat recovery: sustained motion (~5s) resumes present.
 - [ ] Auto mode computes brightness from LDR.
 - [ ] Boot state keeps main light OFF until user single-click.
 - [ ] Encoder single click toggles main light ON/OFF.
@@ -37,7 +42,7 @@
 - [ ] Encoder rotation changes offset only (does not change sensitivity/factor parameters).
 - [ ] Double click resets manual offset to `0` (AUTO baseline).
 - [ ] LDR-based AUTO logic remains active after offset reset.
-- [ ] Presence behavior remains baseline threshold logic (no hysteresis in this phase).
+- [ ] Presence holds last valid state during transient ultrasonic failures.
 
 ### B1.1 Stability filter behavior
 - [ ] `ldr_filt` responds smoother than `ldr_raw` under small ambient changes.
