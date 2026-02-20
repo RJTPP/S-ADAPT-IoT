@@ -63,7 +63,7 @@ flowchart TD
 ## RGB Mapping (Current)
 - `BOOT_SETUP` -> Purple
 - `AUTO` -> Blue
-- `OFFSET_POSITIVE` -> Green
+- `OFFSET_POSITIVE` -> Green (used for any non-zero manual offset in baseline)
 - `NO_USER` -> Red
 - `FAULT_FATAL` -> blinking Red
 
@@ -71,7 +71,7 @@ flowchart TD
 1. `FAULT_FATAL`
 2. `BOOT_SETUP` for first `1000 ms` after init
 3. `NO_USER` when `light_enabled == 1` and `last_valid_presence == 0`
-4. `OFFSET_POSITIVE` when `light_enabled == 1` and `manual_offset > 0`
+4. `OFFSET_POSITIVE` when `light_enabled == 1` and `manual_offset != 0`
 5. `AUTO`
 
 ## RGB Validation Mode

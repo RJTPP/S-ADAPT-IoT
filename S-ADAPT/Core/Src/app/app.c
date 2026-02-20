@@ -146,7 +146,7 @@ static status_led_state_t app_evaluate_state(uint32_t now_ms)
         return STATUS_LED_STATE_NO_USER;
     }
 
-    if ((s_app.light_enabled != 0U) && (s_app.manual_offset > 0)) {
+    if ((s_app.light_enabled != 0U) && (s_app.manual_offset != 0)) {
         return STATUS_LED_STATE_OFFSET_POSITIVE;
     }
 
