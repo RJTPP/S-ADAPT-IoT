@@ -6,7 +6,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "debug_print.h"
-#include "ldr.h"
+#include "switch_input.h"
 #include "ultrasonic.h"
 /* USER CODE END Includes */
 
@@ -16,10 +16,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define LDR_SAMPLE_PERIOD_MS  50U
-#define US_SAMPLE_PERIOD_MS   100U
-#define US_ECHO_TIMEOUT_US    30000U
-#define US_DISTANCE_ERROR_CM  999U
+#define US_SAMPLE_PERIOD_MS      100U
+#define US_ECHO_TIMEOUT_US       30000U
+#define US_DISTANCE_ERROR_CM     999U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -37,8 +36,7 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-static uint32_t s_last_ldr_ms = 0U;
-static uint32_t s_last_us_ms = 0U;
+static uint32_t s_last_us_sample_ms = 0U;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,11 +91,10 @@ int main(void)
   debug_print_init(&huart2);
   debug_print_set_level(DEBUG_PRINT_DEBUG);
   debug_println("Boot start");
-  debug_println("US + LDR mode");
-  ldr_init(&hadc1);
+  debug_println("US + switch mode");
   ultrasonic_init(&htim2, TIM_CHANNEL_2);
-  s_last_ldr_ms = HAL_GetTick();
-  s_last_us_ms = s_last_ldr_ms;
+  switch_input_init();
+  s_last_us_sample_ms = HAL_GetTick();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -105,31 +102,23 @@ int main(void)
   while (1)
   {
     uint32_t now_ms = HAL_GetTick();
+    switch_input_event_t switch_event;
 
-    if ((uint32_t)(now_ms - s_last_ldr_ms) >= LDR_SAMPLE_PERIOD_MS)
+    switch_input_tick(now_ms);
+    while (switch_input_pop_event(&switch_event) != 0U)
     {
-      uint16_t ldr_raw = 0U;
-      ldr_status_t ldr_status = ldr_read_raw(&ldr_raw);
-      s_last_ldr_ms = now_ms;
-
-      debug_logln(DEBUG_PRINT_DEBUG, "ldr_raw=%u status=%s",
-                  (unsigned int)ldr_raw,
-                  ldr_status_to_string(ldr_status));
+      const char *name = (switch_event.input == SWITCH_INPUT_BUTTON) ? "BUTTON" : "SW2";
+      const char *event_name = (switch_event.pressed != 0U) ? "pressed" : "released";
+      debug_logln(DEBUG_PRINT_DEBUG, "switch=%s event=%s level=%u",
+                  name,
+                  event_name,
+                  (unsigned int)switch_event.level);
     }
 
-    if ((uint32_t)(now_ms - s_last_us_ms) >= US_SAMPLE_PERIOD_MS)
+    if ((uint32_t)(now_ms - s_last_us_sample_ms) >= US_SAMPLE_PERIOD_MS)
     {
-      ultrasonic_status_t us_status;
-      uint32_t echo_us = ultrasonic_read_echo_us(US_ECHO_TIMEOUT_US);
-      uint32_t distance_cm = (echo_us == 0U) ? US_DISTANCE_ERROR_CM : (echo_us / 58U);
-
-      s_last_us_ms = now_ms;
-      us_status = ultrasonic_get_last_status();
-
-      debug_logln(DEBUG_PRINT_DEBUG, "echo_us=%lu dist_cm=%lu status=%s",
-                  (unsigned long)echo_us,
-                  (unsigned long)distance_cm,
-                  ultrasonic_status_to_string(us_status));
+      s_last_us_sample_ms = now_ms;
+      (void)ultrasonic_read_echo_us(US_ECHO_TIMEOUT_US);
     }
 
     HAL_Delay(1);
@@ -510,11 +499,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(ENCODER_CLK_EXTI1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : SW_Pin */
-  GPIO_InitStruct.Pin = SW_Pin;
+  /*Configure GPIO pin : ENCODER_PRESS_Pin */
+  GPIO_InitStruct.Pin = ENCODER_PRESS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(SW_GPIO_Port, &GPIO_InitStruct);
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(ENCODER_PRESS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : ENCODER_DT_EXTI10_Pin */
   GPIO_InitStruct.Pin = ENCODER_DT_EXTI10_Pin;
