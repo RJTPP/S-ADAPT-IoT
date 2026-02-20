@@ -62,9 +62,8 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
                 }
 
                 away_condition = (s_app.sensors.last_distance_filtered_cm > (ref_distance_cm + s_policy_cfg.presence_body_margin_cm)) ? 1U : 0U;
-                flat_condition = (abs_ref_delta_cm <= s_policy_cfg.presence_flat_band_cm) ? 1U : 0U;
-                motion_condition = ((abs_ref_delta_cm >= s_policy_cfg.presence_motion_delta_cm) ||
-                                    ((prev_ready != 0U) && (abs_step_delta_cm >= s_policy_cfg.presence_motion_delta_cm))) ? 1U : 0U;
+                flat_condition = ((prev_ready != 0U) && (abs_step_delta_cm <= s_policy_cfg.presence_flat_band_cm)) ? 1U : 0U;
+                motion_condition = ((prev_ready != 0U) && (abs_step_delta_cm >= s_policy_cfg.presence_motion_delta_cm)) ? 1U : 0U;
 
                 if (away_condition != 0U) {
                     s_app.sensors.away_streak_ms += s_timing_cfg.us_sample_ms;
