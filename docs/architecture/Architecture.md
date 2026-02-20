@@ -22,52 +22,52 @@ This document defines the current firmware architecture and hardware-to-code map
 ## Firmware Modules
 | Module | Main Files | Responsibility |
 |---|---|---|
-| App orchestration | `S-ADAPT/Core/Src/app.c` | Main runtime step, sensor read cadence, RGB state evaluation, and diagnostics |
+| Switch input debounce | `S-ADAPT/Core/Src/switch_input.c` | Poll `BUTTON`/`SW2`, debounce transitions, queue switch events |
 | Ultrasonic driver | `S-ADAPT/Core/Src/ultrasonic.c` | TRIG pulse, TIM2 input capture, timeout/noise handling, distance conversion |
-| Display driver facade | `S-ADAPT/Core/Src/display.c` | OLED init and page rendering calls |
-| Status LED control | `S-ADAPT/Core/Src/status_led.c` | State-to-color mapping, polarity abstraction, and non-blocking fatal blink |
-| Platform init | `S-ADAPT/Core/Src/main.c` | CubeMX init, app startup, infinite loop |
+| Display driver facade | `S-ADAPT/Core/Src/display.c` | OLED init and rendering calls (available, not in current runtime loop) |
+| Status LED control | `S-ADAPT/Core/Src/status_led.c` | RGB indication and error blink support (available) |
+| Platform runtime | `S-ADAPT/Core/Src/main.c` | CubeMX init, runtime scheduling, switch event logging, ultrasonic logging |
+| App orchestration (future) | `S-ADAPT/Core/Src/app.c` | Reserved for higher-level business logic orchestration |
 
 ## Runtime Data Flow
 ```mermaid
 flowchart TD
     A["Boot / HAL Init"] --> B["Peripheral Init (GPIO, TIM, I2C, ADC, UART)"]
-    B --> C["app_init()"]
-    C --> C1["status_led_init + ultrasonic_init + display_init"]
-    C1 --> D["Loop: app_step()"]
-    D --> E["status_led_tick(HAL_GetTick())"]
-    D --> F["Every 100 ms: ultrasonic_read_distance_cm()"]
-    F --> G["Update cached presence/distance on valid reads"]
-    G --> H["Evaluate RGB state priority"]
-    H --> I["Optional APP_RGB_TEST_MODE override"]
-    I --> J["status_led_set_state + status_led_tick"]
-    J --> K["GPIO outputs (RGB)"]
-    G --> L["display_show_distance_cm()"]
-    L --> M["OLED update (I2C)"]
+    B --> C["ultrasonic_init() + switch_input_init()"]
+    C --> D["Loop in main.c"]
+    D --> E["switch_input_tick(now_ms)"]
+    E --> F["switch_input_pop_event()"]
+    F --> G["UART: switch pressed/released transitions"]
+    D --> H{"100 ms elapsed?"}
+    H -- "Yes" --> I["ultrasonic_read_echo_us()"]
+    I --> J["Distance conversion + status read"]
+    J --> K["UART: ultrasonic diagnostic line"]
+    H -- "No" --> L["Idle"]
+    G --> L
+    K --> L
 ```
 
 ## Timing Model (Current)
 | Activity | Current cadence |
 |---|---|
-| Main loop | Free-running (`while(1)` with `app_step()`, no loop `HAL_Delay`) |
-| App control tick | 100 ms (`APP_LOOP_TICK_MS`) |
-| Ultrasonic measurement | Once per app control tick |
-| OLED distance update | Once per app control tick when display init succeeds |
-| Fatal RGB blink toggle | 250 ms default (`STATUS_LED_FAULT_BLINK_DEFAULT_MS`) |
-
-## RGB Status Behavior (Current)
-- Primary path is state-based RGB (`status_led_set_state`), not distance-threshold mapping.
-- State colors:
-- `BOOT_SETUP` -> Purple
-- `AUTO` -> Blue
-- `OFFSET_POSITIVE` -> Green
-- `NO_USER` -> Red
-- `FAULT_FATAL` -> blinking Red
-- Compatibility wrappers (`status_led_set_for_distance`, `status_led_blink_error`) remain for transition only.
-- Temporary compile-time test mode (`APP_RGB_TEST_MODE`) cycles `AUTO -> OFFSET_POSITIVE -> NO_USER -> BOOT_SETUP` every 1000 ms.
+| Main loop pacing | `HAL_Delay(1)` |
+| Switch sampling | 10 ms (`SWITCH_SAMPLE_PERIOD_MS`) |
+| Switch debounce confirmation | 30 ms (`SWITCH_DEBOUNCE_TICKS` x sample period) |
+| Ultrasonic measurement | 100 ms (`US_SAMPLE_PERIOD_MS`) |
+| UART switch logs | On debounced transitions only |
+| UART ultrasonic logs | Once per ultrasonic tick |
 
 ## Planned Direction
 - Keep module boundaries stable.
-- Disable/remove temporary RGB test mode after board validation.
-- Complete full business logic layer: `AUTO + manual_offset`, light ON/OFF toggling, LDR-driven PWM output, and page switching.
+| Main loop pacing | `HAL_Delay(1)` |
+| Switch sampling | 10 ms (`SWITCH_SAMPLE_PERIOD_MS`) |
+| Switch debounce confirmation | 30 ms (`SWITCH_DEBOUNCE_TICKS` x sample period) |
+| Ultrasonic measurement | 100 ms (`US_SAMPLE_PERIOD_MS`) |
+| UART switch logs | On debounced transitions only |
+| UART ultrasonic logs | Once per ultrasonic tick |
+
+## Planned Direction
+- Keep module boundaries stable.
 - Keep hardware drivers separate from policy decisions.
+- Add LDR and PWM hardware bring-up modules to the same scheduling model.
+- Move scheduling/orchestration from `main.c` to `app.c` when business logic integration starts.

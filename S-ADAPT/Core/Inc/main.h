@@ -77,8 +77,8 @@ void Error_Handler(void);
 #define ENCODER_CLK_EXTI1_GPIO_Port GPIOB
 #define Main_LED_TIM1_CH1_Pin GPIO_PIN_8
 #define Main_LED_TIM1_CH1_GPIO_Port GPIOA
-#define SW_Pin GPIO_PIN_9
-#define SW_GPIO_Port GPIOA
+#define ENCODER_PRESS_Pin GPIO_PIN_9
+#define ENCODER_PRESS_GPIO_Port GPIOA
 #define ENCODER_DT_EXTI10_Pin GPIO_PIN_10
 #define ENCODER_DT_EXTI10_GPIO_Port GPIOA
 #define SWDIO_Pin GPIO_PIN_13
