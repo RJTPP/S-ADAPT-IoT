@@ -22,10 +22,10 @@ This document defines the current firmware architecture and hardware-to-code map
 ## Firmware Modules
 | Module | Main Files | Responsibility |
 |---|---|---|
-| App orchestration | `S-ADAPT/Core/Src/app.c` | Main runtime step, connects sensor, display, and status outputs |
+| App orchestration | `S-ADAPT/Core/Src/app.c` | Main runtime step, sensor read cadence, RGB state evaluation, and diagnostics |
 | Ultrasonic driver | `S-ADAPT/Core/Src/ultrasonic.c` | TRIG pulse, TIM2 input capture, timeout/noise handling, distance conversion |
 | Display driver facade | `S-ADAPT/Core/Src/display.c` | OLED init and page rendering calls |
-| Status LED control | `S-ADAPT/Core/Src/status_led.c` | RGB indication behavior and fatal error blink |
+| Status LED control | `S-ADAPT/Core/Src/status_led.c` | State-to-color mapping, polarity abstraction, and non-blocking fatal blink |
 | Platform init | `S-ADAPT/Core/Src/main.c` | CubeMX init, app startup, infinite loop |
 
 ## Runtime Data Flow
@@ -33,22 +33,41 @@ This document defines the current firmware architecture and hardware-to-code map
 flowchart TD
     A["Boot / HAL Init"] --> B["Peripheral Init (GPIO, TIM, I2C, ADC, UART)"]
     B --> C["app_init()"]
-    C --> D["Loop: app_step()"]
-    D --> E["ultrasonic_read_distance_cm()"]
-    E --> F["status_led_set_for_distance()"]
-    E --> G["display_show_distance_cm()"]
-    F --> H["GPIO Outputs (RGB)"]
-    G --> I["OLED Update (I2C)"]
+    C --> C1["status_led_init + ultrasonic_init + display_init"]
+    C1 --> D["Loop: app_step()"]
+    D --> E["status_led_tick(HAL_GetTick())"]
+    D --> F["Every 100 ms: ultrasonic_read_distance_cm()"]
+    F --> G["Update cached presence/distance on valid reads"]
+    G --> H["Evaluate RGB state priority"]
+    H --> I["Optional APP_RGB_TEST_MODE override"]
+    I --> J["status_led_set_state + status_led_tick"]
+    J --> K["GPIO outputs (RGB)"]
+    G --> L["display_show_distance_cm()"]
+    L --> M["OLED update (I2C)"]
 ```
 
 ## Timing Model (Current)
 | Activity | Current cadence |
 |---|---|
-| Main loop tick | ~33 ms (`HAL_Delay(33)`) |
-| Ultrasonic measurement | Once per loop |
-| OLED update | Once per loop |
+| Main loop | Free-running (`while(1)` with `app_step()`, no loop `HAL_Delay`) |
+| App control tick | 100 ms (`APP_LOOP_TICK_MS`) |
+| Ultrasonic measurement | Once per app control tick |
+| OLED distance update | Once per app control tick when display init succeeds |
+| Fatal RGB blink toggle | 250 ms default (`STATUS_LED_FAULT_BLINK_DEFAULT_MS`) |
+
+## RGB Status Behavior (Current)
+- Primary path is state-based RGB (`status_led_set_state`), not distance-threshold mapping.
+- State colors:
+- `BOOT_SETUP` -> Purple
+- `AUTO` -> Blue
+- `OFFSET_POSITIVE` -> Green
+- `NO_USER` -> Red
+- `FAULT_FATAL` -> blinking Red
+- Compatibility wrappers (`status_led_set_for_distance`, `status_led_blink_error`) remain for transition only.
+- Temporary compile-time test mode (`APP_RGB_TEST_MODE`) cycles `AUTO -> OFFSET_POSITIVE -> NO_USER -> BOOT_SETUP` every 1000 ms.
 
 ## Planned Direction
 - Keep module boundaries stable.
-- Add business logic layer for `AUTO + manual_offset`, light ON/OFF toggling, and page switching.
+- Disable/remove temporary RGB test mode after board validation.
+- Complete full business logic layer: `AUTO + manual_offset`, light ON/OFF toggling, LDR-driven PWM output, and page switching.
 - Keep hardware drivers separate from policy decisions.
