@@ -5,9 +5,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "app.h"
 #include "debug_print.h"
-#include "status_led.h"
 #include "switch_input.h"
 #include "ultrasonic.h"
 /* USER CODE END Includes */
@@ -50,32 +48,10 @@ static void MX_I2C1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
-static void i2c_scan(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static void i2c_scan(void)
-{
-  uint8_t addr;
-  uint8_t found = 0U;
-
-  debug_println("I2C scan start");
-  for (addr = 0x03U; addr <= 0x77U; addr++)
-  {
-    if (HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)(addr << 1), 2U, 20U) == HAL_OK)
-    {
-      debug_println("I2C device: 0x%02X", addr);
-      found = 1U;
-    }
-  }
-
-  if (!found)
-  {
-    debug_println("I2C device: none");
-  }
-  debug_println("I2C scan end");
-}
 /* USER CODE END 0 */
 
 /**
@@ -86,7 +62,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/

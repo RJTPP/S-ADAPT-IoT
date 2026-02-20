@@ -59,6 +59,15 @@ flowchart TD
 
 ## Planned Direction
 - Keep module boundaries stable.
+| Main loop pacing | `HAL_Delay(1)` |
+| Switch sampling | 10 ms (`SWITCH_SAMPLE_PERIOD_MS`) |
+| Switch debounce confirmation | 30 ms (`SWITCH_DEBOUNCE_TICKS` x sample period) |
+| Ultrasonic measurement | 100 ms (`US_SAMPLE_PERIOD_MS`) |
+| UART switch logs | On debounced transitions only |
+| UART ultrasonic logs | Once per ultrasonic tick |
+
+## Planned Direction
+- Keep module boundaries stable.
 - Keep hardware drivers separate from policy decisions.
 - Add LDR and PWM hardware bring-up modules to the same scheduling model.
 - Move scheduling/orchestration from `main.c` to `app.c` when business logic integration starts.
