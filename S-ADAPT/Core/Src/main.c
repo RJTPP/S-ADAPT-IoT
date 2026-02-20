@@ -530,17 +530,12 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : ENCODER_DT_EXTI10_Pin */
   GPIO_InitStruct.Pin = ENCODER_DT_EXTI10_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(ENCODER_DT_EXTI10_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
   /* Use EXTI on CLK only for encoder X1 decode. */
-  GPIO_InitStruct.Pin = ENCODER_DT_EXTI10_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(ENCODER_DT_EXTI10_GPIO_Port, &GPIO_InitStruct);
-
   HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI1_IRQn);
   /* USER CODE END MX_GPIO_Init_2 */

@@ -77,6 +77,7 @@ static void queue_push(encoder_event_type_t type, uint32_t now_ms, uint8_t sw_le
 
 void encoder_input_init(void)
 {
+    uint32_t primask = critical_enter();
     uint8_t sw_level = read_pin_level(ENCODER_SW_GPIO_Port, ENCODER_SW_Pin);
 
     s_sw_state.stable_level = sw_level;
@@ -89,6 +90,8 @@ void encoder_input_init(void)
     s_queue_head = 0U;
     s_queue_tail = 0U;
     s_queue_count = 0U;
+
+    critical_exit(primask);
 }
 
 void encoder_input_tick(uint32_t now_ms)
@@ -132,7 +135,7 @@ void encoder_input_on_clk_edge_isr(void)
     s_last_clk_edge_ms = now_ms;
 
     dt_level = read_pin_level(ENCODER_DT_EXTI10_GPIO_Port, ENCODER_DT_EXTI10_Pin);
-    sw_level = read_pin_level(ENCODER_SW_GPIO_Port, ENCODER_SW_Pin);
+    sw_level = s_sw_state.stable_level;
 
     queue_push((dt_level == 0U) ? ENCODER_EVENT_CW : ENCODER_EVENT_CCW, now_ms, sw_level);
 }
