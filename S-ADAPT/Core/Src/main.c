@@ -605,7 +605,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : ENCODER_CLK_EXTI1_Pin */
   GPIO_InitStruct.Pin = ENCODER_CLK_EXTI1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(ENCODER_CLK_EXTI1_GPIO_Port, &GPIO_InitStruct);
 
@@ -617,21 +617,23 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : ENCODER_DT_EXTI10_Pin */
   GPIO_InitStruct.Pin = ENCODER_DT_EXTI10_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(ENCODER_DT_EXTI10_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
-  /* Use EXTI on CLK only for encoder X1 decode. */
+  /* Use EXTI on both encoder channels for quadrature decode. */
   HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  if (GPIO_Pin == ENCODER_CLK_EXTI1_Pin)
+  if ((GPIO_Pin == ENCODER_CLK_EXTI1_Pin) || (GPIO_Pin == ENCODER_DT_EXTI10_Pin))
   {
     encoder_input_on_clk_edge_isr();
   }

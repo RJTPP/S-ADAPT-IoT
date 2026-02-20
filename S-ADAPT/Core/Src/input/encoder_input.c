@@ -15,7 +15,7 @@
 
 #define ENCODER_SW_SAMPLE_MS      10U
 #define ENCODER_SW_DEBOUNCE_TICKS 3U
-#define ENCODER_EDGE_GUARD_MS     2U
+#define ENCODER_STEPS_PER_DETENT  4U
 #define ENCODER_EVENT_QUEUE_SIZE  8U
 
 typedef struct
@@ -27,12 +27,29 @@ typedef struct
 
 static sw_state_t s_sw_state;
 static uint32_t s_last_sw_sample_ms = 0U;
-static uint32_t s_last_clk_edge_ms = 0U;
+static uint8_t s_last_ab_state = 0U;
+static int8_t s_step_accum = 0;
 
 static encoder_event_t s_event_queue[ENCODER_EVENT_QUEUE_SIZE];
 static uint8_t s_queue_head = 0U;
 static uint8_t s_queue_tail = 0U;
 static uint8_t s_queue_count = 0U;
+
+/* Reject invalid quadrature transitions to suppress bounce-induced reversals. */
+static const int8_t s_quadrature_lut[16] = {
+    0, -1,  1,  0,
+    1,  0,  0, -1,
+   -1,  0,  0,  1,
+    0,  1, -1,  0
+};
+
+static uint8_t encoder_read_ab_state(void)
+{
+    uint8_t clk_level = input_gpio_level(ENCODER_CLK_EXTI1_GPIO_Port, ENCODER_CLK_EXTI1_Pin);
+    uint8_t dt_level = input_gpio_level(ENCODER_DT_EXTI10_GPIO_Port, ENCODER_DT_EXTI10_Pin);
+
+    return (uint8_t)((clk_level << 1) | dt_level);
+}
 
 static void queue_push(encoder_event_type_t type, uint32_t now_ms, uint8_t sw_level)
 {
@@ -62,7 +79,8 @@ void encoder_input_init(void)
     s_sw_state.candidate_ticks = 0U;
 
     s_last_sw_sample_ms = HAL_GetTick();
-    s_last_clk_edge_ms = 0U;
+    s_last_ab_state = encoder_read_ab_state();
+    s_step_accum = 0;
 
     s_queue_head = 0U;
     s_queue_tail = 0U;
@@ -102,19 +120,31 @@ void encoder_input_tick(uint32_t now_ms)
 
 void encoder_input_on_clk_edge_isr(void)
 {
-    uint8_t dt_level;
+    uint8_t ab_state;
+    uint8_t lut_index;
+    int8_t step_delta;
     uint8_t sw_level;
     uint32_t now_ms = HAL_GetTick();
 
-    if ((uint32_t)(now_ms - s_last_clk_edge_ms) < ENCODER_EDGE_GUARD_MS) {
+    ab_state = encoder_read_ab_state();
+    lut_index = (uint8_t)((s_last_ab_state << 2) | ab_state);
+    step_delta = s_quadrature_lut[lut_index];
+    s_last_ab_state = ab_state;
+
+    if (step_delta == 0) {
         return;
     }
-    s_last_clk_edge_ms = now_ms;
 
-    dt_level = input_gpio_level(ENCODER_DT_EXTI10_GPIO_Port, ENCODER_DT_EXTI10_Pin);
+    s_step_accum = (int8_t)(s_step_accum + step_delta);
     sw_level = s_sw_state.stable_level;
 
-    queue_push((dt_level == 0U) ? ENCODER_EVENT_CW : ENCODER_EVENT_CCW, now_ms, sw_level);
+    if (s_step_accum >= (int8_t)ENCODER_STEPS_PER_DETENT) {
+        s_step_accum = 0;
+        queue_push(ENCODER_EVENT_CW, now_ms, sw_level);
+    } else if (s_step_accum <= -(int8_t)ENCODER_STEPS_PER_DETENT) {
+        s_step_accum = 0;
+        queue_push(ENCODER_EVENT_CCW, now_ms, sw_level);
+    }
 }
 
 uint8_t encoder_input_pop_event(encoder_event_t *out_event)

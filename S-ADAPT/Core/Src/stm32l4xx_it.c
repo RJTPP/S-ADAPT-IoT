@@ -204,4 +204,9 @@ void EXTI1_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(ENCODER_CLK_EXTI1_Pin);
 }
 
+void EXTI15_10_IRQHandler(void)
+{
+  HAL_GPIO_EXTI_IRQHandler(ENCODER_DT_EXTI10_Pin);
+}
+
 /* USER CODE END 1 */
