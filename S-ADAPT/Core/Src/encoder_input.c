@@ -2,6 +2,16 @@
 
 #include "main.h"
 
+#if defined(ENCODER_PRESS_GPIO_Port) && defined(ENCODER_PRESS_Pin)
+#define ENCODER_SW_GPIO_Port ENCODER_PRESS_GPIO_Port
+#define ENCODER_SW_Pin ENCODER_PRESS_Pin
+#elif defined(SW_GPIO_Port) && defined(SW_Pin)
+#define ENCODER_SW_GPIO_Port SW_GPIO_Port
+#define ENCODER_SW_Pin SW_Pin
+#else
+#error "Encoder switch pin macros are not defined in main.h"
+#endif
+
 #define ENCODER_SW_SAMPLE_MS      10U
 #define ENCODER_SW_DEBOUNCE_TICKS 3U
 #define ENCODER_EDGE_GUARD_MS     2U
@@ -67,7 +77,7 @@ static void queue_push(encoder_event_type_t type, uint32_t now_ms, uint8_t sw_le
 
 void encoder_input_init(void)
 {
-    uint8_t sw_level = read_pin_level(SW_GPIO_Port, SW_Pin);
+    uint8_t sw_level = read_pin_level(ENCODER_SW_GPIO_Port, ENCODER_SW_Pin);
 
     s_sw_state.stable_level = sw_level;
     s_sw_state.candidate_level = sw_level;
@@ -90,7 +100,7 @@ void encoder_input_tick(uint32_t now_ms)
     }
     s_last_sw_sample_ms = now_ms;
 
-    sw_level = read_pin_level(SW_GPIO_Port, SW_Pin);
+    sw_level = read_pin_level(ENCODER_SW_GPIO_Port, ENCODER_SW_Pin);
     if (sw_level != s_sw_state.candidate_level) {
         s_sw_state.candidate_level = sw_level;
         s_sw_state.candidate_ticks = 1U;
@@ -122,7 +132,7 @@ void encoder_input_on_clk_edge_isr(void)
     s_last_clk_edge_ms = now_ms;
 
     dt_level = read_pin_level(ENCODER_DT_EXTI10_GPIO_Port, ENCODER_DT_EXTI10_Pin);
-    sw_level = read_pin_level(SW_GPIO_Port, SW_Pin);
+    sw_level = read_pin_level(ENCODER_SW_GPIO_Port, ENCODER_SW_Pin);
 
     queue_push((dt_level == 0U) ? ENCODER_EVENT_CW : ENCODER_EVENT_CCW, now_ms, sw_level);
 }
