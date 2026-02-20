@@ -57,7 +57,8 @@ Source references:
 - [ ] State color mapping works:
 - [ ] Blue = Auto mode
 - [ ] Green = Manual mode
-- [ ] Red = No user / standby
+- [ ] Yellow = No user (while light ON)
+- [ ] Red = Manual OFF
 - [ ] Purple = Setup / special mode
 - [ ] Confirm implemented state-based RGB mapping matches behavior spec (distance-only legacy mapping removed).
 - [ ] Error blink path works on forced init failure.

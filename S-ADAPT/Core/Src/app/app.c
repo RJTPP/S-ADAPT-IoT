@@ -84,6 +84,8 @@ static const char *status_led_state_to_string(status_led_state_t state)
     switch (state) {
         case STATUS_LED_STATE_BOOT_SETUP:
             return "boot_setup";
+        case STATUS_LED_STATE_LIGHT_OFF:
+            return "light_off";
         case STATUS_LED_STATE_AUTO:
             return "auto";
         case STATUS_LED_STATE_OFFSET_POSITIVE:
@@ -142,11 +144,15 @@ static status_led_state_t app_evaluate_state(uint32_t now_ms)
         return STATUS_LED_STATE_BOOT_SETUP;
     }
 
-    if ((s_app.light_enabled != 0U) && (s_app.last_valid_presence == 0U)) {
+    if (s_app.light_enabled == 0U) {
+        return STATUS_LED_STATE_LIGHT_OFF;
+    }
+
+    if (s_app.last_valid_presence == 0U) {
         return STATUS_LED_STATE_NO_USER;
     }
 
-    if ((s_app.light_enabled != 0U) && (s_app.manual_offset != 0)) {
+    if (s_app.manual_offset != 0) {
         return STATUS_LED_STATE_OFFSET_POSITIVE;
     }
 

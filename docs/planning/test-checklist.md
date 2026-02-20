@@ -50,7 +50,13 @@
 
 ### B3. RGB status behavior
 - [ ] Current implementation behavior is documented and verified.
-- [ ] If migrated: Blue/Green/Red/Purple state mapping is verified.
+- [ ] Baseline mapping is verified:
+- [ ] Blue = AUTO
+- [ ] Green = manual offset active (non-zero offset)
+- [ ] Yellow = no user (while light ON)
+- [ ] Red = manual OFF
+- [ ] Purple = boot/setup window
+- [ ] Fatal fault = red blink
 
 ## C. Acceptance Tests (Pass/Fail)
 | Test | Pass Criteria | Result |
