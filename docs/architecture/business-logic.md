@@ -41,20 +41,20 @@
 flowchart TD
     A["app_step()"] --> B["Process switch/encoder events"]
     B --> C["Handle click timeout (single-click commit)"]
-    C --> D{"33 ms elapsed?"}
-    D -- "No" --> E["Return"]
-    D -- "Yes" --> F{"50 ms elapsed?"}
-    F -- "Yes" --> G["Read LDR raw"]
-    F -- "No" --> H["Keep prior LDR cache"]
-    G --> I{"100 ms elapsed?"}
-    H --> I
-    I -- "Yes" --> J["Read ultrasonic + status"]
-    I -- "No" --> K["Keep prior ultrasonic cache"]
-    J --> L{"Valid read?"}
-    L -- "Yes" --> M["Update distance/presence cache"]
-    L -- "No" --> K
-    M --> N["Compute auto_percent from LDR"]
-    K --> N
+    C --> D{"50 ms elapsed?"}
+    D -- "Yes" --> E["Read LDR raw"]
+    D -- "No" --> F["Keep prior LDR cache"]
+    E --> G{"100 ms elapsed?"}
+    F --> G
+    G -- "Yes" --> H["Read ultrasonic + status"]
+    G -- "No" --> I["Keep prior ultrasonic cache"]
+    H --> J{"Valid read?"}
+    J -- "Yes" --> K["Update distance/presence cache"]
+    J -- "No" --> I
+    K --> L{"33 ms elapsed?"}
+    I --> L
+    L -- "No" --> M["Return"]
+    L -- "Yes" --> N["Compute auto_percent from LDR"]
     N --> O["Apply manual_offset + clamp 0..100 target"]
     O --> P["Apply gates: light_off or no_user -> target=0%"]
     P --> Q["Apply output hysteresis (±5%)"]

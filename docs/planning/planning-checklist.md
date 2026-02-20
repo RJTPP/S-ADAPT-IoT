@@ -97,7 +97,7 @@ Source references:
 
 ### Sampling and filtering
 - [x] Control loop tick at 33 ms (+/- 10%).
-- [x] LDR sampling loop at 50 ms (+/- 10%).
+- [x] LDR sampling loop at 50 ms (+/- 10%), decoupled from control-tick cadence.
 - [x] Ultrasonic sampling loop at 100 ms (+/- 10%).
 - [x] Moving average filter for LDR.
 - [x] Median/outlier filtering for ultrasonic.

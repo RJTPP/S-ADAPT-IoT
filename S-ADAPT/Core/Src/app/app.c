@@ -490,13 +490,8 @@ void app_step(void)
 
     app_handle_click_timeout(now_ms);
 
-    if ((uint32_t)(now_ms - s_app.timing.last_control_tick_ms) < s_timing_cfg.control_tick_ms) {
-        return;
-    }
-    s_app.timing.last_control_tick_ms = now_ms;
-
     if ((uint32_t)(now_ms - s_app.timing.last_ldr_sample_ms) >= s_timing_cfg.ldr_sample_ms) {
-        s_app.timing.last_ldr_sample_ms = now_ms;
+        s_app.timing.last_ldr_sample_ms += s_timing_cfg.ldr_sample_ms;
         s_app.sensors.last_ldr_status = ldr_read_raw(&s_app.sensors.last_ldr_raw);
         if (s_app.sensors.last_ldr_status == LDR_STATUS_OK) {
             s_app.sensors.last_ldr_filtered =
@@ -507,7 +502,7 @@ void app_step(void)
     if ((uint32_t)(now_ms - s_app.timing.last_us_sample_ms) >= s_timing_cfg.us_sample_ms) {
         uint32_t distance_cm;
 
-        s_app.timing.last_us_sample_ms = now_ms;
+        s_app.timing.last_us_sample_ms += s_timing_cfg.us_sample_ms;
         distance_cm = ultrasonic_read_distance_cm(s_policy_cfg.us_timeout_us, s_policy_cfg.distance_error_cm);
         s_app.sensors.last_us_status = ultrasonic_get_last_status();
 
@@ -519,6 +514,11 @@ void app_step(void)
             s_app.sensors.last_valid_presence = (s_app.sensors.last_distance_filtered_cm < s_policy_cfg.presence_cm) ? 1U : 0U;
         }
     }
+
+    if ((uint32_t)(now_ms - s_app.timing.last_control_tick_ms) < s_timing_cfg.control_tick_ms) {
+        return;
+    }
+    s_app.timing.last_control_tick_ms += s_timing_cfg.control_tick_ms;
 
     s_app.control.auto_percent = compute_auto_percent_from_ldr(s_app.sensors.last_ldr_filtered);
 
