@@ -6,12 +6,16 @@
 - OLED multi-page status display.
 - RGB LED indicates system state.
 
-## Current Implementation Snapshot (Driver-First Phase)
-- Runtime owner is currently `main.c` (hardware bring-up mode), not `app.c`.
-- Hardware drivers are integrated: LDR, ultrasonic, switch, encoder, RGB status LED, OLED facade, main LED PWM.
-- Main LED is currently validated via deterministic debug duty sweep (`0/25/50/75/100%` every 1 s).
-- OLED debug heartbeat/update path is active when display init succeeds.
-- RGB debug state cycle is active at 1 s cadence for hardware verification.
+## Current Implementation Snapshot (Baseline Logic Phase)
+- Runtime owner is now `app.c` (`app_init` + `app_step`).
+- Main LED output is driven by baseline policy (`AUTO + manual_offset`) instead of debug sweep.
+- Encoder switch release drives single/double click behavior:
+- single click toggles light ON/OFF (after double-click window timeout).
+- double click resets `manual_offset` to `0`.
+- Encoder rotation adjusts offset only while light is ON.
+- Presence gate uses ultrasonic with hold-last-valid behavior on transient read failures.
+- RGB state now follows runtime policy (no test cycle override).
+- UART emits a consolidated 1-second summary log for tuning.
 
 ## Power-On Defaults (Current)
 - `Mode = AUTO`
@@ -30,19 +34,25 @@
 ## Main Control Flow (Current)
 ```mermaid
 flowchart TD
-    A["app_step()"] --> B["status_led_tick(now_ms)"]
-    B --> C{"100 ms elapsed?"}
-    C -- "No" --> D["Return"]
-    C -- "Yes" --> E["Read ultrasonic + status"]
-    E --> F{"Valid read?"}
-    F -- "Yes" --> G["Update last_valid_distance and last_valid_presence"]
-    F -- "No" --> H["Keep previous cached presence/distance"]
-    G --> I["Optional OLED distance update"]
-    H --> I
-    I --> J["Evaluate runtime RGB state priority"]
-    J --> K["Optional test override cycle"]
-    K --> L["status_led_set_state()"]
-    L --> M["status_led_tick(now_ms)"]
+    A["app_step()"] --> B["Process switch/encoder events"]
+    B --> C["Handle click timeout (single-click commit)"]
+    C --> D{"50 ms elapsed?"}
+    D -- "No" --> E["Return"]
+    D -- "Yes" --> F["Read LDR raw"]
+    F --> G{"100 ms elapsed?"}
+    G -- "Yes" --> H["Read ultrasonic + status"]
+    G -- "No" --> I["Keep prior ultrasonic cache"]
+    H --> J{"Valid read?"}
+    J -- "Yes" --> K["Update distance/presence cache"]
+    J -- "No" --> I
+    K --> L["Compute auto_percent from LDR"]
+    I --> L
+    L --> M["Apply manual_offset + clamp 0..100"]
+    M --> N["Apply gates: light_off or no_user -> 0%"]
+    N --> O["main_led_set_percent(output)"]
+    O --> P["Evaluate RGB state priority"]
+    P --> Q["status_led_set_state + tick"]
+    Q --> R["1 s summary UART log (+ optional OLED update)"]
 ```
 
 ## Presence Logic (Current)
@@ -64,28 +74,22 @@ flowchart TD
 4. `OFFSET_POSITIVE` when `light_enabled == 1` and `manual_offset > 0`
 5. `AUTO`
 
-## Temporary RGB Validation Mode
-- Compile-time flag: `APP_RGB_TEST_MODE`.
-- Current setting: enabled for board validation.
-- Behavior when enabled:
-- every `1000 ms`, override runtime color with cycle:
-- `AUTO -> OFFSET_POSITIVE -> NO_USER -> BOOT_SETUP -> repeat`
-- `FAULT_FATAL` still has highest priority and is not overridden.
+## RGB Validation Mode
+- Debug RGB override cycle is removed from primary runtime path.
+- RGB now reflects runtime state only.
 
 ## Legacy Compatibility Status
 - `status_led_set_for_distance()` remains as a deprecated wrapper for legacy callers.
 - `status_led_blink_error()` remains as a shim and routes into non-blocking fatal blink handling.
 
 ## Remaining Work To Reach Full Target Logic
-- Baseline business logic first:
-- integrate `light_enabled`, presence gate, `AUTO + manual_offset`, and PWM output from control decision.
-- keep deterministic, easy-to-debug tick schedule while integrating.
-- Then add stabilization utils:
+- Stabilization utilities:
 - moving average for LDR.
 - median/outlier handling for ultrasonic.
 - hysteresis (Schmitt-trigger style thresholds) for state transitions and no-user flicker control.
-- Then implement UX behaviors:
-- encoder single click/double click policy, rotation offset behavior, OLED page/overlay behavior.
+- UX extensions:
+- OLED multi-page model and temporary offset overlay behavior.
+- Additional UI tuning and threshold calibration.
 
 ## Implementation Order (Locked for Next Phase)
 1. Baseline control loop (no advanced filtering): correct behavior first.

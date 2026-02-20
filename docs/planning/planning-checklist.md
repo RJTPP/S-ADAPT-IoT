@@ -90,42 +90,41 @@ Source references:
 ## 2. Business Logic
 
 ### Power-on defaults
-- [ ] `Mode = AUTO` (with `manual_offset = 0`)
-- [ ] `Light = OFF` on boot (PWM output forced to 0 until user action)
+- [x] `Mode = AUTO` (with `manual_offset = 0`)
+- [x] `Light = OFF` on boot (PWM output forced to 0 until user action)
 - [ ] `OLED Page = 0`
 
 ### Sampling and filtering
 - [x] LDR sampling loop at 50 ms (+/- 10%).
-- [ ] Ultrasonic sampling loop at 100 ms (+/- 10%).
-- [ ] Temporary debug cadence note: ultrasonic is currently set to 1000 ms in `main.c` bring-up mode.
+- [x] Ultrasonic sampling loop at 100 ms (+/- 10%).
 - [ ] Moving average filter for LDR.
 - [ ] Median/outlier filtering for ultrasonic.
 - [ ] Hysteresis (Schmitt-trigger style thresholds) for stable state transitions.
 
 ### Presence and safety logic
-- [ ] Define and document presence threshold (target: ~80 cm, tune on board).
-- [ ] `distance < threshold` -> `user_present = TRUE`
-- [ ] `distance >= threshold` -> `user_present = FALSE`
-- [ ] If `user_present = FALSE`, force `brightness = 0`.
+- [x] Define and document presence threshold (target: ~80 cm, tune on board).
+- [x] `distance < threshold` -> `user_present = TRUE`
+- [x] `distance >= threshold` -> `user_present = FALSE`
+- [x] If `user_present = FALSE`, force `brightness = 0`.
 - [ ] Optional no-presence timeout behavior is defined (immediate off vs delayed off).
 
 ### AUTO + offset logic
-- [ ] AUTO mode:
-- [ ] Read filtered LDR and compute target brightness (dark -> higher PWM, bright -> lower PWM).
-- [ ] Clamp output range (example: 20% to 100%).
+- [x] AUTO mode:
+- [x] Read LDR and compute target brightness (dark -> higher PWM, bright -> lower PWM).
+- [x] Clamp output range (0% to 100% baseline).
 - [ ] Offset adjustment behavior:
-- [ ] Encoder CW increases manual brightness offset.
-- [ ] Encoder CCW decreases manual brightness offset.
-- [ ] Encoder rotation adjusts `manual_offset` only (not LDR sensitivity or curve factor).
-- [ ] Offset is applied on top of AUTO target brightness and clamped to valid PWM range.
-- [ ] Encoder single click toggles light ON/OFF.
-- [ ] Encoder double click resets manual offset to `0` (revert to pure AUTO brightness).
+- [x] Encoder CW increases manual brightness offset.
+- [x] Encoder CCW decreases manual brightness offset.
+- [x] Encoder rotation adjusts `manual_offset` only (not LDR sensitivity or curve factor).
+- [x] Offset is applied on top of AUTO target brightness and clamped to valid PWM range.
+- [x] Encoder single click toggles light ON/OFF.
+- [x] Encoder double click resets manual offset to `0` (revert to pure AUTO brightness).
 
 ### Output update logic
-- [ ] Apply PWM output every control tick.
-- [ ] If light state is OFF, force output to 0 regardless of auto/offset calculation.
+- [x] Apply PWM output every control tick.
+- [x] If light state is OFF, force output to 0 regardless of auto/offset calculation.
 - [ ] Apply smoothing/hysteresis/ramp to avoid flicker and abrupt jumps.
-- [ ] Update RGB LED according to system state.
+- [x] Update RGB LED according to system state.
 
 ### Output behavior
 - [ ] OLED includes:
@@ -139,6 +138,7 @@ Source references:
 - [ ] Overlay timeout resets on each new encoder step and returns to previous page when expired.
 - [ ] Status LED behavior is explicitly documented (kept for now).
 - [ ] Optional UART debug output for tuning thresholds and filters.
+- [x] Optional UART debug output for tuning thresholds and filters.
 
 ### Acceptance checks
 - [ ] Presence + low light test passes.
