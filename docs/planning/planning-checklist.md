@@ -96,7 +96,8 @@ Source references:
 - [ ] `OLED Page = 0`
 
 ### Sampling and filtering
-- [x] LDR sampling loop at 50 ms (+/- 10%).
+- [x] Control loop tick at 33 ms (+/- 10%).
+- [x] LDR sampling loop at 50 ms (+/- 10%), decoupled from control-tick cadence.
 - [x] Ultrasonic sampling loop at 100 ms (+/- 10%).
 - [x] Moving average filter for LDR.
 - [x] Median/outlier filtering for ultrasonic.
@@ -126,7 +127,7 @@ Source references:
 - [x] Apply PWM output every control tick.
 - [x] If light state is OFF, output ramps down to 0 with configured slew limit.
 - [x] Apply smoothing/hysteresis/ramp to avoid flicker and abrupt jumps.
-- [x] Output ramp limiter implemented (2% per 50 ms tick).
+- [x] Output ramp limiter implemented (normal 1%, turn-on 3%, turn-off 5% per 33 ms tick).
 - [x] Update RGB LED according to system state.
 
 ### Output behavior

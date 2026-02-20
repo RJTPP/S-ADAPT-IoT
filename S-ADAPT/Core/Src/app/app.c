@@ -13,6 +13,7 @@
 typedef struct
 {
     uint32_t control_tick_ms;
+    uint32_t ldr_sample_ms;
     uint32_t us_sample_ms;
     uint32_t log_ms;
     uint32_t oled_update_ms;
@@ -40,7 +41,8 @@ typedef struct
 #endif
 
 static const app_timing_cfg_t s_timing_cfg = {
-    .control_tick_ms = 50U,
+    .control_tick_ms = 33U,
+    .ldr_sample_ms = 50U,
     .us_sample_ms = 100U,
     .log_ms = 1000U,
     .oled_update_ms = 1000U,
@@ -57,15 +59,16 @@ static const app_policy_cfg_t s_policy_cfg = {
     .us_timeout_us = 30000U,
     .ldr_ma_window_size = 8U,
     .output_hysteresis_band_percent = 5U,
-    .output_ramp_step_percent = 2U,
-    .output_ramp_step_on_percent = 5U,
-    .output_ramp_step_off_percent = 8U,
+    .output_ramp_step_percent = 1U,
+    .output_ramp_step_on_percent = 3U,
+    .output_ramp_step_off_percent = 5U,
 };
 
 typedef struct
 {
     uint32_t boot_start_ms;
     uint32_t last_control_tick_ms;
+    uint32_t last_ldr_sample_ms;
     uint32_t last_us_sample_ms;
     uint32_t last_log_ms;
     uint32_t last_oled_ms;
@@ -369,6 +372,7 @@ uint8_t app_init(const app_hw_config_t *hw)
 
     s_app.timing.boot_start_ms = now_ms;
     s_app.timing.last_control_tick_ms = now_ms;
+    s_app.timing.last_ldr_sample_ms = now_ms;
     s_app.timing.last_us_sample_ms = now_ms;
     s_app.timing.last_log_ms = now_ms;
     s_app.timing.last_oled_ms = now_ms;
@@ -486,20 +490,19 @@ void app_step(void)
 
     app_handle_click_timeout(now_ms);
 
-    if ((uint32_t)(now_ms - s_app.timing.last_control_tick_ms) < s_timing_cfg.control_tick_ms) {
-        return;
-    }
-    s_app.timing.last_control_tick_ms = now_ms;
-
-    s_app.sensors.last_ldr_status = ldr_read_raw(&s_app.sensors.last_ldr_raw);
-    if (s_app.sensors.last_ldr_status == LDR_STATUS_OK) {
-        s_app.sensors.last_ldr_filtered = filter_moving_average_u16_push(&s_app.sensors.ldr_ma, s_app.sensors.last_ldr_raw);
+    if ((uint32_t)(now_ms - s_app.timing.last_ldr_sample_ms) >= s_timing_cfg.ldr_sample_ms) {
+        s_app.timing.last_ldr_sample_ms += s_timing_cfg.ldr_sample_ms;
+        s_app.sensors.last_ldr_status = ldr_read_raw(&s_app.sensors.last_ldr_raw);
+        if (s_app.sensors.last_ldr_status == LDR_STATUS_OK) {
+            s_app.sensors.last_ldr_filtered =
+                filter_moving_average_u16_push(&s_app.sensors.ldr_ma, s_app.sensors.last_ldr_raw);
+        }
     }
 
     if ((uint32_t)(now_ms - s_app.timing.last_us_sample_ms) >= s_timing_cfg.us_sample_ms) {
         uint32_t distance_cm;
 
-        s_app.timing.last_us_sample_ms = now_ms;
+        s_app.timing.last_us_sample_ms += s_timing_cfg.us_sample_ms;
         distance_cm = ultrasonic_read_distance_cm(s_policy_cfg.us_timeout_us, s_policy_cfg.distance_error_cm);
         s_app.sensors.last_us_status = ultrasonic_get_last_status();
 
@@ -511,6 +514,11 @@ void app_step(void)
             s_app.sensors.last_valid_presence = (s_app.sensors.last_distance_filtered_cm < s_policy_cfg.presence_cm) ? 1U : 0U;
         }
     }
+
+    if ((uint32_t)(now_ms - s_app.timing.last_control_tick_ms) < s_timing_cfg.control_tick_ms) {
+        return;
+    }
+    s_app.timing.last_control_tick_ms += s_timing_cfg.control_tick_ms;
 
     s_app.control.auto_percent = compute_auto_percent_from_ldr(s_app.sensors.last_ldr_filtered);
 
