@@ -639,7 +639,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : ENCODER_CLK_EXTI1_Pin */
   GPIO_InitStruct.Pin = ENCODER_CLK_EXTI1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(ENCODER_CLK_EXTI1_GPIO_Port, &GPIO_InitStruct);
 
@@ -651,7 +651,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : ENCODER_DT_EXTI10_Pin */
   GPIO_InitStruct.Pin = ENCODER_DT_EXTI10_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(ENCODER_DT_EXTI10_GPIO_Port, &GPIO_InitStruct);
 
