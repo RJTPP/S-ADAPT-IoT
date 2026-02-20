@@ -78,8 +78,13 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
                     s_app.sensors.flat_streak_ms = 0U;
                 }
 
-                if (motion_condition != 0U) {
-                    s_app.sensors.motion_streak_ms += s_timing_cfg.us_sample_ms;
+                /* Motion streak is only meaningful for recovery from flat no-user state. */
+                if ((s_app.sensors.last_valid_presence == 0U) && (s_app.sensors.no_user_reason == 2U)) {
+                    if (motion_condition != 0U) {
+                        s_app.sensors.motion_streak_ms += s_timing_cfg.us_sample_ms;
+                    } else {
+                        s_app.sensors.motion_streak_ms = 0U;
+                    }
                 } else {
                     s_app.sensors.motion_streak_ms = 0U;
                 }
