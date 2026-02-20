@@ -14,6 +14,8 @@
 - Ultrasonic median filter (`N=3`) for distance/presence input.
 - PWM output hysteresis deadband (`±5%`).
 - PWM output ramp limiter (normal `1%`, turn-on `3%`, turn-off `5%` per control tick) applied after hysteresis.
+- Presence engine uses reference capture + away/stale timers instead of a single fixed threshold.
+- Pre-off dim stage is active before no-user off (`min(current,15%)` for `10 s`).
 - Encoder switch release drives single/double click behavior:
 - single click toggles light ON/OFF (after double-click window timeout).
 - double click resets `manual_offset` to `0`.
@@ -32,7 +34,7 @@
 - `mode`: `AUTO`
 - `light_enabled`: boolean ON/OFF
 - `manual_offset`: signed brightness offset (e.g. `-30..+30`)
-- `last_valid_presence`: boolean from distance threshold (`80 cm`)
+- `last_valid_presence`: boolean from reference-based ultrasonic presence engine
 - `last_valid_distance_cm`: last valid ultrasonic value
 - `fatal_fault`: fatal status flag for RGB blink override
 
@@ -66,13 +68,21 @@ flowchart TD
 ```
 
 ## Presence Logic (Current)
-- Threshold example: `80 cm` (calibrate on real hardware).
-- Presence cache only changes when ultrasonic returns `ULTRASONIC_STATUS_OK`.
-- Presence decision input is median-filtered ultrasonic distance (`N=3`).
-- On transient ultrasonic failure, cached presence is held (no RGB flicker from invalid samples).
-- Presence hysteresis is not enabled in this phase (deferred).
-- Forced-off paths (`manual OFF` / `no-user`) now ramp down output to 0 (not immediate cut).
 - Runtime cadence: control `33 ms`, LDR sampling `50 ms` (decoupled), ultrasonic sampling `100 ms`.
+- On each OFF->ON click:
+- set fallback reference `ref_distance_cm=60`
+- mark pending capture, then replace with first valid filtered distance.
+- Away detection:
+- if `distance > ref + 20 cm` continuously for `30 s`, trigger no-user candidate.
+- Stale detection:
+- if step-to-step movement stays within `±1 cm` for `120 s`, trigger no-user candidate.
+- Pre-off dim before no-user commit:
+- drive output to `min(current_output,15%)` for `10 s` (debug-tunable in build config).
+- if user returns/moves during this window, cancel pre-off and keep present.
+- Recovery after no-user:
+- away reason: return when `distance <= ref + 10 cm` for ~`1.5 s` confirm window.
+- flat reason: return on movement spike (`>=1 cm` step delta) with tolerant decay behavior.
+- On transient ultrasonic failure, keep last valid presence and do not advance timers.
 
 ## RGB Mapping (Current)
 - `BOOT_SETUP` -> Purple
@@ -99,7 +109,6 @@ flowchart TD
 - `status_led_blink_error()` remains as a shim and routes into non-blocking fatal blink handling.
 
 ## Remaining Work To Reach Full Target Logic
-- Presence-level hysteresis (if needed after tuning) is deferred.
 - UX extensions:
 - OLED multi-page model and temporary offset overlay behavior.
 - Additional UI tuning and threshold calibration.

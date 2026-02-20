@@ -4,6 +4,24 @@
 #define APP_ENABLE_DISPLAY 1U
 #endif
 
+/* Bring-up aid: when enabled, shorten presence/pre-off timers for faster hardware testing. */
+/* Set to 0U for production timing behavior. */
+#ifndef APP_PRESENCE_DEBUG_TIMERS
+#define APP_PRESENCE_DEBUG_TIMERS 1U
+#endif
+
+#if APP_PRESENCE_DEBUG_TIMERS
+#define APP_PRESENCE_AWAY_TIMEOUT_MS 5000U
+#define APP_PRESENCE_STALE_TIMEOUT_MS 15000U
+#define APP_PRESENCE_RESUME_MOTION_MS 2000U
+#define APP_PRESENCE_PREOFF_DIM_MS 5000U
+#else
+#define APP_PRESENCE_AWAY_TIMEOUT_MS 30000U
+#define APP_PRESENCE_STALE_TIMEOUT_MS 120000U
+#define APP_PRESENCE_RESUME_MOTION_MS 5000U
+#define APP_PRESENCE_PREOFF_DIM_MS 10000U
+#endif
+
 const app_timing_cfg_t s_timing_cfg = {
     .control_tick_ms = 33U,
     .ldr_sample_ms = 50U,
@@ -14,7 +32,6 @@ const app_timing_cfg_t s_timing_cfg = {
 
 const app_policy_cfg_t s_policy_cfg = {
     .boot_setup_ms = 1000U,
-    .presence_cm = 80U,
     .double_click_ms = 350U,
     .offset_step = 5,
     .offset_min = -50,
@@ -26,6 +43,17 @@ const app_policy_cfg_t s_policy_cfg = {
     .output_ramp_step_percent = 1U,
     .output_ramp_step_on_percent = 3U,
     .output_ramp_step_off_percent = 5U,
+    .presence_ref_fallback_cm = 60U,
+    .presence_body_margin_cm = 20U,
+    .presence_return_band_cm = 10U,
+    .presence_return_confirm_ms = 1500U,
+    .presence_away_timeout_ms = APP_PRESENCE_AWAY_TIMEOUT_MS,
+    .presence_flat_band_cm = 1U,
+    .presence_motion_delta_cm = 1U,
+    .presence_stale_timeout_ms = APP_PRESENCE_STALE_TIMEOUT_MS,
+    .presence_resume_motion_ms = APP_PRESENCE_RESUME_MOTION_MS,
+    .presence_preoff_dim_percent = 15U,
+    .presence_preoff_dim_ms = APP_PRESENCE_PREOFF_DIM_MS,
 };
 
 app_ctx_t s_app;
@@ -64,6 +92,18 @@ uint8_t app_init(const app_hw_config_t *hw)
     s_app.sensors.last_valid_distance_cm = s_policy_cfg.distance_error_cm;
     s_app.sensors.last_us_status = ULTRASONIC_STATUS_NOT_INIT;
     s_app.sensors.last_valid_presence = 1U;
+    s_app.sensors.ref_distance_cm = s_policy_cfg.presence_ref_fallback_cm;
+    s_app.sensors.ref_valid = 0U;
+    s_app.sensors.ref_pending_capture = 0U;
+    s_app.sensors.using_fallback_ref = 1U;
+    s_app.sensors.prev_valid_distance_cm = 0U;
+    s_app.sensors.prev_valid_distance_ready = 0U;
+    s_app.sensors.away_streak_ms = 0U;
+    s_app.sensors.flat_streak_ms = 0U;
+    s_app.sensors.motion_streak_ms = 0U;
+    s_app.sensors.near_ref_streak_ms = 0U;
+    s_app.sensors.no_user_reason = 0U;
+    s_app.sensors.presence_candidate_no_user = 0U;
 
     filter_moving_average_u16_init(&s_app.sensors.ldr_ma, s_policy_cfg.ldr_ma_window_size);
     filter_median3_u32_init(&s_app.sensors.dist_median3);
@@ -80,6 +120,9 @@ uint8_t app_init(const app_hw_config_t *hw)
     s_app.control.ramp_initialized = 0U;
     s_app.control.fatal_fault = 0U;
     s_app.control.rgb_state = STATUS_LED_STATE_BOOT_SETUP;
+    s_app.control.preoff_active = 0U;
+    s_app.control.preoff_start_ms = 0U;
+    s_app.control.preoff_dim_target_percent = 0U;
 
     s_app.click.pending = 0U;
     s_app.click.deadline_ms = now_ms;
@@ -156,7 +199,7 @@ void app_step(void)
         return;
     }
 
-    app_update_output_control();
+    app_update_output_control(now_ms);
     app_update_rgb(now_ms);
     app_update_oled_if_due(now_ms);
     app_log_summary_if_due(now_ms);
