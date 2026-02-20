@@ -17,6 +17,10 @@ Source references:
 - [ ] `PA1` = HC-SR04 `ECHO` (`TIM2_CH2` input capture)
 - [ ] `PB6/PB7` = OLED I2C (`SCL/SDA`)
 - [ ] `PA8` = PWM output for main LED driver (`TIM1_CH1`)
+- [ ] RGB status LED pins are mapped and tested:
+- [ ] `LED_Status_R` = `PB4`
+- [ ] `LED_Status_G` = `PB5`
+- [ ] `LED_Status_B` = `PA11`
 - [ ] Confirm LDR analog pin and ADC channel mapping are consistent.
 - [ ] Verify encoder and button pin mapping for:
 - [ ] Encoder `CLK`, `DT`, `SW`
@@ -27,6 +31,8 @@ Source references:
 - [ ] OLED module:
 - [ ] I2C address responds (`0x3C` expected).
 - [ ] Text render/update works without bus lockups.
+- [ ] Validate OLED remains stable while RGB channels are active.
+- [ ] If OLED fails with `HAL_I2C` timeout/busy (`err=0x20`), isolate pin/wiring interactions and retest RGB mapping.
 - [ ] HC-SR04 module:
 - [ ] `TRIG` pulse width is valid (~10 us).
 - [ ] `ECHO` capture timing is stable at near and far targets.
@@ -47,6 +53,7 @@ Source references:
 - [ ] Purple = Setup / special mode
 - [ ] Confirm implemented state-based RGB mapping matches behavior spec (distance-only legacy mapping removed).
 - [ ] Error blink path works on forced init failure.
+- [ ] Confirm no OLED/I2C disturbance when RGB outputs toggle.
 - [ ] Encoder module (`CLK/DT/SW`) inputs:
 - [ ] Pin reads/interrupts are stable and debounced as needed.
 - [ ] Logic safely ignores encoder inputs when unused.
