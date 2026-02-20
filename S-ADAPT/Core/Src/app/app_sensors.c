@@ -82,8 +82,8 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
                     if (motion_condition != 0U) {
                         s_app.sensors.motion_streak_ms += s_timing_cfg.us_sample_ms;
                     } else {
-                        if (s_app.sensors.motion_streak_ms > s_timing_cfg.us_sample_ms) {
-                            s_app.sensors.motion_streak_ms -= s_timing_cfg.us_sample_ms;
+                        if (s_app.sensors.motion_streak_ms > (s_timing_cfg.us_sample_ms / 2U)) {
+                            s_app.sensors.motion_streak_ms -= (s_timing_cfg.us_sample_ms / 2U);
                         } else {
                             s_app.sensors.motion_streak_ms = 0U;
                         }
