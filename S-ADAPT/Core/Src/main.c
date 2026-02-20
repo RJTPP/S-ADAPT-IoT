@@ -8,6 +8,7 @@
 #include "debug_print.h"
 #include "encoder_input.h"
 #include "ldr.h"
+#include "status_led.h"
 #include "switch_input.h"
 #include "ultrasonic.h"
 /* USER CODE END Includes */
@@ -19,9 +20,10 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define LDR_SAMPLE_PERIOD_MS     50U
-#define US_SAMPLE_PERIOD_MS      100U
+#define US_SAMPLE_PERIOD_MS      1000U
 #define US_ECHO_TIMEOUT_US       30000U
 #define US_DISTANCE_ERROR_CM     999U
+#define RGB_DEBUG_PERIOD_MS      1000U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -41,8 +43,10 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 static uint32_t s_last_ldr_sample_ms = 0U;
 static uint32_t s_last_us_sample_ms = 0U;
+static uint32_t s_last_rgb_ms = 0U;
 static uint16_t s_last_ldr_raw = 0U;
 static ldr_status_t s_last_ldr_status = LDR_STATUS_NOT_INIT;
+static status_led_state_t s_rgb_state = STATUS_LED_STATE_BOOT_SETUP;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,6 +81,41 @@ static const char *encoder_event_name(encoder_event_type_t type)
       return "sw_released";
     default:
       return "unknown";
+  }
+}
+
+static const char *rgb_state_name(status_led_state_t state)
+{
+  switch (state)
+  {
+    case STATUS_LED_STATE_BOOT_SETUP:
+      return "boot_setup";
+    case STATUS_LED_STATE_AUTO:
+      return "auto";
+    case STATUS_LED_STATE_OFFSET_POSITIVE:
+      return "offset_positive";
+    case STATUS_LED_STATE_NO_USER:
+      return "no_user";
+    case STATUS_LED_STATE_FAULT_FATAL:
+      return "fault_fatal";
+    default:
+      return "unknown";
+  }
+}
+
+static status_led_state_t next_rgb_debug_state(status_led_state_t current_state)
+{
+  switch (current_state)
+  {
+    case STATUS_LED_STATE_AUTO:
+      return STATUS_LED_STATE_OFFSET_POSITIVE;
+    case STATUS_LED_STATE_OFFSET_POSITIVE:
+      return STATUS_LED_STATE_NO_USER;
+    case STATUS_LED_STATE_NO_USER:
+      return STATUS_LED_STATE_BOOT_SETUP;
+    case STATUS_LED_STATE_BOOT_SETUP:
+    default:
+      return STATUS_LED_STATE_AUTO;
   }
 }
 /* USER CODE END 0 */
@@ -123,10 +162,14 @@ int main(void)
   ultrasonic_init(&htim2, TIM_CHANNEL_2);
   switch_input_init();
   encoder_input_init();
+  status_led_init();
   s_last_ldr_status = LDR_STATUS_NOT_INIT;
   s_last_ldr_raw = 0U;
+  s_rgb_state = STATUS_LED_STATE_BOOT_SETUP;
   s_last_ldr_sample_ms = HAL_GetTick();
   s_last_us_sample_ms = HAL_GetTick();
+  s_last_rgb_ms = HAL_GetTick();
+  debug_logln(DEBUG_PRINT_INFO, "dbg led_state=%s", rgb_state_name(s_rgb_state));
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -139,6 +182,8 @@ int main(void)
     ultrasonic_status_t us_status;
     uint32_t echo_us = 0U;
     uint32_t distance_cm = US_DISTANCE_ERROR_CM;
+
+    status_led_tick(now_ms);
 
     switch_input_tick(now_ms);
     while (switch_input_pop_event(&switch_event) != 0U)
@@ -176,6 +221,14 @@ int main(void)
                   (unsigned long)echo_us,
                   (unsigned long)distance_cm,
                   ultrasonic_status_to_string(us_status));
+    }
+
+    if ((uint32_t)(now_ms - s_last_rgb_ms) >= RGB_DEBUG_PERIOD_MS)
+    {
+      s_last_rgb_ms = now_ms;
+      s_rgb_state = next_rgb_debug_state(s_rgb_state);
+      status_led_set_state(s_rgb_state);
+      debug_logln(DEBUG_PRINT_INFO, "dbg led_state=%s", rgb_state_name(s_rgb_state));
     }
 
     HAL_Delay(1);
