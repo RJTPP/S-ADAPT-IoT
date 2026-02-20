@@ -6,7 +6,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "debug_print.h"
-#include "switch_input.h"
+#include "encoder_input.h"
+#include "status_led.h"
 #include "ultrasonic.h"
 /* USER CODE END Includes */
 
@@ -91,9 +92,9 @@ int main(void)
   debug_print_init(&huart2);
   debug_print_set_level(DEBUG_PRINT_DEBUG);
   debug_println("Boot start");
-  debug_println("US + switch mode");
+  debug_println("US + encoder mode");
   ultrasonic_init(&htim2, TIM_CHANNEL_2);
-  switch_input_init();
+  encoder_input_init();
   s_last_us_sample_ms = HAL_GetTick();
   /* USER CODE END 2 */
 
@@ -102,23 +103,45 @@ int main(void)
   while (1)
   {
     uint32_t now_ms = HAL_GetTick();
-    switch_input_event_t switch_event;
+    encoder_event_t encoder_event;
 
-    switch_input_tick(now_ms);
-    while (switch_input_pop_event(&switch_event) != 0U)
+    encoder_input_tick(now_ms);
+    while (encoder_input_pop_event(&encoder_event) != 0U)
     {
-      const char *name = (switch_event.input == SWITCH_INPUT_BUTTON) ? "BUTTON" : "SW2";
-      const char *event_name = (switch_event.pressed != 0U) ? "pressed" : "released";
-      debug_logln(DEBUG_PRINT_DEBUG, "switch=%s event=%s level=%u",
-                  name,
-                  event_name,
-                  (unsigned int)switch_event.level);
+      switch (encoder_event.type)
+      {
+        case ENCODER_EVENT_CW:
+          debug_logln(DEBUG_PRINT_DEBUG, "encoder event=cw");
+          break;
+        case ENCODER_EVENT_CCW:
+          debug_logln(DEBUG_PRINT_DEBUG, "encoder event=ccw");
+          break;
+        case ENCODER_EVENT_SW_PRESSED:
+          debug_logln(DEBUG_PRINT_DEBUG, "encoder event=sw_pressed level=%u",
+                      (unsigned int)encoder_event.sw_level);
+          break;
+        case ENCODER_EVENT_SW_RELEASED:
+          debug_logln(DEBUG_PRINT_DEBUG, "encoder event=sw_released level=%u",
+                      (unsigned int)encoder_event.sw_level);
+          break;
+        default:
+          break;
+      }
     }
 
     if ((uint32_t)(now_ms - s_last_us_sample_ms) >= US_SAMPLE_PERIOD_MS)
     {
+      ultrasonic_status_t us_status;
+      uint32_t echo_us = ultrasonic_read_echo_us(US_ECHO_TIMEOUT_US);
+      uint32_t distance_cm = (echo_us == 0U) ? US_DISTANCE_ERROR_CM : (echo_us / 58U);
+
       s_last_us_sample_ms = now_ms;
-      (void)ultrasonic_read_echo_us(US_ECHO_TIMEOUT_US);
+      us_status = ultrasonic_get_last_status();
+
+      debug_logln(DEBUG_PRINT_DEBUG, "echo_us=%lu dist_cm=%lu status=%s",
+                  (unsigned long)echo_us,
+                  (unsigned long)distance_cm,
+                  ultrasonic_status_to_string(us_status));
     }
 
     HAL_Delay(1);
@@ -507,15 +530,25 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : ENCODER_DT_EXTI10_Pin */
   GPIO_InitStruct.Pin = ENCODER_DT_EXTI10_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(ENCODER_DT_EXTI10_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
+  /* Use EXTI on CLK only for encoder X1 decode. */
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if (GPIO_Pin == ENCODER_CLK_EXTI1_Pin)
+  {
+    encoder_input_on_clk_edge_isr();
+  }
+}
 /* USER CODE END 4 */
 
 /**
