@@ -58,7 +58,7 @@ Source references:
 - [x] Encoder rotation adjusts `manual_offset` only (not LDR sensitivity or curve factor).
 - [x] Offset is applied on top of AUTO target brightness and clamped to valid PWM range.
 - [x] Encoder single click toggles light ON/OFF.
-- [x] Encoder double click resets manual offset to `0` (revert to pure AUTO brightness).
+- [x] Encoder long press (`>= 800 ms`) resets manual offset to `0` (revert to pure AUTO brightness).
 
 ### Output update logic
 - [x] Apply PWM output every control tick.
@@ -103,6 +103,6 @@ Note: production timing profile (`APP_PRESENCE_DEBUG_TIMERS=0`) is away `30s`, s
 - [x] No presence timeout-off test passes.
 - [x] Small ambient fluctuations do not cause output oscillation.
 - [x] Single click toggles lamp state reliably.
-- [x] Double click resets manual offset to AUTO baseline.
+- [x] Long press resets manual offset to AUTO baseline.
 - [x] Encoder rotation adjusts brightness offset smoothly.
 - [x] Record test notes for PR.

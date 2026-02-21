@@ -16,7 +16,7 @@ This matrix summarizes implemented features and current status for the `v1.1.0-r
 | Area | Feature | Status |
 |---|---|---|
 | Encoder rotate | Manual offset adjust (normal mode) | Implemented |
-| Encoder click | Single click toggle / double click offset reset | Implemented |
+| Encoder click | Short click toggle / long press offset reset | Implemented |
 | Page button | Page switch on short press | Implemented |
 | Long press | Settings mode enter/exit (`~1000 ms`) | Implemented |
 

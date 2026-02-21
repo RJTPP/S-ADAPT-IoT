@@ -38,7 +38,7 @@ flowchart TD
     B --> C["main.c: app_init(hw)"]
     C --> D["main.c loop: app_step()"]
     D --> E["Input ticks/events (switch + encoder)"]
-    E --> F["Click handling (single/double) + offset updates"]
+    E --> F["Click handling (short/long) + offset updates"]
     F --> G{"50 ms elapsed?"}
     G -- "Yes" --> H["LDR sample + MA8 filter update"]
     G -- "No" --> I["Reuse cached LDR value"]
@@ -73,6 +73,7 @@ flowchart TD
 | OLED refresh fallback | 1000 ms (`ui_refresh_ms`) |
 | OLED overlay timeout | 1200 ms from last encoder step, plus post-reach hold (~750 ms) |
 | Settings entry long-press | 1000 ms (`APP_SETTINGS_LONG_PRESS_MS`) |
+| Encoder offset-reset long-press | 800 ms (`encoder_long_press_ms`) |
 | UART summary log | 1000 ms (`log_ms`) |
 
 Note: if `APP_PRESENCE_DEBUG_TIMERS` is set to `0`, the production timing profile becomes away `30000 ms`, stale `120000 ms`, and pre-off dim `10000 ms`.

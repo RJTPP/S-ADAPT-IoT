@@ -16,9 +16,9 @@
 - PWM output ramp limiter (normal `1%`, turn-on `3%`, turn-off `5%` per control tick) applied after hysteresis.
 - Presence engine uses reference capture + away/stale timers instead of a single fixed threshold.
 - Pre-off dim stage is active before no-user off (`min(current,15%)` for `5 s` in current debug-timer profile).
-- Encoder switch release drives single/double click behavior:
-- single click toggles light ON/OFF (after double-click window timeout).
-- double click resets `manual_offset` to `0`.
+- Encoder switch release drives short/long press behavior:
+- short click toggles light ON/OFF.
+- long press (`>= 800 ms`) resets `manual_offset` to `0`.
 - Encoder rotation adjusts offset only while light is ON.
 - Presence gate uses ultrasonic with hold-last-valid behavior on transient read failures.
 - RGB state now follows runtime policy (no test cycle override).
@@ -60,7 +60,7 @@ flowchart TD
     B --> C{"Settings mode active?"}
     C -- "Yes" --> D["Route encoder to settings UI (browse/edit/save/reset/exit)"]
     D --> E["Skip click-timeout light toggle path"]
-    C -- "No" --> F["Handle click timeout (single-click commit)"]
+    C -- "No" --> F["Handle encoder short/long press actions"]
     E --> G{"50 ms elapsed?"}
     F --> G
     G -- "Yes" --> H["Read LDR raw"]
@@ -173,5 +173,5 @@ stateDiagram-v2
     AUTO_ON --> AUTO_OFF: Single click (light OFF)
     AUTO_ON --> STANDBY: No user (timeout or immediate rule)
     AUTO_OFF --> STANDBY: No user (optional policy)
-    STANDBY --> AUTO_OFF: User returns - wait for single click
+    STANDBY --> AUTO_OFF: User returns - wait for short click
 ```
