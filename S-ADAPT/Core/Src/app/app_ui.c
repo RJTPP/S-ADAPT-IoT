@@ -14,8 +14,13 @@ typedef struct
 static app_ui_snapshot_t s_ui_snapshot;
 static int32_t s_overlay_display_offset = 0;
 static uint8_t s_overlay_anim_initialized = 0U;
+static uint32_t s_overlay_reach_ms = 0U;
+static uint8_t s_overlay_reach_latched = 0U;
 
-#define APP_UI_OVERLAY_ANIM_STEP 2
+#define APP_UI_OVERLAY_ANIM_MIN_STEP    1
+#define APP_UI_OVERLAY_ANIM_MAX_STEP    8
+#define APP_UI_OVERLAY_ANIM_DIVISOR     6
+#define APP_UI_OVERLAY_POST_HOLD_MS     1000U
 
 static const char *no_user_reason_to_string(uint8_t reason)
 {
@@ -149,6 +154,8 @@ static void app_update_ui_dirty_from_data(const display_view_t *current_view)
         if (s_overlay_anim_initialized == 0U) {
             s_overlay_display_offset = s_app.ui.overlay_offset;
             s_overlay_anim_initialized = 1U;
+            s_overlay_reach_latched = 0U;
+            s_overlay_reach_ms = 0U;
         }
 
         if ((s_ui_snapshot.valid == 0U) ||
@@ -156,6 +163,11 @@ static void app_update_ui_dirty_from_data(const display_view_t *current_view)
             (s_ui_snapshot.overlay_offset != s_app.ui.overlay_offset) ||
             (s_overlay_display_offset != s_app.ui.overlay_offset)) {
             s_app.ui.render_dirty = 1U;
+        }
+
+        if (s_overlay_display_offset != s_app.ui.overlay_offset) {
+            s_overlay_reach_latched = 0U;
+            s_overlay_reach_ms = 0U;
         }
         return;
     }
@@ -199,18 +211,25 @@ static void app_render_display(const display_view_t *view)
 
     if (s_app.ui.overlay_active != 0U) {
         int32_t target = s_app.ui.overlay_offset;
+        int32_t diff = target - s_overlay_display_offset;
+        int32_t abs_diff = (diff >= 0) ? diff : -diff;
+        int32_t step = abs_diff / APP_UI_OVERLAY_ANIM_DIVISOR;
 
-        if (s_overlay_display_offset < target) {
-            int32_t delta = target - s_overlay_display_offset;
-            if (delta > APP_UI_OVERLAY_ANIM_STEP) {
-                s_overlay_display_offset += APP_UI_OVERLAY_ANIM_STEP;
+        if (step < APP_UI_OVERLAY_ANIM_MIN_STEP) {
+            step = APP_UI_OVERLAY_ANIM_MIN_STEP;
+        } else if (step > APP_UI_OVERLAY_ANIM_MAX_STEP) {
+            step = APP_UI_OVERLAY_ANIM_MAX_STEP;
+        }
+
+        if (diff > 0) {
+            if (diff > step) {
+                s_overlay_display_offset += step;
             } else {
                 s_overlay_display_offset = target;
             }
-        } else if (s_overlay_display_offset > target) {
-            int32_t delta = s_overlay_display_offset - target;
-            if (delta > APP_UI_OVERLAY_ANIM_STEP) {
-                s_overlay_display_offset -= APP_UI_OVERLAY_ANIM_STEP;
+        } else if (diff < 0) {
+            if ((-diff) > step) {
+                s_overlay_display_offset -= step;
             } else {
                 s_overlay_display_offset = target;
             }
@@ -260,9 +279,19 @@ void app_update_oled_if_due(uint32_t now_ms)
     if ((s_app.ui.overlay_active != 0U) &&
         ((int32_t)(now_ms - s_app.ui.overlay_until_ms) >= 0)) {
         if (s_overlay_display_offset == s_app.ui.overlay_offset) {
-            s_app.ui.overlay_active = 0U;
-            s_overlay_anim_initialized = 0U;
-            s_app.ui.render_dirty = 1U;
+            if (s_overlay_reach_latched == 0U) {
+                s_overlay_reach_latched = 1U;
+                s_overlay_reach_ms = now_ms;
+                s_app.ui.render_dirty = 1U;
+            } else if (input_has_elapsed_ms(now_ms, s_overlay_reach_ms, APP_UI_OVERLAY_POST_HOLD_MS) != 0U) {
+                s_app.ui.overlay_active = 0U;
+                s_overlay_anim_initialized = 0U;
+                s_overlay_reach_latched = 0U;
+                s_overlay_reach_ms = 0U;
+                s_app.ui.render_dirty = 1U;
+            } else {
+                s_app.ui.render_dirty = 1U;
+            }
         } else {
             s_app.ui.render_dirty = 1U;
         }
