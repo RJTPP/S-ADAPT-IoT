@@ -1,4 +1,4 @@
-# S-ADAPT
+# 💡S-ADAPT
 
 `S-ADAPT` (Sensing-based Automated Dimming for Ambient-aware Presence-Tracked Lighting) is an STM32 firmware project for adaptive desk lighting on NUCLEO-L432KC, driven by ambient light and user presence.
 This repository is the implementation for the class project in `01204323 Electronic Laboratory for Embedded Systems` (Computer Engineering, Kasetsart University).
