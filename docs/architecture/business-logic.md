@@ -57,29 +57,30 @@
 ```mermaid
 flowchart TD
     A["app_step()"] --> B["Process switch/encoder events"]
-    B --> C["Handle click timeout (single-click commit)"]
-    C --> D{"50 ms elapsed?"}
-    D -- "Yes" --> E["Read LDR raw"]
-    D -- "No" --> F["Keep prior LDR cache"]
-    E --> G{"100 ms elapsed?"}
+    B --> C{"Settings mode active?"}
+    C -- "Yes" --> D["Route encoder to settings UI (browse/edit/save/reset/exit)"]
+    D --> E["Skip click-timeout light toggle path"]
+    C -- "No" --> F["Handle click timeout (single-click commit)"]
+    E --> G{"50 ms elapsed?"}
     F --> G
-    G -- "Yes" --> H["Read ultrasonic + status"]
-    G -- "No" --> I["Keep prior ultrasonic cache"]
-    H --> J{"Valid read?"}
-    J -- "Yes" --> K["Update distance/presence cache"]
-    J -- "No" --> I
-    K --> L{"33 ms elapsed?"}
-    I --> L
-    L -- "No" --> M["Return"]
-    L -- "Yes" --> N["Compute auto_percent from LDR"]
-    N --> O["Apply manual_offset + clamp 0..100 target"]
-    O --> P["Apply gates: light_off or no_user -> target=0%"]
-    P --> Q["Apply output hysteresis (±5%)"]
-    Q --> R["Apply output ramp (1/3/5 per 33 ms)"]
+    G -- "Yes" --> H["Read LDR raw"]
+    G -- "No" --> I["Keep prior LDR cache"]
+    H --> J{"100 ms elapsed?"}
+    I --> J
+    J -- "Yes" --> K["Read ultrasonic + status"]
+    J -- "No" --> L["Keep prior ultrasonic cache"]
+    K --> M{"Valid read?"}
+    M -- "Yes" --> N["Update distance/presence cache (Away/Flat paths)"]
+    M -- "No" --> L
+    N --> O{"33 ms elapsed?"}
+    L --> O
+    O -- "No" --> P["Return"]
+    O -- "Yes" --> Q["Compute target (AUTO + offset)"]
+    Q --> R["Apply gates + hysteresis + ramp"]
     R --> S["main_led_set_percent(applied_output)"]
     S --> T["Evaluate RGB state priority"]
     T --> U["status_led_set_state + tick"]
-    U --> V["Render OLED page/overlay (event-driven + 1 s refresh)"]
+    U --> V["Render OLED (settings page OR normal pages/overlay)"]
     V --> W["1 s summary UART log"]
 ```
 
