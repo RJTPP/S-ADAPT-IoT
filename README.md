@@ -114,6 +114,8 @@ stm32cubeide --launcher.suppressErrors -nosplash \
 ## Documentation
 
 - Docs index: [`docs/README.md`](docs/README.md)
+- User guide: [`docs/user-guide.md`](docs/user-guide.md)
+- Feature matrix: [`docs/feature-matrix.md`](docs/feature-matrix.md)
 - Architecture: [`docs/architecture/Architecture.md`](docs/architecture/Architecture.md)
 - Business logic: [`docs/architecture/business-logic.md`](docs/architecture/business-logic.md)
 - Planning checklist: [`docs/planning/planning-checklist.md`](docs/planning/planning-checklist.md)
