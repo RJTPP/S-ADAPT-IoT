@@ -46,6 +46,10 @@ static uint8_t app_compute_ldr_percent(uint16_t ldr_filtered_raw)
 
 static display_badge_t app_select_main_badge(void)
 {
+    if (s_app.sensors.away_streak_ms > 0U) {
+        return DISPLAY_BADGE_LEAVE;
+    }
+
     if (s_app.control.preoff_active != 0U) {
         return DISPLAY_BADGE_DIM;
     }
