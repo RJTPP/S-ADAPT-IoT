@@ -30,7 +30,7 @@
 - Display refresh is data/event-driven with 1-second periodic refresh fallback.
 - OLED redraw is rate-limited to ~15 FPS (`66 ms` minimum draw interval).
 - Settings mode is available as a modal OLED flow:
-  - enter/exit with `BUTTON` long-press (`1500 ms`)
+  - enter/exit with `BUTTON` long-press (`1000 ms`)
   - encoder rotate to move/select/edit
   - explicit `Save`/`Reset`/`Exit` actions
   - edit focus inverts value token only
@@ -84,7 +84,7 @@ flowchart TD
 ```
 
 ## Settings Mode and Persistence (Current)
-- Entry: `BUTTON` long-press (`1500 ms`) toggles settings mode.
+- Entry: `BUTTON` long-press (`1000 ms`) toggles settings mode.
 - While settings mode is active:
   - normal page cycling is suspended
   - encoder click/rotate are routed to settings UI

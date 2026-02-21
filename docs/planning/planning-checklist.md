@@ -146,7 +146,7 @@ Source references:
 - [x] Optional UART debug output for tuning thresholds and filters.
 
 ### Settings UI and persistence
-- [x] Modal settings mode entered/exited by `BUTTON` long-press (`1500 ms`).
+- [x] Modal settings mode entered/exited by `BUTTON` long-press (`1000 ms`).
 - [x] Encoder is reused for settings navigation/editing (`rotate`/`click`).
 - [x] Draft-edit model is implemented (`Save` applies, `Exit` discards unsaved edits).
 - [x] Core presence settings are configurable on-device:
