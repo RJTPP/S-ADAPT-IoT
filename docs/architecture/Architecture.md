@@ -26,6 +26,7 @@ This document defines the current firmware architecture and hardware-to-code map
 | Main LED PWM driver | `S-ADAPT/Core/Src/bsp/main_led.c` | TIM1 CH1 PWM output control (`0..100%`) for isolated MOSFET module (shared lamp power rail) |
 | Ultrasonic driver | `S-ADAPT/Core/Src/sensors/ultrasonic.c` | TRIG pulse, TIM2 input capture, timeout/noise handling, distance conversion |
 | Display driver facade | `S-ADAPT/Core/Src/bsp/display.c` | OLED init and rendering calls via `ssd1306.c` |
+| Settings persistence store | `S-ADAPT/Core/Src/support/settings_store.c` | Load/save user settings in reserved flash page using append-only records (`magic/version/seq/crc`) |
 | Status LED control | `S-ADAPT/Core/Src/bsp/status_led.c` | RGB indication and error blink support |
 | Platform runtime entry | `S-ADAPT/Core/Src/main.c` | CubeMX/HAL init and app handoff (`app_init`, `app_step`) |
 | App orchestration | `S-ADAPT/Core/Src/app/*.c` | Runtime state, events, sensing, control loop, RGB policy, OLED pages/overlay, diagnostics |
@@ -51,8 +52,9 @@ flowchart TD
     M -- "No" --> O["Skip control update"]
     N --> P["RGB state eval + status_led update/tick"]
     O --> P
-    P --> Q["OLED render (dirty/event driven, <=15 FPS, 1 s fallback)"]
-    Q --> R["1 s summary UART log"]
+    P --> Q["Settings mode routing (button long-press + encoder UI flow)"]
+    Q --> R["OLED render (dirty/event driven, <=15 FPS, 1 s fallback)"]
+    R --> S["1 s summary UART log"]
 ```
 
 ## Timing Model (Current)
@@ -70,9 +72,15 @@ flowchart TD
 | OLED redraw (dirty) | Up to ~15 FPS (`ui_min_redraw_ms = 66 ms`) |
 | OLED refresh fallback | 1000 ms (`ui_refresh_ms`) |
 | OLED overlay timeout | 1200 ms from last encoder step, plus post-reach hold (~750 ms) |
+| Settings entry long-press | 1000 ms (`APP_SETTINGS_LONG_PRESS_MS`) |
 | UART summary log | 1000 ms (`log_ms`) |
 
 Note: if `APP_PRESENCE_DEBUG_TIMERS` is set to `0`, the production timing profile becomes away `30000 ms`, stale `120000 ms`, and pre-off dim `10000 ms`.
+
+## Flash Reservation (Settings NVM)
+- Linker `FLASH` length is reduced from `256K` to `254K`.
+- Reserved NVM page for settings: `0x0803F800..0x0803FFFF` (2 KB).
+- Runtime settings writes are append-only; page erase occurs only when full.
 
 ## Known Bring-Up Note
 - A branch-level bring-up issue was observed with RGB on `PA5/PA6/PA7`: enabling those channels caused OLED I2C timeout/busy (`HAL_I2C` error `0x20`).
