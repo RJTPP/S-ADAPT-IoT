@@ -220,6 +220,7 @@ const char *status_led_state_to_string(status_led_state_t state)
 void app_update_oled_if_due(uint32_t now_ms)
 {
     display_view_t current_view;
+    uint8_t redraw_rate_limited = 0U;
     uint8_t periodic_due = 0U;
 
     if (s_app.platform.display_ready == 0U) {
@@ -234,6 +235,9 @@ void app_update_oled_if_due(uint32_t now_ms)
 
     app_compose_display_view(&current_view);
     app_update_ui_dirty_from_data(&current_view);
+    if (input_has_elapsed_ms(now_ms, s_app.timing.last_ui_draw_ms, s_timing_cfg.ui_min_redraw_ms) == 0U) {
+        redraw_rate_limited = 1U;
+    }
 
     if (input_has_elapsed_ms(now_ms, s_app.timing.last_ui_refresh_ms, s_policy_cfg.ui_refresh_ms) != 0U) {
         s_app.timing.last_ui_refresh_ms += s_policy_cfg.ui_refresh_ms;
@@ -244,7 +248,12 @@ void app_update_oled_if_due(uint32_t now_ms)
         return;
     }
 
+    if ((periodic_due == 0U) && (redraw_rate_limited != 0U)) {
+        return;
+    }
+
     app_render_display(&current_view);
+    s_app.timing.last_ui_draw_ms = now_ms;
     app_snapshot_commit(&current_view);
     s_app.ui.render_dirty = 0U;
 }

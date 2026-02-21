@@ -27,6 +27,7 @@ const app_timing_cfg_t s_timing_cfg = {
     .ldr_sample_ms = 50U,
     .us_sample_ms = 100U,
     .log_ms = 1000U,
+    .ui_min_redraw_ms = 66U,
 };
 
 const app_policy_cfg_t s_policy_cfg = {
@@ -82,6 +83,7 @@ uint8_t app_init(const app_hw_config_t *hw)
     s_app.timing.last_ldr_sample_ms = now_ms;
     s_app.timing.last_us_sample_ms = now_ms;
     s_app.timing.last_log_ms = now_ms;
+    s_app.timing.last_ui_draw_ms = now_ms;
     s_app.timing.last_ui_refresh_ms = now_ms;
 
     s_app.sensors.last_ldr_raw = 0U;

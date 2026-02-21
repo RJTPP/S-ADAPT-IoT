@@ -20,6 +20,7 @@ typedef struct
     uint32_t ldr_sample_ms;
     uint32_t us_sample_ms;
     uint32_t log_ms;
+    uint32_t ui_min_redraw_ms;
 } app_timing_cfg_t;
 
 typedef struct
@@ -58,6 +59,7 @@ typedef struct
     uint32_t last_ldr_sample_ms;
     uint32_t last_us_sample_ms;
     uint32_t last_log_ms;
+    uint32_t last_ui_draw_ms;
     uint32_t last_ui_refresh_ms;
 } app_timing_state_t;
 
