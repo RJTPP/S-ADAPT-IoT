@@ -15,6 +15,10 @@
 #define DISPLAY_SETTINGS_ROW_HEIGHT   10U
 #define DISPLAY_SETTINGS_LABEL_X      8U
 #define DISPLAY_SETTINGS_VALUE_X      76U
+#define DISPLAY_SETTINGS_SCROLL_X0    122U
+#define DISPLAY_SETTINGS_SCROLL_X1    125U
+#define DISPLAY_SETTINGS_SCROLL_Y0    DISPLAY_SETTINGS_ROW_Y_START
+#define DISPLAY_SETTINGS_SCROLL_Y1    (DISPLAY_SETTINGS_ROW_Y_START + (DISPLAY_SETTINGS_VISIBLE_ROWS * DISPLAY_SETTINGS_ROW_HEIGHT) - 1U)
 
 static uint8_t clamp_percent_u8(uint8_t value)
 {
@@ -216,6 +220,40 @@ static uint8_t settings_row_has_editable_value(display_settings_row_id_t row)
     return (row <= DISPLAY_SETTINGS_ROW_RETURN_BAND) ? 1U : 0U;
 }
 
+static void draw_settings_scrollbar(uint8_t row_count, uint8_t row_window_start)
+{
+    uint8_t track_height;
+    uint8_t thumb_height;
+    uint8_t thumb_offset = 0U;
+
+    if (row_count <= DISPLAY_SETTINGS_VISIBLE_ROWS) {
+        return;
+    }
+
+    track_height = (uint8_t)(DISPLAY_SETTINGS_SCROLL_Y1 - DISPLAY_SETTINGS_SCROLL_Y0 + 1U);
+    thumb_height = (uint8_t)((track_height * DISPLAY_SETTINGS_VISIBLE_ROWS) / row_count);
+    if (thumb_height < 4U) {
+        thumb_height = 4U;
+    }
+    if (thumb_height > track_height) {
+        thumb_height = track_height;
+    }
+
+    if (row_count > DISPLAY_SETTINGS_VISIBLE_ROWS) {
+        uint8_t max_window_start = (uint8_t)(row_count - DISPLAY_SETTINGS_VISIBLE_ROWS);
+        uint8_t scroll_range = (uint8_t)(track_height - thumb_height);
+        thumb_offset = (uint8_t)((scroll_range * row_window_start) / max_window_start);
+    }
+
+    ssd1306_DrawRectangle(DISPLAY_SETTINGS_SCROLL_X0, DISPLAY_SETTINGS_SCROLL_Y0,
+                          DISPLAY_SETTINGS_SCROLL_X1, DISPLAY_SETTINGS_SCROLL_Y1, White);
+    ssd1306_FillRectangle((uint8_t)(DISPLAY_SETTINGS_SCROLL_X0 + 1U),
+                          (uint8_t)(DISPLAY_SETTINGS_SCROLL_Y0 + thumb_offset + 1U),
+                          (uint8_t)(DISPLAY_SETTINGS_SCROLL_X1 - 1U),
+                          (uint8_t)(DISPLAY_SETTINGS_SCROLL_Y0 + thumb_offset + thumb_height - 2U),
+                          White);
+}
+
 void display_show_settings_page(const display_settings_view_t *view)
 {
     uint8_t selected_row;
@@ -345,6 +383,7 @@ void display_show_settings_page(const display_settings_view_t *view)
         ssd1306_SetCursor(72, 54);
         ssd1306_WriteString((char *)status_text, Font_7x10, White);
     }
+
 
     ssd1306_UpdateScreen();
 }
