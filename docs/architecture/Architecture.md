@@ -27,43 +27,47 @@ This document defines the current firmware architecture and hardware-to-code map
 | Ultrasonic driver | `S-ADAPT/Core/Src/sensors/ultrasonic.c` | TRIG pulse, TIM2 input capture, timeout/noise handling, distance conversion |
 | Display driver facade | `S-ADAPT/Core/Src/bsp/display.c` | OLED init and rendering calls via `ssd1306.c` |
 | Status LED control | `S-ADAPT/Core/Src/bsp/status_led.c` | RGB indication and error blink support |
-| Platform runtime | `S-ADAPT/Core/Src/main.c` | CubeMX init, runtime scheduling, bring-up debug loops/logs for LDR/US/RGB/OLED/main LED |
-| App orchestration (future) | `S-ADAPT/Core/Src/app/app.c` | Reserved for higher-level business logic orchestration |
+| Platform runtime entry | `S-ADAPT/Core/Src/main.c` | CubeMX/HAL init and app handoff (`app_init`, `app_step`) |
+| App orchestration | `S-ADAPT/Core/Src/app/*.c` | Runtime state, events, sensing, control loop, RGB policy, OLED pages/overlay, diagnostics |
 
 ## Runtime Data Flow
 ```mermaid
 flowchart TD
     A["Boot / HAL Init"] --> B["Peripheral Init (GPIO, TIM, I2C, ADC, UART)"]
-    B --> C["Init: ldr + ultrasonic + switch + encoder + status_led (+ OLED when enabled)"]
-    C --> D["Loop in main.c"]
-    D --> E["switch_input_tick + encoder_input_tick"]
-    E --> F["UART event logs"]
-    D --> G{"50 ms elapsed?"}
-    G -- "Yes" --> H["ldr_read_raw()"]
-    D --> I{"1000 ms elapsed?"}
-    I -- "Yes" --> J["ultrasonic_read_echo_us() + distance conversion + UART sample log"]
-    D --> K{"1000 ms elapsed?"}
-    K -- "Yes" --> L["status_led_set_state(next debug state) + UART led_state log"]
-    D --> M{"1000 ms elapsed?"}
-    M -- "Yes" --> N["main_led_set_percent(next sweep step) + UART main_led log"]
-    D --> O{"1000 ms elapsed and OLED ready?"}
-    O -- "Yes" --> P["display_show_main_page/display_show_sensor_page + UART oled log"]
+    B --> C["main.c: app_init(hw)"]
+    C --> D["main.c loop: app_step()"]
+    D --> E["Input ticks/events (switch + encoder)"]
+    E --> F["Click handling (single/double) + offset updates"]
+    F --> G{"50 ms elapsed?"}
+    G -- "Yes" --> H["LDR sample + MA8 filter update"]
+    G -- "No" --> I["Reuse cached LDR value"]
+    H --> J{"100 ms elapsed?"}
+    I --> J
+    J -- "Yes" --> K["Ultrasonic sample + median3 + presence engine"]
+    J -- "No" --> L["Reuse cached distance/presence"]
+    K --> M{"33 ms control tick?"}
+    L --> M
+    M -- "Yes" --> N["AUTO+offset -> hysteresis -> ramp -> main LED PWM"]
+    M -- "No" --> O["Skip control update"]
+    N --> P["RGB state eval + status_led update/tick"]
+    O --> P
+    P --> Q["OLED render (dirty/event driven, <=15 FPS, 1 s fallback)"]
+    Q --> R["1 s summary UART log"]
 ```
 
 ## Timing Model (Current)
 | Activity | Current cadence |
 |---|---|
 | Main loop pacing | `HAL_Delay(1)` |
+| Control update tick | 33 ms (`control_tick_ms`) |
 | Switch sampling | 10 ms (`SWITCH_SAMPLE_PERIOD_MS`) |
 | Switch debounce confirmation | 20 ms (`SWITCH_DEBOUNCE_TICKS` x sample period) |
-| Ultrasonic measurement | 1000 ms (`US_SAMPLE_PERIOD_MS`) |
-| LDR sampling | 50 ms (`LDR_SAMPLE_PERIOD_MS`) |
+| LDR sampling | 50 ms (`ldr_sample_ms`) |
+| Ultrasonic measurement | 100 ms (`us_sample_ms`) |
 | OLED redraw (dirty) | Up to ~15 FPS (`ui_min_redraw_ms = 66 ms`) |
 | OLED refresh fallback | 1000 ms (`ui_refresh_ms`) |
 | OLED overlay timeout | 1200 ms from last encoder step, plus post-reach hold (~1000 ms) |
-| RGB debug state cycle | 1000 ms (`RGB_DEBUG_PERIOD_MS`) |
-| UART switch logs | On debounced transitions only |
-| UART ultrasonic logs | Once per ultrasonic tick |
+| UART summary log | 1000 ms (`log_ms`) |
 
 ## Known Bring-Up Note
 - A branch-level bring-up issue was observed with RGB on `PA5/PA6/PA7`: enabling those channels caused OLED I2C timeout/busy (`HAL_I2C` error `0x20`).
@@ -72,7 +76,6 @@ flowchart TD
 ## Planned Direction
 - Keep module boundaries stable.
 - Keep hardware drivers separate from policy decisions.
-- Hardware bring-up is mostly complete; next is baseline business logic integration.
-- Implement baseline control loop first (presence gate + LDR->brightness + ON/OFF + offset application).
-- Add moving-average/median/hysteresis immediately after baseline loop is stable on hardware.
-- Move scheduling/orchestration from `main.c` to `app.c` when business logic integration starts.
+- Hardware bring-up and baseline business logic are integrated.
+- Current focus is release stabilization: calibration, regression, and UX tuning.
+- Keep `app` decomposition clean as features evolve.
