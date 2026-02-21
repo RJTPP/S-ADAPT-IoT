@@ -134,21 +134,14 @@ void display_show_main_page(const display_view_t *view)
     ssd1306_WriteString(line, Font_7x10, White);
 
     (void)snprintf(line, sizeof(line), "LDR:%3u%%", (unsigned int)ldr_percent);
-    ssd1306_SetCursor(0, 10);
+    ssd1306_SetCursor(0, 12);
     ssd1306_WriteString(line, Font_7x10, White);
-    draw_progress_bar(48U, 12U, 76U, 7U, ldr_percent);
+    draw_progress_bar(48U, 24U, 76U, 7U, ldr_percent);
 
-    (void)snprintf(line, sizeof(line), "OUT:%3u%%", (unsigned int)output_percent);
-    ssd1306_SetCursor(0, 22);
-    ssd1306_WriteString(line, Font_7x10, White);
-    draw_progress_bar(48U, 24U, 76U, 7U, output_percent);
-
-    (void)snprintf(line, sizeof(line), "OFF:%+ld", (long)offset_value);
+    (void)snprintf(line, sizeof(line), "OUT:%3u%% O:%+ld", (unsigned int)output_percent, (long)offset_value);
     ssd1306_SetCursor(0, 34);
     ssd1306_WriteString(line, Font_7x10, White);
-
-    ssd1306_SetCursor(0, 46);
-    ssd1306_WriteString((char *)"BTN:next page", Font_7x10, White);
+    draw_progress_bar(48U, 46U, 76U, 7U, output_percent);
 
     draw_page_bullets(0U);
     ssd1306_UpdateScreen();
@@ -178,7 +171,7 @@ void display_show_sensor_page(const display_view_t *view)
 
     (void)snprintf(line,
                    sizeof(line),
-                   "P:%u R:%s",
+                   "PRS:%u RSN:%s",
                    (unsigned int)((view->present != 0U) ? 1U : 0U),
                    reason_to_text(view->reason));
     ssd1306_SetCursor(0, 36);
