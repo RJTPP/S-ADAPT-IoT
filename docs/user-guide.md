@@ -85,3 +85,46 @@ Saved settings are stored in internal flash and restored on reboot.
 - `Save` writes a new record.
 - `Exit` without save does not persist draft edits.
 
+## 7) Abbreviation / Short Word Meanings
+### OLED (Main/Sensor pages)
+- `MODE` = operating state (`ON`, `OFF`, `SLEEP`)
+- `LDR` = Light Dependent Resistor input as percentage
+- `OUT` = final applied lamp output percentage
+- `OFF:+n/-n` = manual **offset** (not power-off)
+- `DIST` = measured distance (cm)
+- `LDRF` = filtered LDR raw ADC value
+- `REF` = reference distance used by presence logic
+- `PRS` = present flag (`1` present, `0` not present)
+- `RSN` = no-user reason code
+- `NON` = none
+- `AWY` = away
+- `FLT` = flat/stale
+
+### Status badges / indicators
+- `LEAVE` = leaving/no-user transition indicator
+- `DIM` = pre-off dim phase active
+- `AWAY` = away-related status
+- `IDLE` = idle-related status
+
+### Settings labels
+- `Away T` = away timeout (seconds)
+- `Flat T` = flat/stale timeout (seconds)
+- `PreOff` = pre-off dim duration (seconds)
+- `RetBand` = return band for away recovery (cm)
+
+### Runtime logs (common)
+- `ldr_raw` = raw LDR ADC
+- `ldr_filt` = filtered LDR ADC
+- `dist_cm_filt` = filtered distance in cm
+- `target_out` = control target output before hysteresis/ramp
+- `hyst_out` = output after hysteresis
+- `applied_out` = final output sent to PWM
+- `cfg_*` = active saved configuration values
+
+## 8) Quick Troubleshooting
+- Cannot enter settings:
+  - hold `BUTTON` for about `1000 ms`.
+- Value changes but not kept after reboot:
+  - ensure `Save` was selected.
+- Exited settings and changes disappeared:
+  - expected if not saved (`Exit` discards draft).
