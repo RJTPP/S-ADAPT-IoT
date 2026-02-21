@@ -47,6 +47,10 @@ This repository is the implementation for the class project in `01204323 Electro
 - Main light driver: MOSFET + PWM
 - Inputs: rotary encoder (`CLK/DT/SW`) + extra page button
 
+## Hardware Overview
+
+![S-ADAPT Schematic](docs/architecture/Schematic_S-ADAPT.png)
+
 ## Pin Map (MCU + Nucleo Alias)
 
 | Function | MCU Pin | Nucleo Alias | Firmware Symbol |
