@@ -110,16 +110,24 @@ flowchart TD
 - On each OFF->ON click:
 - set fallback reference `ref_distance_cm=60`
 - mark pending capture, then replace with first valid filtered distance.
-- Away detection:
-- if `distance > ref + 20 cm` continuously for `5 s` (current debug-timer profile), trigger no-user candidate.
-- Stale detection:
-- if step-to-step movement stays within `±1 cm` for `15 s` (current debug-timer profile), trigger no-user candidate.
+- Two no-user detection paths run with independent rules:
+
+### Presence Logic A: Away Path
+- Condition: `distance > ref + 20 cm` continuously.
+- Timeout: `5 s` in current debug-timer profile (`30 s` in production profile).
+- Trigger: no-user candidate with reason `away`.
+- Recovery: distance returns near reference (`distance <= ref + return_band`) and holds for confirm window (~`1.5 s`).
+
+### Presence Logic B: Flat/Stale Path
+- Condition: low step-to-step movement (`abs(step) <= 1 cm`) continuously.
+- Timeout: `15 s` in current debug-timer profile (`120 s` in production profile).
+- Trigger: no-user candidate with reason `flat`.
+- Recovery: movement spike detected (`abs(step) >= 2 cm`).
+
+### Shared Transition Behavior
 - Pre-off dim before no-user commit:
 - drive output to `min(current_output,15%)` for `5 s` (debug-tunable in build config).
 - if user returns/moves during this window, cancel pre-off and keep present.
-- Recovery after no-user:
-- away reason: return when `distance <= ref + 10 cm` for ~`1.5 s` confirm window.
-- flat reason: return on movement spike (`>=2 cm` step delta).
 - On transient ultrasonic failure, keep last valid presence and do not advance timers.
 
 Note: if `APP_PRESENCE_DEBUG_TIMERS` is set to `0`, the production timing profile becomes away `30 s`, stale `120 s`, and pre-off dim `10 s`.
