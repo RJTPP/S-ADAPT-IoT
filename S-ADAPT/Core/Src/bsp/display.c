@@ -6,6 +6,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#define DISPLAY_OFFSET_MIN           (-50)
+#define DISPLAY_OFFSET_MAX           50
+#define DISPLAY_OFFSET_MAGNITUDE_MAX 50U
+#define DISPLAY_OFFSET_BAR_HALF_PX   40U
+
 static uint8_t clamp_percent_u8(uint8_t value)
 {
     return (value > 100U) ? 100U : value;
@@ -13,11 +18,11 @@ static uint8_t clamp_percent_u8(uint8_t value)
 
 static int32_t clamp_offset_i32(int32_t value)
 {
-    if (value < -50) {
-        return -50;
+    if (value < DISPLAY_OFFSET_MIN) {
+        return DISPLAY_OFFSET_MIN;
     }
-    if (value > 50) {
-        return 50;
+    if (value > DISPLAY_OFFSET_MAX) {
+        return DISPLAY_OFFSET_MAX;
     }
     return value;
 }
@@ -107,7 +112,7 @@ static void draw_inverted_badge(display_badge_t badge)
     }
 
     text_len = (uint8_t)strlen(text);
-    text_px = (uint8_t)(text_len * 7U);
+    text_px = (uint8_t)(text_len * Font_7x10.width);
     if (text_px > 124U) {
         text_px = 124U;
     }
@@ -155,22 +160,6 @@ void display_show_boot(void)
     HAL_Delay(120);
     draw_boot_frame("Ready", 100U);
     HAL_Delay(220);
-}
-
-void display_show_distance_cm(uint32_t distance_cm)
-{
-    char dist_str[20];
-    int n;
-
-    n = snprintf(dist_str, sizeof(dist_str), "Dist: %lu cm", (unsigned long)distance_cm);
-    if (n < 0) {
-        return;
-    }
-
-    ssd1306_Fill(Black);
-    ssd1306_SetCursor(10, 10);
-    ssd1306_WriteString(dist_str, Font_7x10, White);
-    ssd1306_UpdateScreen();
 }
 
 void display_show_main_page(const display_view_t *view)
@@ -251,11 +240,7 @@ void display_show_offset_overlay(int32_t offset)
     int32_t clamped = clamp_offset_i32(offset);
     uint32_t magnitude = (clamped >= 0) ? (uint32_t)clamped : (uint32_t)(-clamped);
 
-    if (magnitude > 50U) {
-        magnitude = 50U;
-    }
-
-    bar_fill = (uint8_t)((magnitude * 40U) / 50U);
+    bar_fill = (uint8_t)((magnitude * DISPLAY_OFFSET_BAR_HALF_PX) / DISPLAY_OFFSET_MAGNITUDE_MAX);
 
     ssd1306_Fill(Black);
     ssd1306_SetCursor(24, 2);

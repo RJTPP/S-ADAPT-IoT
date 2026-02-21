@@ -42,7 +42,6 @@ typedef struct
 
 uint8_t display_init(void);
 void display_show_boot(void);
-void display_show_distance_cm(uint32_t distance_cm);
 void display_show_main_page(const display_view_t *view);
 void display_show_sensor_page(const display_view_t *view);
 void display_show_offset_overlay(int32_t offset);

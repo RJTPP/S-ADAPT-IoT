@@ -1,5 +1,7 @@
 #include "app/app_internal.h"
 
+#define APP_ADC_MAX_VALUE 4095U
+
 typedef struct
 {
     uint8_t valid;
@@ -48,7 +50,7 @@ static display_reason_t app_to_display_reason(void)
 
 static uint8_t app_compute_ldr_percent(uint16_t ldr_filtered_raw)
 {
-    uint32_t scaled = ((uint32_t)ldr_filtered_raw * 100U) / 4095U;
+    uint32_t scaled = ((uint32_t)ldr_filtered_raw * 100U) / APP_ADC_MAX_VALUE;
     if (scaled > 100U) {
         scaled = 100U;
     }
