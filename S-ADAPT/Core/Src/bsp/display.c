@@ -136,12 +136,12 @@ void display_show_main_page(const display_view_t *view)
     (void)snprintf(line, sizeof(line), "LDR:%3u%%", (unsigned int)ldr_percent);
     ssd1306_SetCursor(0, 12);
     ssd1306_WriteString(line, Font_7x10, White);
-    draw_progress_bar(48U, 24U, 76U, 7U, ldr_percent);
+    draw_progress_bar(0U, 24U, 127U, 7U, ldr_percent);
 
     (void)snprintf(line, sizeof(line), "OUT:%3u%% O:%+ld", (unsigned int)output_percent, (long)offset_value);
     ssd1306_SetCursor(0, 34);
     ssd1306_WriteString(line, Font_7x10, White);
-    draw_progress_bar(48U, 46U, 76U, 7U, output_percent);
+    draw_progress_bar(0U, 46U, 127U, 7U, output_percent);
 
     draw_page_bullets(0U);
     ssd1306_UpdateScreen();
