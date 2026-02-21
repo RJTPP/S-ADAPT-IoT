@@ -103,6 +103,7 @@ typedef struct
     uint8_t last_applied_output_percent;
     uint8_t output_hysteresis_initialized;
     uint8_t ramp_initialized;
+    uint8_t ramp_fast_on_active;
     status_led_state_t rgb_state;
     uint8_t fatal_fault;
     uint8_t preoff_active;

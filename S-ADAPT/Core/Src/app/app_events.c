@@ -63,6 +63,7 @@ void app_handle_click_timeout(uint32_t now_ms)
     s_app.control.light_enabled = (s_app.control.light_enabled == 0U) ? 1U : 0U;
 
     if ((was_light_enabled == 0U) && (s_app.control.light_enabled != 0U)) {
+        s_app.control.ramp_fast_on_active = 1U;
         reset_presence_runtime_state();
         s_app.sensors.ref_distance_cm = s_policy_cfg.presence_ref_fallback_cm;
         s_app.sensors.ref_valid = 1U;
@@ -71,6 +72,7 @@ void app_handle_click_timeout(uint32_t now_ms)
         s_app.sensors.prev_valid_distance_ready = 0U;
         s_app.sensors.last_valid_presence = 1U;
     } else if ((was_light_enabled != 0U) && (s_app.control.light_enabled == 0U)) {
+        s_app.control.ramp_fast_on_active = 0U;
         reset_presence_runtime_state();
     }
 

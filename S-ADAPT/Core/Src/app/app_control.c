@@ -64,7 +64,7 @@ static uint8_t apply_output_ramp(uint8_t desired_percent)
 
     current = s_app.control.ramped_output_percent;
     step = s_policy_cfg.output_ramp_step_percent;
-    if ((current == 0U) && (desired_percent > 0U)) {
+    if ((s_app.control.ramp_fast_on_active != 0U) && (desired_percent > current)) {
         step = s_policy_cfg.output_ramp_step_on_percent;
     } else if ((desired_percent == 0U) && (current > 0U)) {
         step = s_policy_cfg.output_ramp_step_off_percent;
@@ -87,6 +87,10 @@ static uint8_t apply_output_ramp(uint8_t desired_percent)
         } else {
             current = desired_percent;
         }
+    }
+
+    if ((desired_percent == 0U) || (current >= desired_percent)) {
+        s_app.control.ramp_fast_on_active = 0U;
     }
 
     s_app.control.ramped_output_percent = current;
