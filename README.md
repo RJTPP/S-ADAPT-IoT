@@ -5,7 +5,7 @@ This repository is the implementation for the class project in `01204323 Electro
 
 ## Release Status
 
-- Current release target: `v1.0.0-rc1`
+- Current release target: `v1.1.0-rc1`
 - Runtime owner: `app` layer (`app_init`, `app_step`)
 - Hardware-first bring-up is complete, with integrated baseline business logic and OLED runtime UI.
 
@@ -37,6 +37,11 @@ This repository is the implementation for the class project in `01204323 Electro
   - Page 1 `SENSOR`
   - temporary offset overlay on encoder rotation
   - event/data-driven redraw with capped OLED update rate
+- Settings subsystem:
+  - modal settings mode via `BUTTON` long-press (`1000 ms`)
+  - encoder browse/edit interaction with value-token invert focus
+  - explicit `Save` / `Reset` / `Exit` draft workflow
+  - persistent user config in internal flash (append-only records with CRC)
 
 ## Hardware
 
