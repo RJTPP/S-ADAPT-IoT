@@ -103,6 +103,7 @@ static const char *badge_to_text(display_badge_t badge)
 static void draw_inverted_badge(display_badge_t badge)
 {
     const char *text = badge_to_text(badge);
+    const uint8_t badge_y = 2U;
     uint8_t text_len;
     uint8_t text_px;
     uint8_t x;
@@ -118,9 +119,9 @@ static void draw_inverted_badge(display_badge_t badge)
     }
 
     x = (uint8_t)(SSD1306_WIDTH - text_px - 2U);
-    ssd1306_SetCursor(x, 0U);
+    ssd1306_SetCursor(x, badge_y);
     ssd1306_WriteString((char *)text, Font_7x10, White);
-    (void)ssd1306_InvertRectangle((uint8_t)(x - 1U), 0U, (uint8_t)(x + text_px), 10U);
+    (void)ssd1306_InvertRectangle((uint8_t)(x - 1U), (uint8_t)(badge_y - 2U), (uint8_t)(x + text_px), (uint8_t)(badge_y + 10U));
 }
 
 static void draw_boot_frame(const char *status, uint8_t progress_percent)
