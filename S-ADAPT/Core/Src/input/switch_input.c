@@ -4,7 +4,7 @@
 #include "main.h"
 
 #define SWITCH_SAMPLE_PERIOD_MS 10U
-#define SWITCH_DEBOUNCE_TICKS   3U
+#define SWITCH_DEBOUNCE_TICKS   2U
 #define SWITCH_EVENT_QUEUE_SIZE 8U
 
 typedef struct
