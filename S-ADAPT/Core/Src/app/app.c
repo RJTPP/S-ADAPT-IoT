@@ -165,6 +165,7 @@ uint8_t app_init(const app_hw_config_t *hw)
     s_app.settings_ui.editing_value = 0U;
     s_app.settings_ui.selected_row = 0U;
     s_app.settings_ui.button_pressed = 0U;
+    s_app.settings_ui.long_press_fired = 0U;
     s_app.settings_ui.button_press_start_ms = now_ms;
     s_app.settings_ui.toast_until_ms = 0U;
     s_app.settings_ui.toast = APP_SETTINGS_TOAST_NONE;

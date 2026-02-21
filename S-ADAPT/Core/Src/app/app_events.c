@@ -96,6 +96,7 @@ static void app_enter_settings_mode(uint32_t now_ms)
     s_app.settings_ui.editing_value = 0U;
     s_app.settings_ui.selected_row = 0U;
     s_app.settings_ui.button_pressed = 0U;
+    s_app.settings_ui.long_press_fired = 0U;
     s_app.settings_ui.button_press_start_ms = now_ms;
     app_set_settings_toast(APP_SETTINGS_TOAST_NONE, now_ms);
     s_app.settings.draft = s_app.settings.active;
@@ -112,6 +113,7 @@ static void app_exit_settings_mode_discard(uint32_t now_ms)
     s_app.settings_ui.editing_value = 0U;
     s_app.settings_ui.selected_row = 0U;
     s_app.settings_ui.button_pressed = 0U;
+    s_app.settings_ui.long_press_fired = 0U;
     s_app.settings_ui.button_press_start_ms = now_ms;
     app_set_settings_toast(APP_SETTINGS_TOAST_NONE, now_ms);
     s_app.settings.draft = s_app.settings.active;
