@@ -71,7 +71,7 @@
 - [x] Repeated encoder movement extends/resets overlay timeout correctly.
 
 ### B2.1 Settings mode behavior
-- [ ] `BUTTON` long-press (~1500 ms) enters settings mode.
+- [ ] `BUTTON` long-press (~1000 ms) enters settings mode.
 - [ ] Long-press while in settings mode exits and discards unsaved edits.
 - [ ] Encoder rotate moves selected settings row in browse mode.
 - [ ] Encoder click on numeric field enters/leaves edit mode.
