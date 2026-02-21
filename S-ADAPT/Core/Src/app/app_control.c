@@ -89,7 +89,8 @@ static uint8_t apply_output_ramp(uint8_t desired_percent)
         }
     }
 
-    if ((desired_percent == 0U) || (current >= desired_percent)) {
+    if ((s_app.control.ramp_fast_on_active != 0U) &&
+        ((desired_percent == 0U) || (current >= desired_percent))) {
         s_app.control.ramp_fast_on_active = 0U;
     }
 
