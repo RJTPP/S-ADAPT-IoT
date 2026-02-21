@@ -47,6 +47,25 @@ static uint16_t clamp_settings_u16(uint16_t value, uint16_t min_value, uint16_t 
     return value;
 }
 
+static uint16_t wrap_settings_u16(uint16_t current, int8_t direction, uint16_t min_value, uint16_t max_value, uint16_t step)
+{
+    int32_t next;
+
+    if ((step == 0U) || (max_value <= min_value)) {
+        return clamp_settings_u16(current, min_value, max_value);
+    }
+
+    next = (int32_t)current + ((int32_t)direction * (int32_t)step);
+    if (next > (int32_t)max_value) {
+        return min_value;
+    }
+    if (next < (int32_t)min_value) {
+        return max_value;
+    }
+
+    return (uint16_t)next;
+}
+
 static uint8_t settings_are_equal(const app_settings_t *lhs, const app_settings_t *rhs)
 {
     if ((lhs == NULL) || (rhs == NULL)) {
@@ -124,34 +143,35 @@ static void app_exit_settings_mode_discard(uint32_t now_ms)
 
 static void app_settings_adjust_value(display_settings_row_id_t row, int8_t direction)
 {
-    int32_t delta = (int32_t)direction;
-
     switch (row) {
         case DISPLAY_SETTINGS_ROW_AWAY_TIMEOUT:
-            s_app.settings.draft.away_timeout_s = clamp_settings_u16(
-                (uint16_t)((int32_t)s_app.settings.draft.away_timeout_s +
-                           (delta * (int32_t)APP_SETTINGS_AWAY_TIMEOUT_S_STEP)),
+            s_app.settings.draft.away_timeout_s = wrap_settings_u16(
+                s_app.settings.draft.away_timeout_s,
+                direction,
                 APP_SETTINGS_AWAY_TIMEOUT_S_MIN,
-                APP_SETTINGS_AWAY_TIMEOUT_S_MAX);
+                APP_SETTINGS_AWAY_TIMEOUT_S_MAX,
+                APP_SETTINGS_AWAY_TIMEOUT_S_STEP);
             break;
         case DISPLAY_SETTINGS_ROW_FLAT_TIMEOUT:
-            s_app.settings.draft.stale_timeout_s = clamp_settings_u16(
-                (uint16_t)((int32_t)s_app.settings.draft.stale_timeout_s +
-                           (delta * (int32_t)APP_SETTINGS_STALE_TIMEOUT_S_STEP)),
+            s_app.settings.draft.stale_timeout_s = wrap_settings_u16(
+                s_app.settings.draft.stale_timeout_s,
+                direction,
                 APP_SETTINGS_STALE_TIMEOUT_S_MIN,
-                APP_SETTINGS_STALE_TIMEOUT_S_MAX);
+                APP_SETTINGS_STALE_TIMEOUT_S_MAX,
+                APP_SETTINGS_STALE_TIMEOUT_S_STEP);
             break;
         case DISPLAY_SETTINGS_ROW_PREOFF_DIM:
-            s_app.settings.draft.preoff_dim_s = clamp_settings_u16(
-                (uint16_t)((int32_t)s_app.settings.draft.preoff_dim_s +
-                           (delta * (int32_t)APP_SETTINGS_PREOFF_DIM_S_STEP)),
+            s_app.settings.draft.preoff_dim_s = wrap_settings_u16(
+                s_app.settings.draft.preoff_dim_s,
+                direction,
                 APP_SETTINGS_PREOFF_DIM_S_MIN,
-                APP_SETTINGS_PREOFF_DIM_S_MAX);
+                APP_SETTINGS_PREOFF_DIM_S_MAX,
+                APP_SETTINGS_PREOFF_DIM_S_STEP);
             break;
         case DISPLAY_SETTINGS_ROW_RETURN_BAND:
             s_app.settings.draft.return_band_cm = (uint8_t)clamp_settings_u16(
                 (uint16_t)((int32_t)s_app.settings.draft.return_band_cm +
-                           (delta * (int32_t)APP_SETTINGS_RETURN_BAND_CM_STEP)),
+                           ((int32_t)direction * (int32_t)APP_SETTINGS_RETURN_BAND_CM_STEP)),
                 APP_SETTINGS_RETURN_BAND_CM_MIN,
                 APP_SETTINGS_RETURN_BAND_CM_MAX);
             break;
