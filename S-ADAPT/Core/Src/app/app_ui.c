@@ -259,8 +259,13 @@ void app_update_oled_if_due(uint32_t now_ms)
 
     if ((s_app.ui.overlay_active != 0U) &&
         ((int32_t)(now_ms - s_app.ui.overlay_until_ms) >= 0)) {
-        s_app.ui.overlay_active = 0U;
-        s_app.ui.render_dirty = 1U;
+        if (s_overlay_display_offset == s_app.ui.overlay_offset) {
+            s_app.ui.overlay_active = 0U;
+            s_overlay_anim_initialized = 0U;
+            s_app.ui.render_dirty = 1U;
+        } else {
+            s_app.ui.render_dirty = 1U;
+        }
     }
 
     app_compose_display_view(&current_view);
