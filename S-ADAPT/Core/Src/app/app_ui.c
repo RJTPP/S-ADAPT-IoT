@@ -50,18 +50,9 @@ static display_badge_t app_select_main_badge(void)
         return DISPLAY_BADGE_DIM;
     }
 
-    if ((s_app.sensors.last_valid_presence != 0U) &&
-        (s_app.sensors.presence_candidate_no_user != 0U) &&
-        (s_app.sensors.no_user_reason == 1U)) {
+    if ((s_app.sensors.presence_candidate_no_user != 0U) ||
+        (s_app.sensors.last_valid_presence == 0U)) {
         return DISPLAY_BADGE_LEAVE;
-    }
-
-    if ((s_app.sensors.last_valid_presence == 0U) && (s_app.sensors.no_user_reason == 1U)) {
-        return DISPLAY_BADGE_AWAY;
-    }
-
-    if ((s_app.sensors.last_valid_presence == 0U) && (s_app.sensors.no_user_reason == 2U)) {
-        return DISPLAY_BADGE_IDLE;
     }
 
     return DISPLAY_BADGE_NONE;
