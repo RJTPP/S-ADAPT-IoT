@@ -117,7 +117,7 @@ Source references:
 - [x] AUTO mode:
 - [x] Read LDR and compute target brightness (dark -> higher PWM, bright -> lower PWM).
 - [x] Clamp output range (0% to 100% baseline).
-- [ ] Offset adjustment behavior:
+- [x] Offset adjustment behavior:
 - [x] Encoder CW increases manual brightness offset.
 - [x] Encoder CCW decreases manual brightness offset.
 - [x] Encoder rotation adjusts `manual_offset` only (not LDR sensitivity or curve factor).
@@ -133,7 +133,7 @@ Source references:
 - [x] Update RGB LED according to system state.
 
 ### Output behavior
-- [ ] OLED includes:
+- [x] OLED includes:
 - [x] Brightness %
 - [x] Current control profile (`AUTO + offset`) and light ON/OFF state
 - [x] Distance
@@ -141,9 +141,8 @@ Source references:
 - [x] Multiple OLED pages are implemented.
 - [x] Extra button cycles pages: `page = (page + 1) % TOTAL_PAGES`.
 - [x] Encoder rotation triggers temporary OLED offset overlay (e.g., for ~1200 ms).
-- [x] Overlay timeout resets on each new encoder step and returns to previous page when expired.
-- [ ] Status LED behavior is explicitly documented (kept for now).
-- [ ] Optional UART debug output for tuning thresholds and filters.
+- [x] Overlay timeout resets on each new encoder step; page returns after timeout + overlay animation completion/hold.
+- [x] Status LED behavior is explicitly documented (kept for now).
 - [x] Optional UART debug output for tuning thresholds and filters.
 
 ### Acceptance checks
