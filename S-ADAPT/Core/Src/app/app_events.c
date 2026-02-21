@@ -367,19 +367,9 @@ void app_process_switch_events(uint32_t now_ms)
                     (unsigned int)switch_event.level);
 
         if ((switch_event.input == SWITCH_INPUT_BUTTON) && (switch_event.pressed == 0U)) {
-            uint32_t held_ms = 0U;
-
-            if (s_app.settings_ui.button_pressed != 0U) {
-                held_ms = (uint32_t)(now_ms - s_app.settings_ui.button_press_start_ms);
-            }
             s_app.settings_ui.button_pressed = 0U;
-
-            if (held_ms >= APP_SETTINGS_LONG_PRESS_MS) {
-                if (s_app.settings_ui.mode_active != 0U) {
-                    app_exit_settings_mode_discard(now_ms);
-                } else {
-                    app_enter_settings_mode(now_ms);
-                }
+            if (s_app.settings_ui.long_press_fired != 0U) {
+                s_app.settings_ui.long_press_fired = 0U;
                 continue;
             }
 
@@ -393,7 +383,19 @@ void app_process_switch_events(uint32_t now_ms)
             s_app.ui.render_dirty = 1U;
         } else if ((switch_event.input == SWITCH_INPUT_BUTTON) && (switch_event.pressed != 0U)) {
             s_app.settings_ui.button_pressed = 1U;
+            s_app.settings_ui.long_press_fired = 0U;
             s_app.settings_ui.button_press_start_ms = now_ms;
+        }
+    }
+
+    if ((s_app.settings_ui.button_pressed != 0U) &&
+        (s_app.settings_ui.long_press_fired == 0U) &&
+        (input_has_elapsed_ms(now_ms, s_app.settings_ui.button_press_start_ms, APP_SETTINGS_LONG_PRESS_MS) != 0U)) {
+        s_app.settings_ui.long_press_fired = 1U;
+        if (s_app.settings_ui.mode_active != 0U) {
+            app_exit_settings_mode_discard(now_ms);
+        } else {
+            app_enter_settings_mode(now_ms);
         }
     }
 }
