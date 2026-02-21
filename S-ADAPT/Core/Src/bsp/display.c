@@ -306,6 +306,7 @@ void display_show_settings_page(const display_settings_view_t *view)
         uint8_t current_row = (uint8_t)(row_window_start + row_idx);
         uint8_t y = (uint8_t)(DISPLAY_SETTINGS_ROW_Y_START + (row_idx * DISPLAY_SETTINGS_ROW_HEIGHT));
         uint8_t invert_value = 0U;
+        uint8_t invert_label = 0U;
 
         if (current_row >= row_count) {
             break;
@@ -356,14 +357,19 @@ void display_show_settings_page(const display_settings_view_t *view)
             default:
                 if ((view->unsaved != 0U) && (current_row == selected_row)) {
                     label = "Exit?";
+                    invert_label = 1U;
                 } else {
                     label = "Exit";
                 }
                 break;
         }
 
-        ssd1306_SetCursor(DISPLAY_SETTINGS_LABEL_X, y);
-        ssd1306_WriteString((char *)label, Font_7x10, White);
+        if (invert_label != 0U) {
+            draw_text_token(DISPLAY_SETTINGS_LABEL_X, y, label, 1U);
+        } else {
+            ssd1306_SetCursor(DISPLAY_SETTINGS_LABEL_X, y);
+            ssd1306_WriteString((char *)label, Font_7x10, White);
+        }
 
         if ((view->editing_value != 0U) &&
             (current_row == selected_row) &&
