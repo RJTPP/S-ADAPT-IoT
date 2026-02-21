@@ -122,28 +122,34 @@ static void app_exit_settings_mode_discard(uint32_t now_ms)
 
 static void app_settings_adjust_value(display_settings_row_id_t row, int8_t direction)
 {
+    int32_t delta = (int32_t)direction;
+
     switch (row) {
         case DISPLAY_SETTINGS_ROW_AWAY_TIMEOUT:
             s_app.settings.draft.away_timeout_s = clamp_settings_u16(
-                (uint16_t)((int32_t)s_app.settings.draft.away_timeout_s + direction),
+                (uint16_t)((int32_t)s_app.settings.draft.away_timeout_s +
+                           (delta * (int32_t)APP_SETTINGS_AWAY_TIMEOUT_S_STEP)),
                 APP_SETTINGS_AWAY_TIMEOUT_S_MIN,
                 APP_SETTINGS_AWAY_TIMEOUT_S_MAX);
             break;
         case DISPLAY_SETTINGS_ROW_FLAT_TIMEOUT:
             s_app.settings.draft.stale_timeout_s = clamp_settings_u16(
-                (uint16_t)((int32_t)s_app.settings.draft.stale_timeout_s + direction),
+                (uint16_t)((int32_t)s_app.settings.draft.stale_timeout_s +
+                           (delta * (int32_t)APP_SETTINGS_STALE_TIMEOUT_S_STEP)),
                 APP_SETTINGS_STALE_TIMEOUT_S_MIN,
                 APP_SETTINGS_STALE_TIMEOUT_S_MAX);
             break;
         case DISPLAY_SETTINGS_ROW_PREOFF_DIM:
             s_app.settings.draft.preoff_dim_s = clamp_settings_u16(
-                (uint16_t)((int32_t)s_app.settings.draft.preoff_dim_s + direction),
+                (uint16_t)((int32_t)s_app.settings.draft.preoff_dim_s +
+                           (delta * (int32_t)APP_SETTINGS_PREOFF_DIM_S_STEP)),
                 APP_SETTINGS_PREOFF_DIM_S_MIN,
                 APP_SETTINGS_PREOFF_DIM_S_MAX);
             break;
         case DISPLAY_SETTINGS_ROW_RETURN_BAND:
             s_app.settings.draft.return_band_cm = (uint8_t)clamp_settings_u16(
-                (uint16_t)((int32_t)s_app.settings.draft.return_band_cm + direction),
+                (uint16_t)((int32_t)s_app.settings.draft.return_band_cm +
+                           (delta * (int32_t)APP_SETTINGS_RETURN_BAND_CM_STEP)),
                 APP_SETTINGS_RETURN_BAND_CM_MIN,
                 APP_SETTINGS_RETURN_BAND_CM_MAX);
             break;
