@@ -124,6 +124,8 @@ typedef struct
 {
     uint32_t last_press_ms;
     uint32_t last_release_ms;
+    uint8_t encoder_sw_pressed;
+    uint8_t encoder_long_press_fired;
 } app_click_state_t;
 
 typedef struct

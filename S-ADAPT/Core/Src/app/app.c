@@ -147,6 +147,8 @@ uint8_t app_init(const app_hw_config_t *hw)
 
     s_app.click.last_press_ms = now_ms;
     s_app.click.last_release_ms = now_ms;
+    s_app.click.encoder_sw_pressed = 0U;
+    s_app.click.encoder_long_press_fired = 0U;
 
     s_app.ui.page_index = 0U;
     s_app.ui.page_count = 2U;

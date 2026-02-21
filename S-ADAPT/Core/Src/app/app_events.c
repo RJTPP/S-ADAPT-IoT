@@ -231,6 +231,27 @@ static void app_toggle_light_enabled(void)
     debug_logln(DEBUG_PRINT_INFO, "dbg click=single light_on=%u", (unsigned int)s_app.control.light_enabled);
 }
 
+static void app_handle_encoder_long_press(uint32_t now_ms)
+{
+    if (s_app.settings_ui.mode_active != 0U) {
+        return;
+    }
+    if (s_app.click.encoder_sw_pressed == 0U) {
+        return;
+    }
+    if (s_app.click.encoder_long_press_fired != 0U) {
+        return;
+    }
+    if (input_has_elapsed_ms(now_ms, s_app.click.last_press_ms, s_policy_cfg.encoder_long_press_ms) == 0U) {
+        return;
+    }
+
+    s_app.click.encoder_long_press_fired = 1U;
+    s_app.control.manual_offset = 0;
+    s_app.ui.render_dirty = 1U;
+    debug_logln(DEBUG_PRINT_INFO, "dbg click=long offset=%ld", (long)s_app.control.manual_offset);
+}
+
 void app_handle_encoder_event(const encoder_event_t *event)
 {
     if (event == NULL) {
@@ -328,17 +349,17 @@ void app_handle_encoder_event(const encoder_event_t *event)
 
         case ENCODER_EVENT_SW_PRESSED:
             s_app.click.last_press_ms = event->timestamp_ms;
+            s_app.click.encoder_sw_pressed = 1U;
+            s_app.click.encoder_long_press_fired = 0U;
             break;
 
         case ENCODER_EVENT_SW_RELEASED:
             s_app.click.last_release_ms = event->timestamp_ms;
-            if ((uint32_t)(event->timestamp_ms - s_app.click.last_press_ms) >= s_policy_cfg.encoder_long_press_ms) {
-                s_app.control.manual_offset = 0;
-                s_app.ui.render_dirty = 1U;
-                debug_logln(DEBUG_PRINT_INFO, "dbg click=long offset=%ld", (long)s_app.control.manual_offset);
-            } else {
+            s_app.click.encoder_sw_pressed = 0U;
+            if (s_app.click.encoder_long_press_fired == 0U) {
                 app_toggle_light_enabled();
             }
+            s_app.click.encoder_long_press_fired = 0U;
             break;
 
         default:
@@ -410,4 +431,6 @@ void app_process_encoder_events(uint32_t now_ms)
                     (unsigned int)encoder_event.sw_level);
         app_handle_encoder_event(&encoder_event);
     }
+
+    app_handle_encoder_long_press(now_ms);
 }
