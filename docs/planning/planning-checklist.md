@@ -93,7 +93,7 @@ Source references:
 ### Power-on defaults
 - [x] `Mode = AUTO` (with `manual_offset = 0`)
 - [x] `Light = OFF` on boot (PWM output forced to 0 until user action)
-- [ ] `OLED Page = 0`
+- [x] `OLED Page = 0`
 
 ### Sampling and filtering
 - [x] Control loop tick at 33 ms (+/- 10%).
@@ -134,14 +134,14 @@ Source references:
 
 ### Output behavior
 - [ ] OLED includes:
-- [ ] Brightness %
-- [ ] Current control profile (`AUTO + offset`) and light ON/OFF state
-- [ ] Distance
-- [ ] Ambient light value (raw and/or filtered)
-- [ ] Multiple OLED pages are implemented.
-- [ ] Extra button cycles pages: `page = (page + 1) % TOTAL_PAGES`.
-- [ ] Encoder rotation triggers temporary OLED offset overlay (e.g., for ~1200 ms).
-- [ ] Overlay timeout resets on each new encoder step and returns to previous page when expired.
+- [x] Brightness %
+- [x] Current control profile (`AUTO + offset`) and light ON/OFF state
+- [x] Distance
+- [x] Ambient light value (raw and/or filtered)
+- [x] Multiple OLED pages are implemented.
+- [x] Extra button cycles pages: `page = (page + 1) % TOTAL_PAGES`.
+- [x] Encoder rotation triggers temporary OLED offset overlay (e.g., for ~1200 ms).
+- [x] Overlay timeout resets on each new encoder step and returns to previous page when expired.
 - [ ] Status LED behavior is explicitly documented (kept for now).
 - [ ] Optional UART debug output for tuning thresholds and filters.
 - [x] Optional UART debug output for tuning thresholds and filters.

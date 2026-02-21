@@ -23,6 +23,10 @@
 - Presence gate uses ultrasonic with hold-last-valid behavior on transient read failures.
 - RGB state now follows runtime policy (no test cycle override).
 - UART emits a consolidated 1-second summary log for tuning.
+- OLED runtime UI is active:
+- Persistent pages: `MAIN` and `SENSOR`, switched by `BUTTON` release.
+- Offset overlay appears on encoder rotation and auto-hides after `1200 ms`.
+- Display refresh is event-driven with 1-second periodic refresh fallback.
 
 ## Power-On Defaults (Current)
 - `Mode = AUTO`
@@ -64,7 +68,8 @@ flowchart TD
     R --> S["main_led_set_percent(applied_output)"]
     S --> T["Evaluate RGB state priority"]
     T --> U["status_led_set_state + tick"]
-    U --> V["1 s summary UART log (+ optional OLED update)"]
+    U --> V["Render OLED page/overlay (event-driven + 1 s refresh)"]
+    V --> W["1 s summary UART log"]
 ```
 
 ## Presence Logic (Current)
@@ -109,9 +114,8 @@ flowchart TD
 - `status_led_blink_error()` remains as a shim and routes into non-blocking fatal blink handling.
 
 ## Remaining Work To Reach Full Target Logic
-- UX extensions:
-- OLED multi-page model and temporary offset overlay behavior.
 - Additional UI tuning and threshold calibration.
+- Presence policy refinement (if needed from field testing).
 
 ## Implementation Order (Locked for Next Phase)
 1. Baseline control loop (no advanced filtering): correct behavior first.

@@ -47,7 +47,7 @@ flowchart TD
     D --> M{"1000 ms elapsed?"}
     M -- "Yes" --> N["main_led_set_percent(next sweep step) + UART main_led log"]
     D --> O{"1000 ms elapsed and OLED ready?"}
-    O -- "Yes" --> P["display_show_distance_cm(last distance) + UART oled log"]
+    O -- "Yes" --> P["display_show_main_page/display_show_sensor_page + UART oled log"]
 ```
 
 ## Timing Model (Current)
@@ -55,7 +55,7 @@ flowchart TD
 |---|---|
 | Main loop pacing | `HAL_Delay(1)` |
 | Switch sampling | 10 ms (`SWITCH_SAMPLE_PERIOD_MS`) |
-| Switch debounce confirmation | 30 ms (`SWITCH_DEBOUNCE_TICKS` x sample period) |
+| Switch debounce confirmation | 20 ms (`SWITCH_DEBOUNCE_TICKS` x sample period) |
 | Ultrasonic measurement | 1000 ms (`US_SAMPLE_PERIOD_MS`) |
 | LDR sampling | 50 ms (`LDR_SAMPLE_PERIOD_MS`) |
 | OLED debug update | 1000 ms (`OLED_DEBUG_PERIOD_MS`, when enabled) |
