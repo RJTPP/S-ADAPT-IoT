@@ -17,6 +17,15 @@ typedef enum
     DISPLAY_REASON_FLAT
 } display_reason_t;
 
+typedef enum
+{
+    DISPLAY_BADGE_NONE = 0,
+    DISPLAY_BADGE_LEAVE,
+    DISPLAY_BADGE_DIM,
+    DISPLAY_BADGE_AWAY,
+    DISPLAY_BADGE_IDLE
+} display_badge_t;
+
 typedef struct
 {
     display_mode_t mode;
@@ -28,6 +37,7 @@ typedef struct
     uint32_t ref_cm;
     uint8_t present;
     display_reason_t reason;
+    display_badge_t badge;
 } display_view_t;
 
 uint8_t display_init(void);

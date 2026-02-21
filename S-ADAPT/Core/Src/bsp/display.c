@@ -4,6 +4,7 @@
 #include "ssd1306_fonts.h"
 
 #include <stdio.h>
+#include <string.h>
 
 static uint8_t clamp_percent_u8(uint8_t value)
 {
@@ -75,6 +76,46 @@ static const char *reason_to_text(display_reason_t reason)
         default:
             return "NON";
     }
+}
+
+static const char *badge_to_text(display_badge_t badge)
+{
+    switch (badge) {
+        case DISPLAY_BADGE_LEAVE:
+            return "LEAVE";
+        case DISPLAY_BADGE_DIM:
+            return "DIM";
+        case DISPLAY_BADGE_AWAY:
+            return "AWAY";
+        case DISPLAY_BADGE_IDLE:
+            return "IDLE";
+        case DISPLAY_BADGE_NONE:
+        default:
+            return NULL;
+    }
+}
+
+static void draw_inverted_badge(display_badge_t badge)
+{
+    const char *text = badge_to_text(badge);
+    uint8_t text_len;
+    uint8_t text_px;
+    uint8_t x;
+
+    if (text == NULL) {
+        return;
+    }
+
+    text_len = (uint8_t)strlen(text);
+    text_px = (uint8_t)(text_len * 7U);
+    if (text_px > 124U) {
+        text_px = 124U;
+    }
+
+    x = (uint8_t)(SSD1306_WIDTH - text_px - 2U);
+    ssd1306_SetCursor(x, 0U);
+    ssd1306_WriteString((char *)text, Font_7x10, White);
+    (void)ssd1306_InvertRectangle((uint8_t)(x - 1U), 0U, (uint8_t)(x + text_px), 10U);
 }
 
 static void draw_boot_frame(const char *status, uint8_t progress_percent)
@@ -152,6 +193,7 @@ void display_show_main_page(const display_view_t *view)
     (void)snprintf(line, sizeof(line), "MODE:%s", mode_to_text(view->mode));
     ssd1306_SetCursor(0, 0);
     ssd1306_WriteString(line, Font_7x10, White);
+    draw_inverted_badge(view->badge);
 
     (void)snprintf(line, sizeof(line), "LDR:%3u%%", (unsigned int)ldr_percent);
     ssd1306_SetCursor(0, 12);

@@ -44,6 +44,29 @@ static uint8_t app_compute_ldr_percent(uint16_t ldr_filtered_raw)
     return (uint8_t)scaled;
 }
 
+static display_badge_t app_select_main_badge(void)
+{
+    if (s_app.control.preoff_active != 0U) {
+        return DISPLAY_BADGE_DIM;
+    }
+
+    if ((s_app.sensors.last_valid_presence != 0U) &&
+        (s_app.sensors.presence_candidate_no_user != 0U) &&
+        (s_app.sensors.no_user_reason == 1U)) {
+        return DISPLAY_BADGE_LEAVE;
+    }
+
+    if ((s_app.sensors.last_valid_presence == 0U) && (s_app.sensors.no_user_reason == 1U)) {
+        return DISPLAY_BADGE_AWAY;
+    }
+
+    if ((s_app.sensors.last_valid_presence == 0U) && (s_app.sensors.no_user_reason == 2U)) {
+        return DISPLAY_BADGE_IDLE;
+    }
+
+    return DISPLAY_BADGE_NONE;
+}
+
 static void app_render_display(void)
 {
     display_view_t view;
@@ -57,6 +80,7 @@ static void app_render_display(void)
     view.ref_cm = s_app.sensors.ref_distance_cm;
     view.present = s_app.sensors.last_valid_presence;
     view.reason = app_to_display_reason();
+    view.badge = app_select_main_badge();
 
     if (s_app.ui.overlay_active != 0U) {
         display_show_offset_overlay(s_app.ui.overlay_offset);
