@@ -248,8 +248,6 @@ void app_handle_click_timeout(uint32_t now_ms)
 
 void app_handle_encoder_event(const encoder_event_t *event)
 {
-    int32_t previous_offset;
-
     if (event == NULL) {
         return;
     }
@@ -329,8 +327,6 @@ void app_handle_encoder_event(const encoder_event_t *event)
         s_app.ui.render_dirty = 1U;
         return;
     }
-
-    previous_offset = s_app.control.manual_offset;
 
     switch (event->type) {
         case ENCODER_EVENT_CW:
