@@ -11,82 +11,16 @@ Source references:
 
 ## 1. Hardware Handling Code
 
-### Current bring-up snapshot (driver-first)
-- [x] RGB status LED state mapping is implemented and board-verified.
-- [x] LDR raw ADC driver is integrated and sampled in runtime loop.
-- [x] Switch input module is integrated with software debounce.
-- [x] Encoder input module is integrated (EXTI-based CLK path).
-- [x] Main LED PWM driver module is integrated (`TIM1_CH1`) and driven by app control output policy.
-- [x] OLED init/debug path is available and can run in OLED-only debug mode.
-
-### Pin and peripheral setup
-- [ ] Verify mapping in code matches schematic:
-- [ ] `PA0` = HC-SR04 `TRIG` (GPIO output)
-- [ ] `PA1` = HC-SR04 `ECHO` (`TIM2_CH2` input capture)
-- [ ] `PB6/PB7` = OLED I2C (`SCL/SDA`)
-- [ ] `PA8` = PWM output for main LED driver (`TIM1_CH1`)
-- [ ] RGB status LED pins are mapped and tested:
-- [ ] `LED_Status_R` = `PB4`
-- [ ] `LED_Status_G` = `PB5`
-- [ ] `LED_Status_B` = `PA11`
-- [ ] Confirm LDR analog pin and ADC channel mapping are consistent.
-- [ ] Verify encoder and button pin mapping for:
-- [ ] Encoder `CLK`, `DT`, `SW`
-- [ ] Extra button for OLED page switching
-
-### Per-hardware checklist
-- [ ] NUCLEO-L432KC core clocks/peripherals initialized as expected after boot.
-- [ ] OLED module:
-- [ ] I2C address responds (`0x3C` expected).
-- [ ] Text render/update works without bus lockups.
-- [ ] Validate OLED remains stable while RGB channels are active.
-- [ ] If OLED fails with `HAL_I2C` timeout/busy (`err=0x20`), isolate pin/wiring interactions and retest RGB mapping.
-- [ ] HC-SR04 module:
-- [ ] `TRIG` pulse width is valid (~10 us).
-- [ ] `ECHO` capture timing is stable at near and far targets.
-- [ ] Timeout path works when no echo is returned.
-- [ ] LDR + divider network:
-- [ ] ADC raw values move correctly with light changes.
-- [ ] Scaled light percentage range is reasonable and monotonic.
-- [ ] Main LED module + isolated MOSFET driver module:
-- [x] PWM duty changes match commanded brightness.
-- [ ] LED fully turns off at 0% and reaches expected max brightness.
-- [ ] No visible flicker at normal operating brightness.
-- [ ] Isolated MOSFET module input switching is clean at steady duty and step changes.
-- [ ] RGB status LED module:
-- [ ] State color mapping works:
-- [ ] Blue = Auto mode
-- [ ] Green = manual offset active (non-zero offset)
-- [ ] Yellow = No user (while light ON)
-- [ ] Red = Manual OFF
-- [ ] Purple = Setup / special mode
-- [ ] Confirm implemented state-based RGB mapping matches behavior spec (distance-only legacy mapping removed).
-- [ ] Error blink path works on forced init failure.
-- [ ] Confirm no OLED/I2C disturbance when RGB outputs toggle.
-- [ ] Encoder module (`CLK/DT/SW`) inputs:
-- [ ] Pin reads/interrupts are stable and debounced as needed.
-- [ ] Logic safely ignores encoder inputs when unused.
-- [ ] Push switch (`SW2`) input:
-- [ ] Press/release logic is stable (no false toggles).
-- [ ] +5V / +3.3V rails and decoupling:
-- [ ] Voltage levels are within expected range under load.
-- [ ] 470 uF and 0.1 uF decoupling behavior validated under LED load changes.
-- [ ] Power-up does not cause OLED/sensor brownout or random resets.
-
-### Driver/module readiness
-- [ ] Keep modules clean and single-purpose (`ultrasonic`, `display`, `status_led`, `app`).
-- [ ] Ensure ultrasonic capture handles timeout and noisy/overcapture cases.
-- [ ] Ensure OLED init and updates are stable via I2C (no blocking failure loops except fatal init).
-- [ ] Keep module includes namespaced by domain (`app/...`, `bsp/...`, `sensors/...`, `input/...`, `support/...`).
-- [ ] Ensure no direct includes depend on legacy flat header paths.
-
-### Hardware-level validation
-- [ ] Run CubeIDE clean/rebuild after file moves to regenerate build metadata (`sources.mk`/`subdir.mk`).
-- [ ] Build `Debug` successfully.
-- [ ] Build `Release` successfully.
-- [ ] Verify ultrasonic distance updates on target board.
-- [ ] Verify OLED text updates on target board.
-- [x] Verify PWM output to LED driver hardware path.
+### Current hardware status
+- [x] RGB, LDR, switch/button, encoder, main LED PWM, and OLED bring-up are validated on target board.
+- [x] Pin/peripheral mapping in firmware matches current schematic wiring.
+- [x] OLED I2C path is stable (`0x3C`), including runtime updates with other peripherals active.
+- [x] HC-SR04 trigger/echo measurement and timeout path are validated.
+- [x] LDR ADC range/response is validated.
+- [x] Main LED PWM path is validated (off to max range, stable switching under normal operation).
+- [x] RGB state mapping and fault indication path are validated.
+- [x] Encoder/button input behavior is validated (debounce + event semantics).
+- [x] Runtime build/flash behavior is validated in normal development flow.
 
 ## 2. Business Logic
 
