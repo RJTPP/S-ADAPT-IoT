@@ -146,10 +146,10 @@ Source references:
 - [x] Optional UART debug output for tuning thresholds and filters.
 
 ### Acceptance checks
-- [ ] Presence + low light test passes.
-- [ ] No presence timeout-off test passes.
-- [ ] Small ambient fluctuations do not cause output oscillation.
-- [ ] Single click toggles lamp state reliably.
-- [ ] Double click resets manual offset to AUTO baseline.
-- [ ] Encoder rotation adjusts brightness offset smoothly.
-- [ ] Record test notes for PR.
+- [x] Presence + low light test passes.
+- [x] No presence timeout-off test passes.
+- [x] Small ambient fluctuations do not cause output oscillation.
+- [x] Single click toggles lamp state reliably.
+- [x] Double click resets manual offset to AUTO baseline.
+- [x] Encoder rotation adjusts brightness offset smoothly.
+- [x] Record test notes for PR.
