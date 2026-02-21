@@ -61,10 +61,3 @@ This matrix summarizes implemented features and current status for the `v1.1.0-r
 | `return_band_cm` | `5..30` | `5` | `10` |
 
 \* Defaults are seeded from current build profile for timing fields (`APP_PRESENCE_DEBUG_TIMERS`), then overridden by saved flash settings when available.
-
-## Deferred / Future Candidates
-| Candidate | Status |
-|---|---|
-| Additional tunables (ramp/hysteresis/filter windows) | Deferred |
-| EEPROM emulation backend | Deferred |
-| Advanced migration across multiple schema versions | Deferred |

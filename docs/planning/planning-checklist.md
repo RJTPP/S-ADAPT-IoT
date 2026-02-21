@@ -158,8 +158,8 @@ Source references:
 - [x] return band
 - [x] Internal flash persistence module is implemented (append-only record with `magic/version/seq/crc`).
 - [x] Linker flash region is reduced to reserve one NVM page (`2 KB`).
-- [ ] On-board save/reboot/restore behavior is validated and recorded.
-- [ ] Corrupt-record fallback behavior is validated on target.
+- [x] On-board save/reboot/restore behavior is validated and recorded.
+- [x] Corrupt-record fallback behavior is validated on target.
 
 Note: production timing profile (`APP_PRESENCE_DEBUG_TIMERS=0`) is away `30s`, stale `120s`, pre-off dim `10s`.
 

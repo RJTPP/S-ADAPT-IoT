@@ -71,22 +71,22 @@
 - [x] Repeated encoder movement extends/resets overlay timeout correctly.
 
 ### B2.1 Settings mode behavior
-- [ ] `BUTTON` long-press (~1000 ms) enters settings mode.
-- [ ] Long-press while in settings mode exits and discards unsaved edits.
-- [ ] Encoder rotate moves selected settings row in browse mode.
-- [ ] Encoder click on numeric field enters/leaves edit mode.
-- [ ] In edit mode, only the value token is inverted.
-- [ ] Encoder click on binary field toggles ON/OFF immediately in draft.
-- [ ] `Save` writes settings and applies runtime values.
-- [ ] `Reset` restores draft to build defaults (not persisted until Save).
-- [ ] `Exit` discards unsaved draft and returns to normal pages.
-- [ ] Settings mode suppresses normal page bullets and offset overlay.
+- [x] `BUTTON` long-press (~1000 ms) enters settings mode.
+- [x] Long-press while in settings mode exits and discards unsaved edits.
+- [x] Encoder rotate moves selected settings row in browse mode.
+- [x] Encoder click on numeric field enters/leaves edit mode.
+- [x] In edit mode, only the value token is inverted.
+- [x] Encoder click on binary field toggles ON/OFF immediately in draft.
+- [x] `Save` writes settings and applies runtime values.
+- [x] `Reset` restores draft to build defaults (not persisted until Save).
+- [x] `Exit` discards unsaved draft and returns to normal pages.
+- [x] Settings mode suppresses normal page bullets and offset overlay.
 
 ### B2.2 Settings persistence behavior
-- [ ] Save + power cycle restores the same settings values.
-- [ ] First boot without valid record falls back to defaults cleanly.
-- [ ] Invalid/corrupt record is ignored and does not break runtime boot.
-- [ ] Page-full path (append until full) erases and rewrites a fresh valid record.
+- [x] Save + power cycle restores the same settings values.
+- [x] First boot without valid record falls back to defaults cleanly.
+- [x] Invalid/corrupt record is ignored and does not break runtime boot.
+- [x] Page-full path (append until full) erases and rewrites a fresh valid record.
 
 ### B3. RGB status behavior
 - [x] Current implementation behavior is documented and verified.
