@@ -1,6 +1,6 @@
 #include "app/app_internal.h"
 
-#define APP_SETTINGS_LONG_PRESS_MS 1500U
+#define APP_SETTINGS_LONG_PRESS_MS 1000U
 #define APP_SETTINGS_TOAST_MS      1200U
 
 static const char *switch_name(switch_input_id_t input)
