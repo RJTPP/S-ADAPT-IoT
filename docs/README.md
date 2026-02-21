@@ -8,6 +8,8 @@ Files under `docs/references/` are preserved reference artifacts and may describ
 - [`docs/architecture/business-logic.md`](architecture/business-logic.md)
 - [`docs/architecture/Schematic_S-ADAPT.png`](architecture/Schematic_S-ADAPT.png)
 - [`docs/architecture/design_EasyDEA.json`](architecture/design_EasyDEA.json)
+- [`docs/user-guide.md`](user-guide.md)
+- [`docs/feature-matrix.md`](feature-matrix.md)
 
 ## Planning
 - [`docs/planning/planning-checklist.md`](planning/planning-checklist.md)

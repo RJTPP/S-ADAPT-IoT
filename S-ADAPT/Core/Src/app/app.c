@@ -32,7 +32,7 @@ const app_timing_cfg_t s_timing_cfg = {
 
 const app_policy_cfg_t s_policy_cfg = {
     .boot_setup_ms = 1000U,
-    .double_click_ms = 350U,
+    .encoder_long_press_ms = 800U,
     .offset_step = 5,
     .offset_min = -50,
     .offset_max = 50,
@@ -60,6 +60,20 @@ const app_policy_cfg_t s_policy_cfg = {
 
 app_ctx_t s_app;
 
+void app_settings_apply_build_defaults(app_settings_t *cfg)
+{
+    if (cfg == NULL) {
+        return;
+    }
+
+    app_settings_set_defaults(cfg);
+    cfg->away_timeout_s = (uint16_t)(s_policy_cfg.presence_away_timeout_ms / 1000U);
+    cfg->stale_timeout_s = (uint16_t)(s_policy_cfg.presence_stale_timeout_ms / 1000U);
+    cfg->preoff_dim_s = (uint16_t)(s_policy_cfg.presence_preoff_dim_ms / 1000U);
+    cfg->return_band_cm = (uint8_t)s_policy_cfg.presence_return_band_cm;
+    (void)app_settings_validate(cfg);
+}
+
 void app_set_fatal_fault(uint8_t enabled)
 {
     s_app.control.fatal_fault = (enabled != 0U) ? 1U : 0U;
@@ -71,6 +85,9 @@ uint8_t app_init(const app_hw_config_t *hw)
     uint32_t now_ms = HAL_GetTick();
     uint8_t ok = 1U;
     main_led_status_t main_led_status;
+    app_settings_t loaded_settings;
+    uint8_t used_defaults = 0U;
+    settings_store_status_t settings_status;
 
     if ((hw == NULL) || (hw->ldr_adc == NULL) || (hw->echo_tim == NULL) || (hw->main_led_tim == NULL)) {
         s_app.control.fatal_fault = 1U;
@@ -128,10 +145,10 @@ uint8_t app_init(const app_hw_config_t *hw)
     s_app.control.preoff_start_ms = 0U;
     s_app.control.preoff_dim_target_percent = 0U;
 
-    s_app.click.pending = 0U;
-    s_app.click.deadline_ms = now_ms;
     s_app.click.last_press_ms = now_ms;
     s_app.click.last_release_ms = now_ms;
+    s_app.click.encoder_sw_pressed = 0U;
+    s_app.click.encoder_long_press_fired = 0U;
 
     s_app.ui.page_index = 0U;
     s_app.ui.page_count = 2U;
@@ -140,7 +157,44 @@ uint8_t app_init(const app_hw_config_t *hw)
     s_app.ui.overlay_offset = 0;
     s_app.ui.render_dirty = 1U;
 
+    s_app.settings.dirty = 0U;
+    app_settings_apply_build_defaults(&s_app.settings.active);
+    s_app.settings.draft = s_app.settings.active;
+
+    s_app.settings_ui.mode_active = 0U;
+    s_app.settings_ui.editing_value = 0U;
+    s_app.settings_ui.selected_row = 0U;
+    s_app.settings_ui.button_pressed = 0U;
+    s_app.settings_ui.long_press_fired = 0U;
+    s_app.settings_ui.button_press_start_ms = now_ms;
+    s_app.settings_ui.toast_until_ms = 0U;
+    s_app.settings_ui.toast = APP_SETTINGS_TOAST_NONE;
+
     s_app.platform.display_ready = 0U;
+
+    app_settings_apply_build_defaults(&loaded_settings);
+    settings_status = settings_store_load(&loaded_settings, &used_defaults);
+    if ((settings_status != SETTINGS_STORE_OK) &&
+        (settings_status != SETTINGS_STORE_NO_VALID_RECORD)) {
+        app_settings_apply_build_defaults(&loaded_settings);
+        used_defaults = 1U;
+    } else if (used_defaults != 0U) {
+        app_settings_apply_build_defaults(&loaded_settings);
+    }
+    (void)app_settings_validate(&loaded_settings);
+    s_app.settings.active = loaded_settings;
+    s_app.settings.draft = loaded_settings;
+    s_app.settings.dirty = 0U;
+    debug_logln(DEBUG_PRINT_INFO,
+                "dbg cfg load status=%u defaults=%u away_en=%u flat_en=%u away_s=%u flat_s=%u preoff_s=%u ret_cm=%u",
+                (unsigned int)settings_status,
+                (unsigned int)used_defaults,
+                (unsigned int)s_app.settings.active.away_mode_enabled,
+                (unsigned int)s_app.settings.active.flat_mode_enabled,
+                (unsigned int)s_app.settings.active.away_timeout_s,
+                (unsigned int)s_app.settings.active.stale_timeout_s,
+                (unsigned int)s_app.settings.active.preoff_dim_s,
+                (unsigned int)s_app.settings.active.return_band_cm);
 
     ldr_init(hw->ldr_adc);
     ultrasonic_init(hw->echo_tim, hw->echo_channel);
@@ -202,7 +256,6 @@ void app_step(void)
     status_led_tick(now_ms);
     app_process_switch_events(now_ms);
     app_process_encoder_events(now_ms);
-    app_handle_click_timeout(now_ms);
     app_sample_ldr_if_due(now_ms);
     app_sample_ultrasonic_if_due(now_ms);
 

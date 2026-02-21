@@ -40,7 +40,7 @@
 - [x] Encoder single click toggles main light ON/OFF.
 - [x] Encoder rotation adjusts manual brightness offset (CW up / CCW down).
 - [x] Encoder rotation changes offset only (does not change sensitivity/factor parameters).
-- [x] Double click resets manual offset to `0` (AUTO baseline).
+- [x] Long press (`>= 800 ms`) resets manual offset to `0` (AUTO baseline), without waiting for release.
 - [x] LDR-based AUTO logic remains active after offset reset.
 - [x] Presence holds last valid state during transient ultrasonic failures.
 
@@ -70,6 +70,24 @@
 - [x] Overlay remains visible until animated offset reaches target, then holds ~750 ms before returning.
 - [x] Repeated encoder movement extends/resets overlay timeout correctly.
 
+### B2.1 Settings mode behavior
+- [x] `BUTTON` long-press (~1000 ms) enters settings mode.
+- [x] Long-press while in settings mode exits and discards unsaved edits.
+- [x] Encoder rotate moves selected settings row in browse mode.
+- [x] Encoder click on numeric field enters/leaves edit mode.
+- [x] In edit mode, only the value token is inverted.
+- [x] Encoder click on binary field toggles ON/OFF immediately in draft.
+- [x] `Save` writes settings and applies runtime values.
+- [x] `Reset` restores draft to build defaults (not persisted until Save).
+- [x] `Exit` discards unsaved draft and returns to normal pages.
+- [x] Settings mode suppresses normal page bullets and offset overlay.
+
+### B2.2 Settings persistence behavior
+- [x] Save + power cycle restores the same settings values.
+- [x] First boot without valid record falls back to defaults cleanly.
+- [x] Invalid/corrupt record is ignored and does not break runtime boot.
+- [x] Page-full path (append until full) erases and rewrites a fresh valid record.
+
 ### B3. RGB status behavior
 - [x] Current implementation behavior is documented and verified.
 - [x] Baseline mapping is verified:
@@ -89,4 +107,4 @@
 | Lighting noise | No visible oscillation/flicker | [x] |
 | Toggle control | Single click toggles lamp ON/OFF reliably | [x] |
 | Offset control | Encoder rotation changes brightness smoothly | [x] |
-| Reset control | Double click resets to AUTO baseline brightness | [x] |
+| Reset control | Long press resets to AUTO baseline brightness | [x] |

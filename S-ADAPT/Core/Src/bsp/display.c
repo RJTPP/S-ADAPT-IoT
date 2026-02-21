@@ -10,6 +10,15 @@
 #define DISPLAY_OFFSET_MAX           50
 #define DISPLAY_OFFSET_MAGNITUDE_MAX 50U
 #define DISPLAY_OFFSET_BAR_HALF_PX   40U
+#define DISPLAY_SETTINGS_VISIBLE_ROWS 4U
+#define DISPLAY_SETTINGS_ROW_Y_START  12U
+#define DISPLAY_SETTINGS_ROW_HEIGHT   10U
+#define DISPLAY_SETTINGS_LABEL_X      8U
+#define DISPLAY_SETTINGS_VALUE_X      76U
+#define DISPLAY_SETTINGS_SCROLL_X0    122U
+#define DISPLAY_SETTINGS_SCROLL_X1    125U
+#define DISPLAY_SETTINGS_SCROLL_Y0    DISPLAY_SETTINGS_ROW_Y_START
+#define DISPLAY_SETTINGS_SCROLL_Y1    (DISPLAY_SETTINGS_ROW_Y_START + (DISPLAY_SETTINGS_VISIBLE_ROWS * DISPLAY_SETTINGS_ROW_HEIGHT) - 1U)
 
 static uint8_t clamp_percent_u8(uint8_t value)
 {
@@ -168,6 +177,293 @@ void display_show_boot(void)
     HAL_Delay(120);
     draw_boot_frame("Ready", 100U);
     HAL_Delay(220);
+}
+
+static const char *settings_status_to_text(display_settings_status_t status)
+{
+    switch (status) {
+        case DISPLAY_SETTINGS_STATUS_SAVED:
+            return "SAVED";
+        case DISPLAY_SETTINGS_STATUS_SAVE_ERR:
+            return "SAVE ERR";
+        case DISPLAY_SETTINGS_STATUS_RESET:
+            return "RESET";
+        default:
+            return NULL;
+    }
+}
+
+static void draw_text_token(uint8_t x, uint8_t y, const char *text, uint8_t inverted)
+{
+    uint8_t text_width;
+
+    if (text == NULL) {
+        return;
+    }
+
+    ssd1306_SetCursor(x, y);
+    ssd1306_WriteString((char *)text, Font_7x10, White);
+    if (inverted == 0U) {
+        return;
+    }
+
+    text_width = (uint8_t)(strlen(text) * Font_7x10.width);
+    if (text_width == 0U) {
+        return;
+    }
+
+    (void)ssd1306_InvertRectangle((uint8_t)(x - 1U), (uint8_t)(y - 1U), (uint8_t)(x + text_width), (uint8_t)(y + 9U));
+}
+
+static uint8_t settings_row_has_editable_value(display_settings_row_id_t row)
+{
+    return (row <= DISPLAY_SETTINGS_ROW_RETURN_BAND) ? 1U : 0U;
+}
+
+static void draw_settings_scrollbar(uint8_t row_count, uint8_t row_window_start)
+{
+    uint8_t track_height;
+    uint8_t thumb_height;
+    uint8_t thumb_offset = 0U;
+
+    if (row_count <= DISPLAY_SETTINGS_VISIBLE_ROWS) {
+        return;
+    }
+
+    track_height = (uint8_t)(DISPLAY_SETTINGS_SCROLL_Y1 - DISPLAY_SETTINGS_SCROLL_Y0 + 1U);
+    thumb_height = (uint8_t)((track_height * DISPLAY_SETTINGS_VISIBLE_ROWS) / row_count);
+    if (thumb_height < 4U) {
+        thumb_height = 4U;
+    }
+    if (thumb_height > track_height) {
+        thumb_height = track_height;
+    }
+
+    if (row_count > DISPLAY_SETTINGS_VISIBLE_ROWS) {
+        uint8_t max_window_start = (uint8_t)(row_count - DISPLAY_SETTINGS_VISIBLE_ROWS);
+        uint8_t scroll_range = (uint8_t)(track_height - thumb_height);
+        thumb_offset = (uint8_t)((scroll_range * row_window_start) / max_window_start);
+    }
+
+    ssd1306_DrawRectangle(DISPLAY_SETTINGS_SCROLL_X0, DISPLAY_SETTINGS_SCROLL_Y0,
+                          DISPLAY_SETTINGS_SCROLL_X1, DISPLAY_SETTINGS_SCROLL_Y1, White);
+    ssd1306_FillRectangle((uint8_t)(DISPLAY_SETTINGS_SCROLL_X0 + 1U),
+                          (uint8_t)(DISPLAY_SETTINGS_SCROLL_Y0 + thumb_offset + 1U),
+                          (uint8_t)(DISPLAY_SETTINGS_SCROLL_X1 - 1U),
+                          (uint8_t)(DISPLAY_SETTINGS_SCROLL_Y0 + thumb_offset + thumb_height - 2U),
+                          White);
+}
+
+static void settings_compute_window(const display_settings_view_t *view,
+                                    uint8_t *out_row_count,
+                                    uint8_t *out_selected_row,
+                                    uint8_t *out_row_window_start)
+{
+    uint8_t row_window_start = 0U;
+    uint8_t selected_row;
+    uint8_t row_count;
+
+    if ((view == NULL) || (out_row_count == NULL) || (out_selected_row == NULL) || (out_row_window_start == NULL)) {
+        return;
+    }
+
+    row_count = view->row_count;
+    if ((row_count == 0U) || (row_count > DISPLAY_SETTINGS_ROW_COUNT)) {
+        row_count = DISPLAY_SETTINGS_ROW_COUNT;
+    }
+
+    selected_row = view->selected_row;
+    if (selected_row >= row_count) {
+        selected_row = (uint8_t)(row_count - 1U);
+    }
+
+    if (selected_row >= DISPLAY_SETTINGS_VISIBLE_ROWS) {
+        row_window_start = (uint8_t)(selected_row - (DISPLAY_SETTINGS_VISIBLE_ROWS - 1U));
+    }
+    if ((row_window_start + DISPLAY_SETTINGS_VISIBLE_ROWS) > row_count) {
+        if (row_count > DISPLAY_SETTINGS_VISIBLE_ROWS) {
+            row_window_start = (uint8_t)(row_count - DISPLAY_SETTINGS_VISIBLE_ROWS);
+        } else {
+            row_window_start = 0U;
+        }
+    }
+
+    *out_row_count = row_count;
+    *out_selected_row = selected_row;
+    *out_row_window_start = row_window_start;
+}
+
+static void settings_draw_header(const display_settings_view_t *view)
+{
+    ssd1306_SetCursor(0, 0);
+    ssd1306_WriteString((char *)"SETTINGS", Font_7x10, White);
+    if (view->editing_value != 0U) {
+        ssd1306_SetCursor(108, 0);
+        ssd1306_WriteString((char *)"E", Font_7x10, White);
+    }
+    if (view->unsaved != 0U) {
+        ssd1306_SetCursor(120, 0);
+        ssd1306_WriteString((char *)"*", Font_7x10, White);
+    }
+}
+
+static void settings_fill_row_content(const display_settings_view_t *view,
+                                      uint8_t current_row,
+                                      uint8_t is_selected,
+                                      const char **out_label,
+                                      char *out_value_text,
+                                      size_t out_value_size,
+                                      const char **out_unit,
+                                      uint8_t *out_invert_label)
+{
+    const char *label = "";
+    const char *unit = NULL;
+    uint8_t invert_label = 0U;
+
+    if ((view == NULL) || (out_label == NULL) || (out_value_text == NULL) ||
+        (out_value_size == 0U) || (out_unit == NULL) || (out_invert_label == NULL)) {
+        return;
+    }
+
+    out_value_text[0] = '\0';
+    switch ((display_settings_row_id_t)current_row) {
+        case DISPLAY_SETTINGS_ROW_AWAY_MODE:
+            label = "Away Mode:";
+            (void)snprintf(out_value_text, out_value_size, "%s", (view->away_mode_enabled != 0U) ? "ON" : "OFF");
+            break;
+        case DISPLAY_SETTINGS_ROW_FLAT_MODE:
+            label = "Flat Mode:";
+            (void)snprintf(out_value_text, out_value_size, "%s", (view->flat_mode_enabled != 0U) ? "ON" : "OFF");
+            break;
+        case DISPLAY_SETTINGS_ROW_AWAY_TIMEOUT:
+            label = "Away T:";
+            (void)snprintf(out_value_text, out_value_size, "%u", (unsigned int)view->away_timeout_s);
+            unit = "s";
+            break;
+        case DISPLAY_SETTINGS_ROW_FLAT_TIMEOUT:
+            label = "Flat T:";
+            (void)snprintf(out_value_text, out_value_size, "%u", (unsigned int)view->stale_timeout_s);
+            unit = "s";
+            break;
+        case DISPLAY_SETTINGS_ROW_PREOFF_DIM:
+            label = "PreOff:";
+            (void)snprintf(out_value_text, out_value_size, "%u", (unsigned int)view->preoff_dim_s);
+            unit = "s";
+            break;
+        case DISPLAY_SETTINGS_ROW_RETURN_BAND:
+            label = "RetBand:";
+            (void)snprintf(out_value_text, out_value_size, "%u", (unsigned int)view->return_band_cm);
+            unit = "cm";
+            break;
+        case DISPLAY_SETTINGS_ROW_SAVE:
+            label = "Save";
+            break;
+        case DISPLAY_SETTINGS_ROW_RESET:
+            label = "Reset";
+            break;
+        case DISPLAY_SETTINGS_ROW_EXIT:
+        default:
+            if ((view->unsaved != 0U) && (is_selected != 0U)) {
+                label = "Exit?";
+                invert_label = 1U;
+            } else {
+                label = "Exit";
+            }
+            break;
+    }
+
+    *out_label = label;
+    *out_unit = unit;
+    *out_invert_label = invert_label;
+}
+
+static void settings_draw_row(const display_settings_view_t *view, uint8_t current_row, uint8_t y, uint8_t is_selected)
+{
+    char value_text[12];
+    const char *label = "";
+    const char *unit = NULL;
+    uint8_t invert_label = 0U;
+    uint8_t invert_value = 0U;
+
+    settings_fill_row_content(view,
+                              current_row,
+                              is_selected,
+                              &label,
+                              value_text,
+                              sizeof(value_text),
+                              &unit,
+                              &invert_label);
+
+    if (is_selected != 0U) {
+        ssd1306_SetCursor(0, y);
+        ssd1306_WriteString((char *)">", Font_7x10, White);
+    }
+
+    if (invert_label != 0U) {
+        draw_text_token(DISPLAY_SETTINGS_LABEL_X, y, label, 1U);
+    } else {
+        ssd1306_SetCursor(DISPLAY_SETTINGS_LABEL_X, y);
+        ssd1306_WriteString((char *)label, Font_7x10, White);
+    }
+
+    if ((view->editing_value != 0U) &&
+        (is_selected != 0U) &&
+        (settings_row_has_editable_value((display_settings_row_id_t)current_row) != 0U)) {
+        invert_value = 1U;
+    }
+
+    if (value_text[0] != '\0') {
+        uint8_t value_x = DISPLAY_SETTINGS_VALUE_X;
+        draw_text_token(value_x, y, value_text, invert_value);
+        if (unit != NULL) {
+            uint8_t unit_x = (uint8_t)(value_x + (strlen(value_text) * Font_7x10.width) + Font_7x10.width);
+            ssd1306_SetCursor(unit_x, y);
+            ssd1306_WriteString((char *)unit, Font_7x10, White);
+        }
+    }
+}
+
+static void settings_draw_status(display_settings_status_t status)
+{
+    const char *status_text = settings_status_to_text(status);
+
+    if (status_text != NULL) {
+        ssd1306_SetCursor(72, 54);
+        ssd1306_WriteString((char *)status_text, Font_7x10, White);
+    }
+}
+
+void display_show_settings_page(const display_settings_view_t *view)
+{
+    uint8_t row_count;
+    uint8_t selected_row;
+    uint8_t row_window_start;
+    uint8_t row_idx;
+
+    if (view == NULL) {
+        return;
+    }
+
+    settings_compute_window(view, &row_count, &selected_row, &row_window_start);
+
+    ssd1306_Fill(Black);
+    settings_draw_header(view);
+
+    for (row_idx = 0U; row_idx < DISPLAY_SETTINGS_VISIBLE_ROWS; row_idx++) {
+        uint8_t current_row = (uint8_t)(row_window_start + row_idx);
+        uint8_t y = (uint8_t)(DISPLAY_SETTINGS_ROW_Y_START + (row_idx * DISPLAY_SETTINGS_ROW_HEIGHT));
+
+        if (current_row >= row_count) {
+            break;
+        }
+
+        settings_draw_row(view, current_row, y, (uint8_t)(current_row == selected_row));
+    }
+
+    settings_draw_status(view->status);
+    draw_settings_scrollbar(row_count, row_window_start);
+
+    ssd1306_UpdateScreen();
 }
 
 void display_show_main_page(const display_view_t *view)
