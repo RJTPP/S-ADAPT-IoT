@@ -384,6 +384,7 @@ void display_show_settings_page(const display_settings_view_t *view)
         ssd1306_WriteString((char *)status_text, Font_7x10, White);
     }
 
+    draw_settings_scrollbar(row_count, row_window_start);
 
     ssd1306_UpdateScreen();
 }
