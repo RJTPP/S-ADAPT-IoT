@@ -22,12 +22,12 @@ static uint8_t s_overlay_reach_latched = 0U;
 #define APP_UI_OVERLAY_ANIM_DIVISOR     2
 #define APP_UI_OVERLAY_POST_HOLD_MS     750U
 
-static const char *no_user_reason_to_string(uint8_t reason)
+static const char *no_user_reason_to_string(app_no_user_reason_t reason)
 {
     switch (reason) {
-        case 1U:
+        case APP_NO_USER_REASON_AWAY:
             return "away";
-        case 2U:
+        case APP_NO_USER_REASON_FLAT:
             return "flat";
         default:
             return "none";
@@ -48,9 +48,9 @@ static display_mode_t app_to_display_mode(void)
 static display_reason_t app_to_display_reason(void)
 {
     switch (s_app.sensors.no_user_reason) {
-        case 1U:
+        case APP_NO_USER_REASON_AWAY:
             return DISPLAY_REASON_AWAY;
-        case 2U:
+        case APP_NO_USER_REASON_FLAT:
             return DISPLAY_REASON_FLAT;
         default:
             return DISPLAY_REASON_NONE;

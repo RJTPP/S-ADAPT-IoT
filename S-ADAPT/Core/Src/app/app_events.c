@@ -39,7 +39,7 @@ static void reset_presence_runtime_state(void)
     s_app.sensors.flat_streak_ms = 0U;
     s_app.sensors.motion_streak_ms = 0U;
     s_app.sensors.near_ref_streak_ms = 0U;
-    s_app.sensors.no_user_reason = 0U;
+    s_app.sensors.no_user_reason = APP_NO_USER_REASON_NONE;
     s_app.sensors.presence_candidate_no_user = 0U;
     s_app.control.preoff_active = 0U;
     s_app.control.preoff_start_ms = 0U;

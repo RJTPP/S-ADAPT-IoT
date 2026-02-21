@@ -63,6 +63,13 @@ typedef struct
     uint32_t last_ui_refresh_ms;
 } app_timing_state_t;
 
+typedef enum
+{
+    APP_NO_USER_REASON_NONE = 0U,
+    APP_NO_USER_REASON_AWAY = 1U,
+    APP_NO_USER_REASON_FLAT = 2U
+} app_no_user_reason_t;
+
 typedef struct
 {
     uint16_t last_ldr_raw;
@@ -84,7 +91,7 @@ typedef struct
     uint32_t flat_streak_ms;
     uint32_t motion_streak_ms;
     uint32_t near_ref_streak_ms;
-    uint8_t no_user_reason;
+    app_no_user_reason_t no_user_reason;
     uint8_t presence_candidate_no_user;
 
     filter_moving_average_u16_t ldr_ma;

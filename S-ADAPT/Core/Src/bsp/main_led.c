@@ -9,6 +9,7 @@ static uint8_t s_main_led_percent = 0U;
 static main_led_status_t apply_percent(uint8_t percent)
 {
     uint32_t arr;
+    uint32_t full_scale;
     uint32_t pulse;
 
     if (s_main_led_tim == NULL) {
@@ -16,9 +17,10 @@ static main_led_status_t apply_percent(uint8_t percent)
     }
 
     arr = __HAL_TIM_GET_AUTORELOAD(s_main_led_tim);
-    pulse = (((arr + 1U) * (uint32_t)percent) / 100U);
-    if (pulse > arr) {
-        pulse = arr;
+    full_scale = arr + 1U;
+    pulse = ((full_scale * (uint32_t)percent) / 100U);
+    if (pulse > full_scale) {
+        pulse = full_scale;
     }
 
     __HAL_TIM_SET_COMPARE(s_main_led_tim, s_main_led_channel, pulse);

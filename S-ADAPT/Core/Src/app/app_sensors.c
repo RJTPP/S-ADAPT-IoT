@@ -81,7 +81,8 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
                 }
 
                 /* Motion streak is only meaningful for recovery from flat no-user state. */
-                if ((s_app.sensors.last_valid_presence == 0U) && (s_app.sensors.no_user_reason == 2U)) {
+                if ((s_app.sensors.last_valid_presence == 0U) &&
+                    (s_app.sensors.no_user_reason == APP_NO_USER_REASON_FLAT)) {
                     if (motion_condition != 0U) {
                         s_app.sensors.motion_streak_ms += s_timing_cfg.us_sample_ms;
                     } else {
@@ -96,7 +97,7 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
                 }
 
                 if ((s_app.sensors.last_valid_presence == 0U) &&
-                    (s_app.sensors.no_user_reason == 1U) &&
+                    (s_app.sensors.no_user_reason == APP_NO_USER_REASON_AWAY) &&
                     (s_app.sensors.last_distance_filtered_cm <= (ref_distance_cm + s_policy_cfg.presence_return_band_cm))) {
                     s_app.sensors.near_ref_streak_ms += s_timing_cfg.us_sample_ms;
                 } else {
@@ -105,29 +106,29 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
 
                 s_app.sensors.presence_candidate_no_user = 0U;
                 if (s_app.sensors.last_valid_presence != 0U) {
-                    s_app.sensors.no_user_reason = 0U;
+                    s_app.sensors.no_user_reason = APP_NO_USER_REASON_NONE;
                     if (s_app.sensors.away_streak_ms >= s_policy_cfg.presence_away_timeout_ms) {
                         s_app.sensors.presence_candidate_no_user = 1U;
-                        s_app.sensors.no_user_reason = 1U;
+                        s_app.sensors.no_user_reason = APP_NO_USER_REASON_AWAY;
                     } else if (s_app.sensors.flat_streak_ms >= s_policy_cfg.presence_stale_timeout_ms) {
                         s_app.sensors.presence_candidate_no_user = 1U;
-                        s_app.sensors.no_user_reason = 2U;
+                        s_app.sensors.no_user_reason = APP_NO_USER_REASON_FLAT;
                     }
                 } else {
-                    if ((s_app.sensors.no_user_reason == 1U) &&
+                    if ((s_app.sensors.no_user_reason == APP_NO_USER_REASON_AWAY) &&
                         (s_app.sensors.near_ref_streak_ms >= s_policy_cfg.presence_return_confirm_ms)) {
                         s_app.sensors.last_valid_presence = 1U;
                         s_app.sensors.near_ref_streak_ms = 0U;
                         s_app.sensors.away_streak_ms = 0U;
                         s_app.sensors.flat_streak_ms = 0U;
-                        s_app.sensors.no_user_reason = 0U;
-                    } else if ((s_app.sensors.no_user_reason == 2U) &&
+                        s_app.sensors.no_user_reason = APP_NO_USER_REASON_NONE;
+                    } else if ((s_app.sensors.no_user_reason == APP_NO_USER_REASON_FLAT) &&
                                (motion_condition != 0U)) {
                         s_app.sensors.last_valid_presence = 1U;
                         s_app.sensors.motion_streak_ms = 0U;
                         s_app.sensors.away_streak_ms = 0U;
                         s_app.sensors.flat_streak_ms = 0U;
-                        s_app.sensors.no_user_reason = 0U;
+                        s_app.sensors.no_user_reason = APP_NO_USER_REASON_NONE;
                     }
                 }
             }
