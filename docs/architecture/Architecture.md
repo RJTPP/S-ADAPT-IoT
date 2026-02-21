@@ -58,7 +58,9 @@ flowchart TD
 | Switch debounce confirmation | 20 ms (`SWITCH_DEBOUNCE_TICKS` x sample period) |
 | Ultrasonic measurement | 1000 ms (`US_SAMPLE_PERIOD_MS`) |
 | LDR sampling | 50 ms (`LDR_SAMPLE_PERIOD_MS`) |
-| OLED debug update | 1000 ms (`OLED_DEBUG_PERIOD_MS`, when enabled) |
+| OLED redraw (dirty) | Up to ~15 FPS (`ui_min_redraw_ms = 66 ms`) |
+| OLED refresh fallback | 1000 ms (`ui_refresh_ms`) |
+| OLED overlay timeout | 1200 ms from last encoder step, plus post-reach hold (~1000 ms) |
 | RGB debug state cycle | 1000 ms (`RGB_DEBUG_PERIOD_MS`) |
 | UART switch logs | On debounced transitions only |
 | UART ultrasonic logs | Once per ultrasonic tick |

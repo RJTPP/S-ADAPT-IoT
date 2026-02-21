@@ -25,8 +25,10 @@
 - UART emits a consolidated 1-second summary log for tuning.
 - OLED runtime UI is active:
 - Persistent pages: `MAIN` and `SENSOR`, switched by `BUTTON` release.
-- Offset overlay appears on encoder rotation and auto-hides after `1200 ms`.
-- Display refresh is event-driven with 1-second periodic refresh fallback.
+- Offset overlay appears on encoder rotation and timeout starts at `1200 ms`.
+- Overlay uses adaptive offset animation and remains visible until animation reaches target, then holds for ~`1000 ms` before exit.
+- Display refresh is data/event-driven with 1-second periodic refresh fallback.
+- OLED redraw is rate-limited to ~15 FPS (`66 ms` minimum draw interval).
 
 ## Power-On Defaults (Current)
 - `Mode = AUTO`

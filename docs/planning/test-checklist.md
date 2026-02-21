@@ -62,9 +62,12 @@
 - [ ] Page 0 (`MAIN`) shows mode + LDR% + output% + offset with bars.
 - [ ] Page 1 (`SENSOR`) shows distance + filtered LDR raw + reference + present/reason flags.
 - [ ] Bottom-right page bullets are visible on persistent pages and match active page.
+- [ ] Passive value changes (LDR/output/distance) trigger display updates without waiting only for 1-second refresh.
+- [ ] OLED redraw stays bounded near 15 FPS max under rapid value changes.
 - [ ] Encoder rotation shows temporary offset overlay immediately.
 - [ ] Overlay hides bullets while active.
-- [ ] Overlay hides after ~1200 ms and returns to prior page.
+- [ ] Overlay timeout starts at ~1200 ms from last encoder step.
+- [ ] Overlay remains visible until animated offset reaches target, then holds ~1000 ms before returning.
 - [ ] Repeated encoder movement extends/resets overlay timeout correctly.
 
 ### B3. RGB status behavior
