@@ -121,6 +121,7 @@ uint8_t app_init(const app_hw_config_t *hw)
     s_app.control.last_applied_output_percent = 0U;
     s_app.control.output_hysteresis_initialized = 0U;
     s_app.control.ramp_initialized = 0U;
+    s_app.control.ramp_fast_on_active = 0U;
     s_app.control.fatal_fault = 0U;
     s_app.control.rgb_state = STATUS_LED_STATE_BOOT_SETUP;
     s_app.control.preoff_active = 0U;
