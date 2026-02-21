@@ -29,6 +29,15 @@
 - Overlay uses adaptive offset animation and remains visible until animation reaches target, then holds for ~`750 ms` before exit.
 - Display refresh is data/event-driven with 1-second periodic refresh fallback.
 - OLED redraw is rate-limited to ~15 FPS (`66 ms` minimum draw interval).
+- Settings mode is available as a modal OLED flow:
+  - enter/exit with `BUTTON` long-press (`1500 ms`)
+  - encoder rotate to move/select/edit
+  - explicit `Save`/`Reset`/`Exit` actions
+  - edit focus inverts value token only
+- User settings persistence is active on internal flash:
+  - append-only records with `magic/version/seq/crc`
+  - one reserved flash page (`0x0803F800`, `2 KB`)
+  - boot loads latest valid record, else falls back to defaults
 
 ## Power-On Defaults (Current)
 - `Mode = AUTO`
@@ -73,6 +82,27 @@ flowchart TD
     U --> V["Render OLED page/overlay (event-driven + 1 s refresh)"]
     V --> W["1 s summary UART log"]
 ```
+
+## Settings Mode and Persistence (Current)
+- Entry: `BUTTON` long-press (`1500 ms`) toggles settings mode.
+- While settings mode is active:
+  - normal page cycling is suspended
+  - encoder click/rotate are routed to settings UI
+  - offset overlay is hidden
+- Draft model:
+  - edits go to draft settings only
+  - runtime behavior changes only after `Save`
+  - `Exit` discards unsaved draft edits
+- Persisted fields (v1):
+  - away/flat mode enable
+  - away timeout
+  - stale timeout
+  - pre-off dim duration
+  - away return band
+- Save path:
+  - validate draft
+  - append new flash record with incremented sequence
+  - if page full: erase page then write fresh record
 
 ## Presence Logic (Current)
 - Runtime cadence: control `33 ms`, LDR sampling `50 ms` (decoupled), ultrasonic sampling `100 ms`.

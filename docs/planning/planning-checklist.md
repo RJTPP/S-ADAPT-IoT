@@ -145,6 +145,22 @@ Source references:
 - [x] Status LED behavior is explicitly documented (kept for now).
 - [x] Optional UART debug output for tuning thresholds and filters.
 
+### Settings UI and persistence
+- [x] Modal settings mode entered/exited by `BUTTON` long-press (`1500 ms`).
+- [x] Encoder is reused for settings navigation/editing (`rotate`/`click`).
+- [x] Draft-edit model is implemented (`Save` applies, `Exit` discards unsaved edits).
+- [x] Core presence settings are configurable on-device:
+- [x] away mode enable
+- [x] flat mode enable
+- [x] away timeout
+- [x] stale timeout
+- [x] pre-off dim duration
+- [x] return band
+- [x] Internal flash persistence module is implemented (append-only record with `magic/version/seq/crc`).
+- [x] Linker flash region is reduced to reserve one NVM page (`2 KB`).
+- [ ] On-board save/reboot/restore behavior is validated and recorded.
+- [ ] Corrupt-record fallback behavior is validated on target.
+
 Note: production timing profile (`APP_PRESENCE_DEBUG_TIMERS=0`) is away `30s`, stale `120s`, pre-off dim `10s`.
 
 ### Acceptance checks

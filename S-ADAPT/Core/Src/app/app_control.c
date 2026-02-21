@@ -136,6 +136,7 @@ uint8_t app_control_tick_due(uint32_t now_ms)
 void app_update_output_control(uint32_t now_ms)
 {
     int32_t target_percent_i32;
+    uint32_t preoff_dim_ms = (uint32_t)s_app.settings.active.preoff_dim_s * 1000U;
 
     s_app.control.auto_percent = compute_auto_percent_from_ldr(s_app.sensors.last_ldr_filtered);
 
@@ -158,7 +159,7 @@ void app_update_output_control(uint32_t now_ms)
         if (s_app.control.preoff_active != 0U) {
             if (s_app.sensors.presence_candidate_no_user == 0U) {
                 s_app.control.preoff_active = 0U;
-            } else if (input_has_elapsed_ms(now_ms, s_app.control.preoff_start_ms, s_policy_cfg.presence_preoff_dim_ms) != 0U) {
+            } else if (input_has_elapsed_ms(now_ms, s_app.control.preoff_start_ms, preoff_dim_ms) != 0U) {
                 s_app.control.preoff_active = 0U;
                 s_app.sensors.last_valid_presence = 0U;
                 s_app.sensors.presence_candidate_no_user = 0U;
