@@ -56,6 +56,8 @@ Reading books in inadequate or excessive lighting conditions is detrimental to e
 - **Voltage Divider:** For the LDR sensor to adapt the voltage range for the ADC.
 - **LED Driver:** Using a Transistor or MOSFET to handle power requirements and PWM signals.
 
+Implementation note (current hardware): the project currently uses an isolated MOSFET module for the main lamp path while keeping a shared supply rail.
+
 ### 2.3 Operational Steps (ขั้นตอนการทำงาน)
 
 1. **Sensor Acquisition:** Sample LDR via ADC and capture Ultrasonic echo width via GPIO Timer Input Capture every 100 ms.

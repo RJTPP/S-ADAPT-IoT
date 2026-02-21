@@ -21,7 +21,7 @@
 - [x] Error blink path works if display init is intentionally forced to fail.
 
 ### A3. Electrical behavior
-- [x] MOSFET gate control is clean (no chatter at steady duty).
+- [x] Isolated MOSFET module PWM input control is clean (no chatter at steady duty).
 - [x] LED can fully turn off and reach target max output.
 - [x] No reset or brownout during fast brightness changes.
 

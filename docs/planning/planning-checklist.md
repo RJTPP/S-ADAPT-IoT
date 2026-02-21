@@ -48,11 +48,11 @@ Source references:
 - [ ] LDR + divider network:
 - [ ] ADC raw values move correctly with light changes.
 - [ ] Scaled light percentage range is reasonable and monotonic.
-- [ ] Main LED module + MOSFET driver:
+- [ ] Main LED module + isolated MOSFET driver module:
 - [x] PWM duty changes match commanded brightness.
 - [ ] LED fully turns off at 0% and reaches expected max brightness.
 - [ ] No visible flicker at normal operating brightness.
-- [ ] MOSFET gate resistor and pull-down behavior validated (clean switching).
+- [ ] Isolated MOSFET module input switching is clean at steady duty and step changes.
 - [ ] RGB status LED module:
 - [ ] State color mapping works:
 - [ ] Blue = Auto mode

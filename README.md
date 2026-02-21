@@ -44,7 +44,7 @@ This repository is the implementation for the class project in `01204323 Electro
 - Ultrasonic: HC-SR04
 - Display: SSD1306 OLED (I2C)
 - Ambient sensor: LDR + divider
-- Main light driver: MOSFET + PWM
+- Main light driver: isolated MOSFET module input (PWM control, shared lamp power rail)
 - Inputs: rotary encoder (`CLK/DT/SW`) + extra page button
 
 ## Hardware Overview

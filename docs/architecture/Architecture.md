@@ -23,7 +23,7 @@ This document defines the current firmware architecture and hardware-to-code map
 | Module | Main Files | Responsibility |
 |---|---|---|
 | Switch input debounce | `S-ADAPT/Core/Src/input/switch_input.c` | Poll `BUTTON`/`SW2`, debounce transitions, queue switch events |
-| Main LED PWM driver | `S-ADAPT/Core/Src/bsp/main_led.c` | TIM1 CH1 PWM output control (`0..100%`) for MOSFET-driven lamp |
+| Main LED PWM driver | `S-ADAPT/Core/Src/bsp/main_led.c` | TIM1 CH1 PWM output control (`0..100%`) for isolated MOSFET module (shared lamp power rail) |
 | Ultrasonic driver | `S-ADAPT/Core/Src/sensors/ultrasonic.c` | TRIG pulse, TIM2 input capture, timeout/noise handling, distance conversion |
 | Display driver facade | `S-ADAPT/Core/Src/bsp/display.c` | OLED init and rendering calls via `ssd1306.c` |
 | Status LED control | `S-ADAPT/Core/Src/bsp/status_led.c` | RGB indication and error blink support |
