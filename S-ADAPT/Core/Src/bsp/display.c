@@ -354,7 +354,11 @@ void display_show_settings_page(const display_settings_view_t *view)
                 break;
             case DISPLAY_SETTINGS_ROW_EXIT:
             default:
-                label = "Exit";
+                if ((view->unsaved != 0U) && (current_row == selected_row)) {
+                    label = "Exit?";
+                } else {
+                    label = "Exit";
+                }
                 break;
         }
 
