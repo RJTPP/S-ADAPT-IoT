@@ -120,7 +120,6 @@ static void app_enter_settings_mode(uint32_t now_ms)
     app_set_settings_toast(APP_SETTINGS_TOAST_NONE, now_ms);
     s_app.settings.draft = s_app.settings.active;
     s_app.settings.dirty = 0U;
-    s_app.click.pending = 0U;
     s_app.ui.overlay_active = 0U;
     s_app.ui.render_dirty = 1U;
     debug_logln(DEBUG_PRINT_INFO, "dbg settings=enter");
@@ -207,24 +206,10 @@ static void reset_presence_runtime_state(void)
     s_app.control.preoff_dim_target_percent = 0U;
 }
 
-void app_handle_click_timeout(uint32_t now_ms)
+static void app_toggle_light_enabled(void)
 {
     uint8_t was_light_enabled;
 
-    if (s_app.settings_ui.mode_active != 0U) {
-        s_app.click.pending = 0U;
-        return;
-    }
-
-    if (s_app.click.pending == 0U) {
-        return;
-    }
-
-    if (input_has_elapsed_ms(now_ms, s_app.click.deadline_ms, s_policy_cfg.double_click_ms) == 0U) {
-        return;
-    }
-
-    s_app.click.pending = 0U;
     was_light_enabled = s_app.control.light_enabled;
     s_app.control.light_enabled = (s_app.control.light_enabled == 0U) ? 1U : 0U;
 
@@ -347,15 +332,12 @@ void app_handle_encoder_event(const encoder_event_t *event)
 
         case ENCODER_EVENT_SW_RELEASED:
             s_app.click.last_release_ms = event->timestamp_ms;
-            if ((s_app.click.pending != 0U) &&
-                ((uint32_t)(event->timestamp_ms - s_app.click.deadline_ms) < s_policy_cfg.double_click_ms)) {
+            if ((uint32_t)(event->timestamp_ms - s_app.click.last_press_ms) >= s_policy_cfg.encoder_long_press_ms) {
                 s_app.control.manual_offset = 0;
-                s_app.click.pending = 0U;
                 s_app.ui.render_dirty = 1U;
-                debug_logln(DEBUG_PRINT_INFO, "dbg click=double offset=%ld", (long)s_app.control.manual_offset);
+                debug_logln(DEBUG_PRINT_INFO, "dbg click=long offset=%ld", (long)s_app.control.manual_offset);
             } else {
-                s_app.click.pending = 1U;
-                s_app.click.deadline_ms = event->timestamp_ms;
+                app_toggle_light_enabled();
             }
             break;
 

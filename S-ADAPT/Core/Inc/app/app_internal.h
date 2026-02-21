@@ -28,7 +28,7 @@ typedef struct
 typedef struct
 {
     uint32_t boot_setup_ms;
-    uint32_t double_click_ms;
+    uint32_t encoder_long_press_ms;
     int32_t offset_step;
     int32_t offset_min;
     int32_t offset_max;
@@ -122,8 +122,6 @@ typedef struct
 
 typedef struct
 {
-    uint8_t pending;
-    uint32_t deadline_ms;
     uint32_t last_press_ms;
     uint32_t last_release_ms;
 } app_click_state_t;
@@ -187,7 +185,6 @@ extern const app_policy_cfg_t s_policy_cfg;
 extern app_ctx_t s_app;
 
 status_led_state_t app_evaluate_state(uint32_t now_ms);
-void app_handle_click_timeout(uint32_t now_ms);
 void app_handle_encoder_event(const encoder_event_t *event);
 void app_process_switch_events(uint32_t now_ms);
 void app_process_encoder_events(uint32_t now_ms);

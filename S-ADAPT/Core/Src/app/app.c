@@ -32,7 +32,7 @@ const app_timing_cfg_t s_timing_cfg = {
 
 const app_policy_cfg_t s_policy_cfg = {
     .boot_setup_ms = 1000U,
-    .double_click_ms = 350U,
+    .encoder_long_press_ms = 800U,
     .offset_step = 5,
     .offset_min = -50,
     .offset_max = 50,
@@ -145,8 +145,6 @@ uint8_t app_init(const app_hw_config_t *hw)
     s_app.control.preoff_start_ms = 0U;
     s_app.control.preoff_dim_target_percent = 0U;
 
-    s_app.click.pending = 0U;
-    s_app.click.deadline_ms = now_ms;
     s_app.click.last_press_ms = now_ms;
     s_app.click.last_release_ms = now_ms;
 
@@ -256,7 +254,6 @@ void app_step(void)
     status_led_tick(now_ms);
     app_process_switch_events(now_ms);
     app_process_encoder_events(now_ms);
-    app_handle_click_timeout(now_ms);
     app_sample_ldr_if_due(now_ms);
     app_sample_ultrasonic_if_due(now_ms);
 
