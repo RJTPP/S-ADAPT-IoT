@@ -110,7 +110,7 @@ Saved settings are stored in internal flash and restored on reboot.
 - `Away T` = away timeout (seconds)
 - `Flat T` = flat/stale timeout (seconds)
 - `PreOff` = pre-off dim duration (seconds)
-- `RetBand` = return band for away recovery (cm)
+- `RetBand` = return band threshold for away recovery, relative to reference distance (cm)
 
 ### Runtime logs (common)
 - `ldr_raw` = raw LDR ADC
