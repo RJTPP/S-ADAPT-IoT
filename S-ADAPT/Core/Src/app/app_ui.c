@@ -41,7 +41,7 @@ static uint8_t app_compute_ldr_percent(uint16_t ldr_filtered_raw)
     if (scaled > 100U) {
         scaled = 100U;
     }
-    return (uint8_t)(100U - scaled);
+    return (uint8_t)scaled;
 }
 
 static void app_render_display(void)
