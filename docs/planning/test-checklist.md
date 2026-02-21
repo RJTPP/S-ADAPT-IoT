@@ -59,12 +59,12 @@
 
 ### B2. OLED behavior
 - [ ] Page button cycles pages with wraparound logic.
-- [ ] Page 0 shows AUTO + offset + brightness + light ON/OFF state.
-- [ ] Page 1 shows LDR info.
-- [ ] Page 2 shows distance/presence info.
-- [ ] Debug page (if enabled) shows useful internal values.
+- [ ] Page 0 (`MAIN`) shows mode + LDR% + output% + offset with bars.
+- [ ] Page 1 (`SENSOR`) shows distance + filtered LDR raw + reference + present/reason flags.
+- [ ] Bottom-right page bullets are visible on persistent pages and match active page.
 - [ ] Encoder rotation shows temporary offset overlay immediately.
-- [ ] Overlay hides after timeout and returns to prior page.
+- [ ] Overlay hides bullets while active.
+- [ ] Overlay hides after ~1200 ms and returns to prior page.
 - [ ] Repeated encoder movement extends/resets overlay timeout correctly.
 
 ### B3. RGB status behavior

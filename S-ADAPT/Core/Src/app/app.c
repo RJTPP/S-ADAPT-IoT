@@ -27,7 +27,6 @@ const app_timing_cfg_t s_timing_cfg = {
     .ldr_sample_ms = 50U,
     .us_sample_ms = 100U,
     .log_ms = 1000U,
-    .oled_update_ms = 1000U,
 };
 
 const app_policy_cfg_t s_policy_cfg = {
@@ -54,6 +53,8 @@ const app_policy_cfg_t s_policy_cfg = {
     .presence_resume_motion_ms = APP_PRESENCE_RESUME_MOTION_MS,
     .presence_preoff_dim_percent = 15U,
     .presence_preoff_dim_ms = APP_PRESENCE_PREOFF_DIM_MS,
+    .ui_overlay_timeout_ms = 1200U,
+    .ui_refresh_ms = 1000U,
 };
 
 app_ctx_t s_app;
@@ -81,7 +82,7 @@ uint8_t app_init(const app_hw_config_t *hw)
     s_app.timing.last_ldr_sample_ms = now_ms;
     s_app.timing.last_us_sample_ms = now_ms;
     s_app.timing.last_log_ms = now_ms;
-    s_app.timing.last_oled_ms = now_ms;
+    s_app.timing.last_ui_refresh_ms = now_ms;
 
     s_app.sensors.last_ldr_raw = 0U;
     s_app.sensors.last_ldr_filtered = 0U;
@@ -128,6 +129,13 @@ uint8_t app_init(const app_hw_config_t *hw)
     s_app.click.deadline_ms = now_ms;
     s_app.click.last_press_ms = now_ms;
     s_app.click.last_release_ms = now_ms;
+
+    s_app.ui.page_index = 0U;
+    s_app.ui.page_count = 2U;
+    s_app.ui.overlay_active = 0U;
+    s_app.ui.overlay_until_ms = 0U;
+    s_app.ui.overlay_offset = 0;
+    s_app.ui.render_dirty = 1U;
 
     s_app.platform.display_ready = 0U;
 

@@ -74,14 +74,19 @@ void app_handle_click_timeout(uint32_t now_ms)
         reset_presence_runtime_state();
     }
 
+    s_app.ui.render_dirty = 1U;
     debug_logln(DEBUG_PRINT_INFO, "dbg click=single light_on=%u", (unsigned int)s_app.control.light_enabled);
 }
 
 void app_handle_encoder_event(const encoder_event_t *event)
 {
+    int32_t previous_offset;
+
     if (event == NULL) {
         return;
     }
+
+    previous_offset = s_app.control.manual_offset;
 
     switch (event->type) {
         case ENCODER_EVENT_CW:
@@ -106,6 +111,7 @@ void app_handle_encoder_event(const encoder_event_t *event)
                 ((uint32_t)(event->timestamp_ms - s_app.click.deadline_ms) < s_policy_cfg.double_click_ms)) {
                 s_app.control.manual_offset = 0;
                 s_app.click.pending = 0U;
+                s_app.ui.render_dirty = 1U;
                 debug_logln(DEBUG_PRINT_INFO, "dbg click=double offset=%ld", (long)s_app.control.manual_offset);
             } else {
                 s_app.click.pending = 1U;
@@ -115,6 +121,14 @@ void app_handle_encoder_event(const encoder_event_t *event)
 
         default:
             break;
+    }
+
+    if (((event->type == ENCODER_EVENT_CW) || (event->type == ENCODER_EVENT_CCW)) &&
+        (s_app.control.manual_offset != previous_offset)) {
+        s_app.ui.overlay_active = 1U;
+        s_app.ui.overlay_until_ms = event->timestamp_ms + s_policy_cfg.ui_overlay_timeout_ms;
+        s_app.ui.overlay_offset = s_app.control.manual_offset;
+        s_app.ui.render_dirty = 1U;
     }
 }
 
@@ -128,6 +142,13 @@ void app_process_switch_events(uint32_t now_ms)
                     switch_name(switch_event.input),
                     (switch_event.pressed != 0U) ? "pressed" : "released",
                     (unsigned int)switch_event.level);
+
+        if ((switch_event.input == SWITCH_INPUT_BUTTON) && (switch_event.pressed == 0U)) {
+            if (s_app.ui.page_count != 0U) {
+                s_app.ui.page_index = (uint8_t)((s_app.ui.page_index + 1U) % s_app.ui.page_count);
+            }
+            s_app.ui.render_dirty = 1U;
+        }
     }
 }
 

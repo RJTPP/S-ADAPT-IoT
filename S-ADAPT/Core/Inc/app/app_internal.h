@@ -20,7 +20,6 @@ typedef struct
     uint32_t ldr_sample_ms;
     uint32_t us_sample_ms;
     uint32_t log_ms;
-    uint32_t oled_update_ms;
 } app_timing_cfg_t;
 
 typedef struct
@@ -48,6 +47,8 @@ typedef struct
     uint32_t presence_resume_motion_ms;
     uint8_t presence_preoff_dim_percent;
     uint32_t presence_preoff_dim_ms;
+    uint32_t ui_overlay_timeout_ms;
+    uint32_t ui_refresh_ms;
 } app_policy_cfg_t;
 
 typedef struct
@@ -57,7 +58,7 @@ typedef struct
     uint32_t last_ldr_sample_ms;
     uint32_t last_us_sample_ms;
     uint32_t last_log_ms;
-    uint32_t last_oled_ms;
+    uint32_t last_ui_refresh_ms;
 } app_timing_state_t;
 
 typedef struct
@@ -117,6 +118,16 @@ typedef struct
 
 typedef struct
 {
+    uint8_t page_index;
+    uint8_t page_count;
+    uint8_t overlay_active;
+    uint32_t overlay_until_ms;
+    int32_t overlay_offset;
+    uint8_t render_dirty;
+} app_ui_state_t;
+
+typedef struct
+{
     uint8_t display_ready;
 } app_platform_state_t;
 
@@ -126,6 +137,7 @@ typedef struct
     app_sensor_state_t sensors;
     app_control_state_t control;
     app_click_state_t click;
+    app_ui_state_t ui;
     app_platform_state_t platform;
 } app_ctx_t;
 
