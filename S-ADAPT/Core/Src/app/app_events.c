@@ -169,11 +169,12 @@ static void app_settings_adjust_value(display_settings_row_id_t row, int8_t dire
                 APP_SETTINGS_PREOFF_DIM_S_STEP);
             break;
         case DISPLAY_SETTINGS_ROW_RETURN_BAND:
-            s_app.settings.draft.return_band_cm = (uint8_t)clamp_settings_u16(
-                (uint16_t)((int32_t)s_app.settings.draft.return_band_cm +
-                           ((int32_t)direction * (int32_t)APP_SETTINGS_RETURN_BAND_CM_STEP)),
+            s_app.settings.draft.return_band_cm = (uint8_t)wrap_settings_u16(
+                s_app.settings.draft.return_band_cm,
+                direction,
                 APP_SETTINGS_RETURN_BAND_CM_MIN,
-                APP_SETTINGS_RETURN_BAND_CM_MAX);
+                APP_SETTINGS_RETURN_BAND_CM_MAX,
+                APP_SETTINGS_RETURN_BAND_CM_STEP);
             break;
         default:
             break;
