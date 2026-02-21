@@ -40,7 +40,7 @@
 - [x] Encoder single click toggles main light ON/OFF.
 - [x] Encoder rotation adjusts manual brightness offset (CW up / CCW down).
 - [x] Encoder rotation changes offset only (does not change sensitivity/factor parameters).
-- [x] Long press (`>= 800 ms`) resets manual offset to `0` (AUTO baseline).
+- [x] Long press (`>= 800 ms`) resets manual offset to `0` (AUTO baseline), without waiting for release.
 - [x] LDR-based AUTO logic remains active after offset reset.
 - [x] Presence holds last valid state during transient ultrasonic failures.
 

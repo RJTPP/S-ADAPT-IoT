@@ -73,7 +73,7 @@ flowchart TD
 | OLED refresh fallback | 1000 ms (`ui_refresh_ms`) |
 | OLED overlay timeout | 1200 ms from last encoder step, plus post-reach hold (~750 ms) |
 | Settings entry long-press | 1000 ms (`APP_SETTINGS_LONG_PRESS_MS`) |
-| Encoder offset-reset long-press | 800 ms (`encoder_long_press_ms`) |
+| Encoder offset-reset long-press | 800 ms (`encoder_long_press_ms`, fires during hold) |
 | UART summary log | 1000 ms (`log_ms`) |
 
 Note: if `APP_PRESENCE_DEBUG_TIMERS` is set to `0`, the production timing profile becomes away `30000 ms`, stale `120000 ms`, and pre-off dim `10000 ms`.

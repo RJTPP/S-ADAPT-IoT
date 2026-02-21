@@ -14,7 +14,7 @@ You can also apply a manual brightness offset with the encoder.
 - `Encoder click`:
   - normal mode:
     - short click: light ON/OFF
-    - long press (~`800 ms`): reset offset to `0`
+    - long press (~`800 ms`): reset offset to `0` (fires while still holding)
   - settings mode: enter/exit value edit, or select action.
 - `BUTTON` short press:
   - normal mode: switch OLED page.

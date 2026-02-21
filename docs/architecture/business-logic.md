@@ -16,9 +16,9 @@
 - PWM output ramp limiter (normal `1%`, turn-on `3%`, turn-off `5%` per control tick) applied after hysteresis.
 - Presence engine uses reference capture + away/stale timers instead of a single fixed threshold.
 - Pre-off dim stage is active before no-user off (`min(current,15%)` for `5 s` in current debug-timer profile).
-- Encoder switch release drives short/long press behavior:
+- Encoder switch handles short/long press behavior:
 - short click toggles light ON/OFF.
-- long press (`>= 800 ms`) resets `manual_offset` to `0`.
+- long press (`>= 800 ms`) resets `manual_offset` to `0` and fires during hold.
 - Encoder rotation adjusts offset only while light is ON.
 - Presence gate uses ultrasonic with hold-last-valid behavior on transient read failures.
 - RGB state now follows runtime policy (no test cycle override).
