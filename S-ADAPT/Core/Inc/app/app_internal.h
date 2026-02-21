@@ -149,6 +149,7 @@ typedef struct
     uint8_t editing_value;
     uint8_t selected_row;
     uint8_t button_pressed;
+    uint8_t long_press_fired;
     uint32_t button_press_start_ms;
     uint32_t toast_until_ms;
     app_settings_toast_t toast;
