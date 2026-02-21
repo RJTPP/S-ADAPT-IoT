@@ -1,5 +1,16 @@
 #include "app/app_internal.h"
 
+typedef struct
+{
+    uint8_t valid;
+    uint8_t overlay_active;
+    uint8_t page_index;
+    int32_t overlay_offset;
+    display_view_t view;
+} app_ui_snapshot_t;
+
+static app_ui_snapshot_t s_ui_snapshot;
+
 static const char *no_user_reason_to_string(uint8_t reason)
 {
     switch (reason) {
@@ -62,20 +73,117 @@ static display_badge_t app_select_main_badge(void)
     return DISPLAY_BADGE_NONE;
 }
 
-static void app_render_display(void)
+static void app_compose_display_view(display_view_t *view)
 {
-    display_view_t view;
+    if (view == NULL) {
+        return;
+    }
 
-    view.mode = app_to_display_mode();
-    view.ldr_percent = app_compute_ldr_percent(s_app.sensors.last_ldr_filtered);
-    view.output_percent = s_app.control.output_percent;
-    view.manual_offset = s_app.control.manual_offset;
-    view.distance_cm = s_app.sensors.last_valid_distance_cm;
-    view.ldr_filtered_raw = s_app.sensors.last_ldr_filtered;
-    view.ref_cm = s_app.sensors.ref_distance_cm;
-    view.present = s_app.sensors.last_valid_presence;
-    view.reason = app_to_display_reason();
-    view.badge = app_select_main_badge();
+    view->mode = app_to_display_mode();
+    view->ldr_percent = app_compute_ldr_percent(s_app.sensors.last_ldr_filtered);
+    view->output_percent = s_app.control.output_percent;
+    view->manual_offset = s_app.control.manual_offset;
+    view->distance_cm = s_app.sensors.last_valid_distance_cm;
+    view->ldr_filtered_raw = s_app.sensors.last_ldr_filtered;
+    view->ref_cm = s_app.sensors.ref_distance_cm;
+    view->present = s_app.sensors.last_valid_presence;
+    view->reason = app_to_display_reason();
+    view->badge = app_select_main_badge();
+}
+
+static uint8_t app_view_changed_for_page(const display_view_t *last_view,
+                                         const display_view_t *current_view,
+                                         uint8_t page_index)
+{
+    if ((last_view == NULL) || (current_view == NULL)) {
+        return 1U;
+    }
+
+    if (page_index == 0U) {
+        if (last_view->mode != current_view->mode) {
+            return 1U;
+        }
+        if (last_view->ldr_percent != current_view->ldr_percent) {
+            return 1U;
+        }
+        if (last_view->output_percent != current_view->output_percent) {
+            return 1U;
+        }
+        if (last_view->manual_offset != current_view->manual_offset) {
+            return 1U;
+        }
+        if (last_view->badge != current_view->badge) {
+            return 1U;
+        }
+        return 0U;
+    }
+
+    if (last_view->distance_cm != current_view->distance_cm) {
+        return 1U;
+    }
+    if (last_view->ldr_filtered_raw != current_view->ldr_filtered_raw) {
+        return 1U;
+    }
+    if (last_view->ref_cm != current_view->ref_cm) {
+        return 1U;
+    }
+    if (last_view->present != current_view->present) {
+        return 1U;
+    }
+    if (last_view->reason != current_view->reason) {
+        return 1U;
+    }
+
+    return 0U;
+}
+
+static void app_update_ui_dirty_from_data(const display_view_t *current_view)
+{
+    if (s_app.ui.overlay_active != 0U) {
+        if ((s_ui_snapshot.valid == 0U) ||
+            (s_ui_snapshot.overlay_active == 0U) ||
+            (s_ui_snapshot.overlay_offset != s_app.ui.overlay_offset)) {
+            s_app.ui.render_dirty = 1U;
+        }
+        return;
+    }
+
+    if (s_ui_snapshot.valid == 0U) {
+        s_app.ui.render_dirty = 1U;
+        return;
+    }
+
+    if (s_ui_snapshot.overlay_active != 0U) {
+        s_app.ui.render_dirty = 1U;
+        return;
+    }
+
+    if (s_ui_snapshot.page_index != s_app.ui.page_index) {
+        s_app.ui.render_dirty = 1U;
+        return;
+    }
+
+    if (app_view_changed_for_page(&s_ui_snapshot.view, current_view, s_app.ui.page_index) != 0U) {
+        s_app.ui.render_dirty = 1U;
+    }
+}
+
+static void app_snapshot_commit(const display_view_t *current_view)
+{
+    if (current_view != NULL) {
+        s_ui_snapshot.view = *current_view;
+    }
+    s_ui_snapshot.valid = 1U;
+    s_ui_snapshot.overlay_active = s_app.ui.overlay_active;
+    s_ui_snapshot.page_index = s_app.ui.page_index;
+    s_ui_snapshot.overlay_offset = s_app.ui.overlay_offset;
+}
+
+static void app_render_display(const display_view_t *view)
+{
+    if (view == NULL) {
+        return;
+    }
 
     if (s_app.ui.overlay_active != 0U) {
         display_show_offset_overlay(s_app.ui.overlay_offset);
@@ -83,9 +191,9 @@ static void app_render_display(void)
     }
 
     if (s_app.ui.page_index == 0U) {
-        display_show_main_page(&view);
+        display_show_main_page(view);
     } else {
-        display_show_sensor_page(&view);
+        display_show_sensor_page(view);
     }
 }
 
@@ -111,6 +219,7 @@ const char *status_led_state_to_string(status_led_state_t state)
 
 void app_update_oled_if_due(uint32_t now_ms)
 {
+    display_view_t current_view;
     uint8_t periodic_due = 0U;
 
     if (s_app.platform.display_ready == 0U) {
@@ -123,6 +232,9 @@ void app_update_oled_if_due(uint32_t now_ms)
         s_app.ui.render_dirty = 1U;
     }
 
+    app_compose_display_view(&current_view);
+    app_update_ui_dirty_from_data(&current_view);
+
     if (input_has_elapsed_ms(now_ms, s_app.timing.last_ui_refresh_ms, s_policy_cfg.ui_refresh_ms) != 0U) {
         s_app.timing.last_ui_refresh_ms += s_policy_cfg.ui_refresh_ms;
         periodic_due = 1U;
@@ -132,7 +244,8 @@ void app_update_oled_if_due(uint32_t now_ms)
         return;
     }
 
-    app_render_display();
+    app_render_display(&current_view);
+    app_snapshot_commit(&current_view);
     s_app.ui.render_dirty = 0U;
 }
 
