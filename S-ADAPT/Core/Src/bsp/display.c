@@ -77,6 +77,23 @@ static const char *reason_to_text(display_reason_t reason)
     }
 }
 
+static void draw_boot_frame(const char *status, uint8_t progress_percent)
+{
+    char line[24];
+
+    ssd1306_Fill(Black);
+
+    ssd1306_SetCursor(24, 6);
+    ssd1306_WriteString((char *)"S-ADAPT", Font_16x24, White);
+
+    ssd1306_SetCursor(0, 36);
+    (void)snprintf(line, sizeof(line), "%s", status);
+    ssd1306_WriteString(line, Font_7x10, White);
+
+    draw_progress_bar(0U, 52U, 127U, 8U, progress_percent);
+    ssd1306_UpdateScreen();
+}
+
 uint8_t display_init(void)
 {
     if (HAL_I2C_IsDeviceReady(&SSD1306_I2C_PORT, SSD1306_I2C_ADDR, 2, 50) != HAL_OK) {
@@ -89,11 +106,14 @@ uint8_t display_init(void)
 
 void display_show_boot(void)
 {
-    ssd1306_Fill(Black);
-    ssd1306_SetCursor(10, 10);
-    ssd1306_WriteString((char *)"Init OK", Font_16x24, White);
-    ssd1306_UpdateScreen();
-    HAL_Delay(1000);
+    draw_boot_frame("Init display...", 25U);
+    HAL_Delay(120);
+    draw_boot_frame("Init sensors...", 55U);
+    HAL_Delay(120);
+    draw_boot_frame("Init control...", 85U);
+    HAL_Delay(120);
+    draw_boot_frame("Ready", 100U);
+    HAL_Delay(220);
 }
 
 void display_show_distance_cm(uint32_t distance_cm)
