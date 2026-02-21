@@ -18,10 +18,10 @@ This repository is the implementation for the class project in `01204323 Electro
 
 ### Team
 
-- `6610502218` Rajata Thamcharoensatit
-- `6610502170` Phutthiphong Rodboung
+- `6610502218` Rajata Thamcharoensatit ([@RJTPP](https://github.com/RJTPP))
+- `6610502170` Phutthiphong Rodboung ([@PRennis](https://github.com/PRennis))
 - `6610505471` Pitiphum Yingwongwiwat
-- `6610505403` Tanapatr Karnjanarujivut
+- `6610505403` Tanapatr Karnjanarujivut ([@zennnne](https://github.com/zennnne))
 
 ## Features (Current)
 
