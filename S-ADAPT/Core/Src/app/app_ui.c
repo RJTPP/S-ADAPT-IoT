@@ -18,9 +18,9 @@ static uint32_t s_overlay_reach_ms = 0U;
 static uint8_t s_overlay_reach_latched = 0U;
 
 #define APP_UI_OVERLAY_ANIM_MIN_STEP    1
-#define APP_UI_OVERLAY_ANIM_MAX_STEP    8
-#define APP_UI_OVERLAY_ANIM_DIVISOR     6
-#define APP_UI_OVERLAY_POST_HOLD_MS     1000U
+#define APP_UI_OVERLAY_ANIM_MAX_STEP    10
+#define APP_UI_OVERLAY_ANIM_DIVISOR     2
+#define APP_UI_OVERLAY_POST_HOLD_MS     750U
 
 static const char *no_user_reason_to_string(uint8_t reason)
 {
