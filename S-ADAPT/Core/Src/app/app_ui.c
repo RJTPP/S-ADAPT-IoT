@@ -84,6 +84,21 @@ static display_badge_t app_select_main_badge(void)
     return DISPLAY_BADGE_NONE;
 }
 
+static display_settings_status_t app_to_display_settings_status(void)
+{
+    switch (s_app.settings_ui.toast) {
+        case APP_SETTINGS_TOAST_SAVED:
+            return DISPLAY_SETTINGS_STATUS_SAVED;
+        case APP_SETTINGS_TOAST_SAVE_ERR:
+            return DISPLAY_SETTINGS_STATUS_SAVE_ERR;
+        case APP_SETTINGS_TOAST_RESET:
+            return DISPLAY_SETTINGS_STATUS_RESET;
+        case APP_SETTINGS_TOAST_NONE:
+        default:
+            return DISPLAY_SETTINGS_STATUS_NONE;
+    }
+}
+
 static void app_compose_display_view(display_view_t *view)
 {
     if (view == NULL) {
@@ -100,6 +115,25 @@ static void app_compose_display_view(display_view_t *view)
     view->present = s_app.sensors.last_valid_presence;
     view->reason = app_to_display_reason();
     view->badge = app_select_main_badge();
+}
+
+static void app_compose_settings_view(display_settings_view_t *view)
+{
+    if (view == NULL) {
+        return;
+    }
+
+    view->selected_row = s_app.settings_ui.selected_row;
+    view->row_count = DISPLAY_SETTINGS_ROW_COUNT;
+    view->editing_value = s_app.settings_ui.editing_value;
+    view->unsaved = s_app.settings.dirty;
+    view->away_mode_enabled = s_app.settings.draft.away_mode_enabled;
+    view->flat_mode_enabled = s_app.settings.draft.flat_mode_enabled;
+    view->away_timeout_s = s_app.settings.draft.away_timeout_s;
+    view->stale_timeout_s = s_app.settings.draft.stale_timeout_s;
+    view->preoff_dim_s = s_app.settings.draft.preoff_dim_s;
+    view->return_band_cm = s_app.settings.draft.return_band_cm;
+    view->status = app_to_display_settings_status();
 }
 
 static uint8_t app_view_changed_for_page(const display_view_t *last_view,
@@ -269,10 +303,43 @@ const char *status_led_state_to_string(status_led_state_t state)
 void app_update_oled_if_due(uint32_t now_ms)
 {
     display_view_t current_view;
+    display_settings_view_t settings_view;
     uint8_t redraw_rate_limited = 0U;
     uint8_t periodic_due = 0U;
 
     if (s_app.platform.display_ready == 0U) {
+        return;
+    }
+
+    if ((s_app.settings_ui.toast != APP_SETTINGS_TOAST_NONE) &&
+        ((int32_t)(now_ms - s_app.settings_ui.toast_until_ms) >= 0)) {
+        s_app.settings_ui.toast = APP_SETTINGS_TOAST_NONE;
+        s_app.settings_ui.toast_until_ms = 0U;
+        s_app.ui.render_dirty = 1U;
+    }
+
+    if (input_has_elapsed_ms(now_ms, s_app.timing.last_ui_draw_ms, s_timing_cfg.ui_min_redraw_ms) == 0U) {
+        redraw_rate_limited = 1U;
+    }
+
+    if (input_has_elapsed_ms(now_ms, s_app.timing.last_ui_refresh_ms, s_policy_cfg.ui_refresh_ms) != 0U) {
+        s_app.timing.last_ui_refresh_ms += s_policy_cfg.ui_refresh_ms;
+        periodic_due = 1U;
+    }
+
+    if (s_app.settings_ui.mode_active != 0U) {
+        app_compose_settings_view(&settings_view);
+
+        if ((s_app.ui.render_dirty == 0U) && (periodic_due == 0U)) {
+            return;
+        }
+        if ((periodic_due == 0U) && (redraw_rate_limited != 0U)) {
+            return;
+        }
+
+        display_show_settings_page(&settings_view);
+        s_app.timing.last_ui_draw_ms = now_ms;
+        s_app.ui.render_dirty = 0U;
         return;
     }
 
@@ -299,14 +366,6 @@ void app_update_oled_if_due(uint32_t now_ms)
 
     app_compose_display_view(&current_view);
     app_update_ui_dirty_from_data(&current_view);
-    if (input_has_elapsed_ms(now_ms, s_app.timing.last_ui_draw_ms, s_timing_cfg.ui_min_redraw_ms) == 0U) {
-        redraw_rate_limited = 1U;
-    }
-
-    if (input_has_elapsed_ms(now_ms, s_app.timing.last_ui_refresh_ms, s_policy_cfg.ui_refresh_ms) != 0U) {
-        s_app.timing.last_ui_refresh_ms += s_policy_cfg.ui_refresh_ms;
-        periodic_due = 1U;
-    }
 
     if ((s_app.ui.render_dirty == 0U) && (periodic_due == 0U)) {
         return;
@@ -333,7 +392,7 @@ void app_log_summary_if_due(uint32_t now_ms)
         }
 
         debug_logln(DEBUG_PRINT_INFO,
-                    "dbg summary ldr_raw=%u ldr_filt=%u ldr_status=%s dist_cm_raw_last_valid=%lu dist_cm_filt=%lu us_status=%s present=%u light_on=%u offset=%ld auto=%u target_out=%u hyst_out=%u applied_out=%u ref_cm=%lu ref_src=%s away_ms=%lu flat_ms=%lu motion_ms=%lu no_user_reason=%s preoff=%u preoff_ms=%lu preoff_target=%u rgb=%s",
+                    "dbg summary ldr_raw=%u ldr_filt=%u ldr_status=%s dist_cm_raw_last_valid=%lu dist_cm_filt=%lu us_status=%s present=%u light_on=%u offset=%ld auto=%u target_out=%u hyst_out=%u applied_out=%u ref_cm=%lu ref_src=%s away_ms=%lu flat_ms=%lu motion_ms=%lu no_user_reason=%s preoff=%u preoff_ms=%lu preoff_target=%u rgb=%s cfg_away_en=%u cfg_flat_en=%u cfg_away_s=%u cfg_flat_s=%u cfg_preoff_s=%u cfg_ret_cm=%u settings_mode=%u settings_dirty=%u",
                     (unsigned int)s_app.sensors.last_ldr_raw,
                     (unsigned int)s_app.sensors.last_ldr_filtered,
                     ldr_status_to_string(s_app.sensors.last_ldr_status),
@@ -356,6 +415,14 @@ void app_log_summary_if_due(uint32_t now_ms)
                     (unsigned int)s_app.control.preoff_active,
                     (unsigned long)preoff_ms,
                     (unsigned int)s_app.control.preoff_dim_target_percent,
-                    status_led_state_to_string(s_app.control.rgb_state));
+                    status_led_state_to_string(s_app.control.rgb_state),
+                    (unsigned int)s_app.settings.active.away_mode_enabled,
+                    (unsigned int)s_app.settings.active.flat_mode_enabled,
+                    (unsigned int)s_app.settings.active.away_timeout_s,
+                    (unsigned int)s_app.settings.active.stale_timeout_s,
+                    (unsigned int)s_app.settings.active.preoff_dim_s,
+                    (unsigned int)s_app.settings.active.return_band_cm,
+                    (unsigned int)s_app.settings_ui.mode_active,
+                    (unsigned int)s_app.settings.dirty);
     }
 }

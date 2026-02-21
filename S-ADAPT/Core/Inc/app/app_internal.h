@@ -2,9 +2,11 @@
 #define APP_INTERNAL_H
 
 #include "app/app.h"
+#include "app/app_settings.h"
 
 #include "support/debug_print.h"
 #include "support/filter_utils.h"
+#include "support/settings_store.h"
 #include "bsp/display.h"
 #include "bsp/main_led.h"
 #include "bsp/status_led.h"
@@ -128,6 +130,32 @@ typedef struct
 
 typedef struct
 {
+    app_settings_t active;
+    app_settings_t draft;
+    uint8_t dirty;
+} app_settings_runtime_t;
+
+typedef enum
+{
+    APP_SETTINGS_TOAST_NONE = 0U,
+    APP_SETTINGS_TOAST_SAVED,
+    APP_SETTINGS_TOAST_SAVE_ERR,
+    APP_SETTINGS_TOAST_RESET
+} app_settings_toast_t;
+
+typedef struct
+{
+    uint8_t mode_active;
+    uint8_t editing_value;
+    uint8_t selected_row;
+    uint8_t button_pressed;
+    uint32_t button_press_start_ms;
+    uint32_t toast_until_ms;
+    app_settings_toast_t toast;
+} app_settings_ui_state_t;
+
+typedef struct
+{
     uint8_t page_index;
     uint8_t page_count;
     uint8_t overlay_active;
@@ -148,6 +176,8 @@ typedef struct
     app_control_state_t control;
     app_click_state_t click;
     app_ui_state_t ui;
+    app_settings_runtime_t settings;
+    app_settings_ui_state_t settings_ui;
     app_platform_state_t platform;
 } app_ctx_t;
 
@@ -168,5 +198,6 @@ void app_update_rgb(uint32_t now_ms);
 void app_update_oled_if_due(uint32_t now_ms);
 void app_log_summary_if_due(uint32_t now_ms);
 const char *status_led_state_to_string(status_led_state_t state);
+void app_settings_apply_build_defaults(app_settings_t *cfg);
 
 #endif /* APP_INTERNAL_H */

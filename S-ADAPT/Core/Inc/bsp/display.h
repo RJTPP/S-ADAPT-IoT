@@ -26,6 +26,28 @@ typedef enum
     DISPLAY_BADGE_IDLE
 } display_badge_t;
 
+typedef enum
+{
+    DISPLAY_SETTINGS_ROW_AWAY_MODE = 0,
+    DISPLAY_SETTINGS_ROW_FLAT_MODE,
+    DISPLAY_SETTINGS_ROW_AWAY_TIMEOUT,
+    DISPLAY_SETTINGS_ROW_FLAT_TIMEOUT,
+    DISPLAY_SETTINGS_ROW_PREOFF_DIM,
+    DISPLAY_SETTINGS_ROW_RETURN_BAND,
+    DISPLAY_SETTINGS_ROW_SAVE,
+    DISPLAY_SETTINGS_ROW_RESET,
+    DISPLAY_SETTINGS_ROW_EXIT,
+    DISPLAY_SETTINGS_ROW_COUNT
+} display_settings_row_id_t;
+
+typedef enum
+{
+    DISPLAY_SETTINGS_STATUS_NONE = 0,
+    DISPLAY_SETTINGS_STATUS_SAVED,
+    DISPLAY_SETTINGS_STATUS_SAVE_ERR,
+    DISPLAY_SETTINGS_STATUS_RESET
+} display_settings_status_t;
+
 typedef struct
 {
     display_mode_t mode;
@@ -40,10 +62,26 @@ typedef struct
     display_badge_t badge;
 } display_view_t;
 
+typedef struct
+{
+    uint8_t selected_row;
+    uint8_t row_count;
+    uint8_t editing_value;
+    uint8_t unsaved;
+    uint8_t away_mode_enabled;
+    uint8_t flat_mode_enabled;
+    uint16_t away_timeout_s;
+    uint16_t stale_timeout_s;
+    uint16_t preoff_dim_s;
+    uint8_t return_band_cm;
+    display_settings_status_t status;
+} display_settings_view_t;
+
 uint8_t display_init(void);
 void display_show_boot(void);
 void display_show_main_page(const display_view_t *view);
 void display_show_sensor_page(const display_view_t *view);
 void display_show_offset_overlay(int32_t offset);
+void display_show_settings_page(const display_settings_view_t *view);
 
 #endif /* DISPLAY_H */

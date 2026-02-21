@@ -29,10 +29,14 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
         if ((distance_cm != s_policy_cfg.distance_error_cm) && (s_app.sensors.last_us_status == ULTRASONIC_STATUS_OK)) {
             uint32_t ref_distance_cm;
             uint32_t abs_step_delta_cm = 0U;
+            uint32_t away_timeout_ms = (uint32_t)s_app.settings.active.away_timeout_s * 1000U;
+            uint32_t stale_timeout_ms = (uint32_t)s_app.settings.active.stale_timeout_s * 1000U;
             uint8_t prev_ready;
             uint8_t away_condition;
             uint8_t flat_condition;
             uint8_t motion_condition;
+            uint8_t away_mode_enabled;
+            uint8_t flat_mode_enabled;
 
             s_app.sensors.last_distance_raw_cm = distance_cm;
             filter_median3_u32_push(&s_app.sensors.dist_median3, distance_cm);
@@ -55,12 +59,18 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
             } else {
                 ref_distance_cm = s_app.sensors.ref_valid != 0U ? s_app.sensors.ref_distance_cm : s_policy_cfg.presence_ref_fallback_cm;
                 prev_ready = s_app.sensors.prev_valid_distance_ready;
+                away_mode_enabled = s_app.settings.active.away_mode_enabled;
+                flat_mode_enabled = s_app.settings.active.flat_mode_enabled;
                 if (prev_ready != 0U) {
                     abs_step_delta_cm = abs_diff_u32(s_app.sensors.last_distance_filtered_cm, s_app.sensors.prev_valid_distance_cm);
                 }
 
-                away_condition = (s_app.sensors.last_distance_filtered_cm > (ref_distance_cm + s_policy_cfg.presence_body_margin_cm)) ? 1U : 0U;
-                flat_condition = ((prev_ready != 0U) && (abs_step_delta_cm <= s_policy_cfg.presence_flat_band_cm)) ? 1U : 0U;
+                away_condition = ((away_mode_enabled != 0U) &&
+                                  (s_app.sensors.last_distance_filtered_cm >
+                                   (ref_distance_cm + s_policy_cfg.presence_body_margin_cm))) ? 1U : 0U;
+                flat_condition = ((flat_mode_enabled != 0U) &&
+                                  (prev_ready != 0U) &&
+                                  (abs_step_delta_cm <= s_policy_cfg.presence_flat_band_cm)) ? 1U : 0U;
                 motion_condition = ((prev_ready != 0U) && (abs_step_delta_cm >= s_policy_cfg.presence_motion_delta_cm)) ? 1U : 0U;
 
                 if (s_app.sensors.last_valid_presence != 0U) {
@@ -98,7 +108,8 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
 
                 if ((s_app.sensors.last_valid_presence == 0U) &&
                     (s_app.sensors.no_user_reason == APP_NO_USER_REASON_AWAY) &&
-                    (s_app.sensors.last_distance_filtered_cm <= (ref_distance_cm + s_policy_cfg.presence_return_band_cm))) {
+                    (s_app.sensors.last_distance_filtered_cm <=
+                     (ref_distance_cm + (uint32_t)s_app.settings.active.return_band_cm))) {
                     s_app.sensors.near_ref_streak_ms += s_timing_cfg.us_sample_ms;
                 } else {
                     s_app.sensors.near_ref_streak_ms = 0U;
@@ -107,10 +118,10 @@ void app_sample_ultrasonic_if_due(uint32_t now_ms)
                 s_app.sensors.presence_candidate_no_user = 0U;
                 if (s_app.sensors.last_valid_presence != 0U) {
                     s_app.sensors.no_user_reason = APP_NO_USER_REASON_NONE;
-                    if (s_app.sensors.away_streak_ms >= s_policy_cfg.presence_away_timeout_ms) {
+                    if ((away_mode_enabled != 0U) && (s_app.sensors.away_streak_ms >= away_timeout_ms)) {
                         s_app.sensors.presence_candidate_no_user = 1U;
                         s_app.sensors.no_user_reason = APP_NO_USER_REASON_AWAY;
-                    } else if (s_app.sensors.flat_streak_ms >= s_policy_cfg.presence_stale_timeout_ms) {
+                    } else if ((flat_mode_enabled != 0U) && (s_app.sensors.flat_streak_ms >= stale_timeout_ms)) {
                         s_app.sensors.presence_candidate_no_user = 1U;
                         s_app.sensors.no_user_reason = APP_NO_USER_REASON_FLAT;
                     }
