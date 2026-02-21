@@ -126,11 +126,18 @@ static void draw_inverted_badge(display_badge_t badge)
 static void draw_boot_frame(const char *status, uint8_t progress_percent)
 {
     char line[24];
+    const char *title = "S-ADAPT";
+    uint8_t title_width = (uint8_t)(strlen(title) * Font_16x24.width);
+    uint8_t title_x = 0U;
 
     ssd1306_Fill(Black);
 
-    ssd1306_SetCursor(24, 6);
-    ssd1306_WriteString((char *)"S-ADAPT", Font_16x24, White);
+    if (title_width < SSD1306_WIDTH) {
+        title_x = (uint8_t)((SSD1306_WIDTH - title_width) / 2U);
+    }
+
+    ssd1306_SetCursor(title_x, 6);
+    ssd1306_WriteString((char *)title, Font_16x24, White);
 
     ssd1306_SetCursor(0, 36);
     (void)snprintf(line, sizeof(line), "%s", status);
