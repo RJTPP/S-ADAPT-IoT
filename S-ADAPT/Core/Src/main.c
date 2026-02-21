@@ -5,9 +5,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "ssd1306.h"
-#include "fonts.h"
-#include <stdio.h>
+#include "support/debug_print.h"
+#include "app/app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,45 +47,6 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void delay_us(uint32_t us)
-{
-    __HAL_TIM_SET_COUNTER(&htim2, 0);
-    while(__HAL_TIM_GET_COUNTER(&htim2) < us);
-}
-
-uint32_t Ultrasonic_Read(void)
-{
-    uint32_t start = 0, stop = 0;
-    uint32_t t0;
-    const uint32_t timeout_us = 30000; // 30 ms guard timeout
-
-    HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
-    delay_us(2);
-
-    HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_SET);
-    delay_us(10);
-    HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
-
-    // Wait for ECHO pin to go HIGH
-    t0 = __HAL_TIM_GET_COUNTER(&htim2);
-    while(HAL_GPIO_ReadPin(ECHO_GPIO_Port, ECHO_Pin) == GPIO_PIN_RESET) {
-        if((uint32_t)(__HAL_TIM_GET_COUNTER(&htim2) - t0) > timeout_us) {
-            return 0; // Timeout waiting for pulse start
-        }
-    }
-    start = __HAL_TIM_GET_COUNTER(&htim2);
-    
-    // Wait for ECHO pin to go LOW
-    t0 = __HAL_TIM_GET_COUNTER(&htim2);
-    while(HAL_GPIO_ReadPin(ECHO_GPIO_Port, ECHO_Pin) == GPIO_PIN_SET) {
-        if((uint32_t)(__HAL_TIM_GET_COUNTER(&htim2) - t0) > timeout_us) {
-            return 0; // Timeout waiting for pulse end
-        }
-    }
-    stop = __HAL_TIM_GET_COUNTER(&htim2);
-
-    return (uint32_t)(stop - start);
-}
 /* USER CODE END 0 */
 
 /**
@@ -97,7 +57,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -124,64 +83,34 @@ int main(void)
   MX_TIM1_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-    if (!SSD1306_Init()) {
-      // OLED not detected on I2C (usually address/wiring/pull-up issue)
-      while (1) {
-        HAL_GPIO_TogglePin(GPIOA, LED1_Pin);
-        HAL_Delay(200);
-      }
+  debug_print_init(&huart2);
+  debug_print_set_level(DEBUG_PRINT_DEBUG);
+  debug_println("Boot start");
+  debug_println("App mode");
+  {
+    app_hw_config_t hw = {
+      .ldr_adc = &hadc1,
+      .echo_tim = &htim2,
+      .echo_channel = TIM_CHANNEL_2,
+      .main_led_tim = &htim1,
+      .main_led_channel = TIM_CHANNEL_1
+    };
+
+    if (app_init(&hw) == 0U)
+    {
+      debug_logln(DEBUG_PRINT_ERROR, "app init degraded mode");
+      app_set_fatal_fault(1U);
+      debug_logln(DEBUG_PRINT_ERROR, "safe mode: fatal fault indication active");
     }
-    HAL_TIM_Base_Start(&htim2);
-    
-    // Show boot message
-    SSD1306_Fill(Black);
-    SSD1306_SetCursor(10, 10);
-    SSD1306_WriteString("Init OK", Font16x24, White);
-    SSD1306_UpdateScreen();
-    HAL_Delay(1000);
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    char dist_str[20];
-    uint32_t echo_time = Ultrasonic_Read();
-    uint32_t distance = 0;
-
-    if (echo_time > 0) {
-      distance = echo_time / 58;
-    } else {
-      distance = 999; // Error value
-    }
-
-    if(distance < 10)
-    {
-      HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED2_Pin, GPIO_PIN_RESET);
-      HAL_GPIO_WritePin(GPIOB, LED3_Pin, GPIO_PIN_RESET);
-    }
-    else if(distance < 20)
-    {
-      HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED2_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED3_Pin, GPIO_PIN_RESET);
-    }
-    else
-    {
-      HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED2_Pin, GPIO_PIN_SET);
-      HAL_GPIO_WritePin(GPIOB, LED3_Pin, GPIO_PIN_SET);
-    }
-
-    // Display on OLED
-    SSD1306_Fill(Black);
-    SSD1306_SetCursor(10, 10);
-    sprintf(dist_str, "Dist: %lu cm", distance);
-    SSD1306_WriteString(dist_str, Font12x12, White);
-    SSD1306_UpdateScreen();
-
-    HAL_Delay(33);
+    app_step();
+    HAL_Delay(1);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -538,10 +467,13 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, TRIG_Pin|LED_Status_R_Pin|LED_Status_G_Pin|LED_Status_B_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, TRIG_Pin|LED_Status_B_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : TRIG_Pin LED_Status_R_Pin LED_Status_G_Pin LED_Status_B_Pin */
-  GPIO_InitStruct.Pin = TRIG_Pin|LED_Status_R_Pin|LED_Status_G_Pin|LED_Status_B_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, LED_Status_R_Pin|LED_Status_G_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : TRIG_Pin LED_Status_B_Pin */
+  GPIO_InitStruct.Pin = TRIG_Pin|LED_Status_B_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -555,27 +487,46 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : ENCODER_CLK_EXTI1_Pin */
   GPIO_InitStruct.Pin = ENCODER_CLK_EXTI1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(ENCODER_CLK_EXTI1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : SW_Pin */
-  GPIO_InitStruct.Pin = SW_Pin;
+  /*Configure GPIO pin : ENCODER_PRESS_Pin */
+  GPIO_InitStruct.Pin = ENCODER_PRESS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(SW_GPIO_Port, &GPIO_InitStruct);
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(ENCODER_PRESS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : ENCODER_DT_EXTI10_Pin */
   GPIO_InitStruct.Pin = ENCODER_DT_EXTI10_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(ENCODER_DT_EXTI10_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : LED_Status_R_Pin LED_Status_G_Pin */
+  GPIO_InitStruct.Pin = LED_Status_R_Pin|LED_Status_G_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
+  /* Use EXTI on both encoder channels for quadrature decode. */
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if ((GPIO_Pin == ENCODER_CLK_EXTI1_Pin) || (GPIO_Pin == ENCODER_DT_EXTI10_Pin))
+  {
+    encoder_input_on_clk_edge_isr();
+  }
+}
 /* USER CODE END 4 */
 
 /**
