@@ -126,7 +126,7 @@ void app_handle_encoder_event(const encoder_event_t *event)
     }
 
     if (((event->type == ENCODER_EVENT_CW) || (event->type == ENCODER_EVENT_CCW)) &&
-        (s_app.control.manual_offset != previous_offset)) {
+        (s_app.control.light_enabled != 0U)) {
         s_app.ui.overlay_active = 1U;
         s_app.ui.overlay_until_ms = event->timestamp_ms + s_policy_cfg.ui_overlay_timeout_ms;
         s_app.ui.overlay_offset = s_app.control.manual_offset;
