@@ -57,8 +57,10 @@ static uint8_t wait_for_capture(uint32_t capture_flag, uint32_t timeout_us)
 
 static void delay_us(uint32_t us)
 {
-    __HAL_TIM_SET_COUNTER(s_echo_tim, 0U);
-    while (__HAL_TIM_GET_COUNTER(s_echo_tim) < us) {
+    uint32_t start;
+
+    start = __HAL_TIM_GET_COUNTER(s_echo_tim);
+    while ((uint32_t)(__HAL_TIM_GET_COUNTER(s_echo_tim) - start) < us) {
     }
 }
 
