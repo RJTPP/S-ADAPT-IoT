@@ -15,7 +15,7 @@
 - PWM output hysteresis deadband (`±5%`).
 - PWM output ramp limiter (normal `1%`, turn-on `3%`, turn-off `5%` per control tick) applied after hysteresis.
 - Presence engine uses reference capture + away/stale timers instead of a single fixed threshold.
-- Pre-off dim stage is active before no-user off (`min(current,15%)` for `10 s`).
+- Pre-off dim stage is active before no-user off (`min(current,15%)` for `5 s` in current debug-timer profile).
 - Encoder switch release drives single/double click behavior:
 - single click toggles light ON/OFF (after double-click window timeout).
 - double click resets `manual_offset` to `0`.
@@ -26,7 +26,7 @@
 - OLED runtime UI is active:
 - Persistent pages: `MAIN` and `SENSOR`, switched by `BUTTON` release.
 - Offset overlay appears on encoder rotation and timeout starts at `1200 ms`.
-- Overlay uses adaptive offset animation and remains visible until animation reaches target, then holds for ~`1000 ms` before exit.
+- Overlay uses adaptive offset animation and remains visible until animation reaches target, then holds for ~`750 ms` before exit.
 - Display refresh is data/event-driven with 1-second periodic refresh fallback.
 - OLED redraw is rate-limited to ~15 FPS (`66 ms` minimum draw interval).
 
@@ -37,9 +37,9 @@
 - `distance_cm` initialized to error value (`999`)
 
 ## Core State Variables (Current Subset)
-- `mode`: `AUTO`
+- `control model`: implicit `AUTO + manual_offset` (no runtime mode enum variable)
 - `light_enabled`: boolean ON/OFF
-- `manual_offset`: signed brightness offset (e.g. `-30..+30`)
+- `manual_offset`: signed brightness offset (`-50..+50`)
 - `last_valid_presence`: boolean from reference-based ultrasonic presence engine
 - `last_valid_distance_cm`: last valid ultrasonic value
 - `fatal_fault`: fatal status flag for RGB blink override
@@ -80,16 +80,18 @@ flowchart TD
 - set fallback reference `ref_distance_cm=60`
 - mark pending capture, then replace with first valid filtered distance.
 - Away detection:
-- if `distance > ref + 20 cm` continuously for `30 s`, trigger no-user candidate.
+- if `distance > ref + 20 cm` continuously for `5 s` (current debug-timer profile), trigger no-user candidate.
 - Stale detection:
-- if step-to-step movement stays within `±1 cm` for `120 s`, trigger no-user candidate.
+- if step-to-step movement stays within `±1 cm` for `15 s` (current debug-timer profile), trigger no-user candidate.
 - Pre-off dim before no-user commit:
-- drive output to `min(current_output,15%)` for `10 s` (debug-tunable in build config).
+- drive output to `min(current_output,15%)` for `5 s` (debug-tunable in build config).
 - if user returns/moves during this window, cancel pre-off and keep present.
 - Recovery after no-user:
 - away reason: return when `distance <= ref + 10 cm` for ~`1.5 s` confirm window.
-- flat reason: return on movement spike (`>=1 cm` step delta) with tolerant decay behavior.
+- flat reason: return on movement spike (`>=2 cm` step delta).
 - On transient ultrasonic failure, keep last valid presence and do not advance timers.
+
+Note: if `APP_PRESENCE_DEBUG_TIMERS` is set to `0`, the production timing profile becomes away `30 s`, stale `120 s`, and pre-off dim `10 s`.
 
 ## RGB Mapping (Current)
 - `BOOT_SETUP` -> Purple

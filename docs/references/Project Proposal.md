@@ -1,5 +1,7 @@
 # Project Proposal: S-ADAPT
 
+> Note: This is the original proposal document. For current implemented behavior and timings, see `docs/architecture/` and `docs/planning/`.
+
 ## 1. Introduction
 
 ### 1.1 Background and Significance

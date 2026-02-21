@@ -64,10 +64,15 @@ flowchart TD
 | Switch debounce confirmation | 20 ms (`SWITCH_DEBOUNCE_TICKS` x sample period) |
 | LDR sampling | 50 ms (`ldr_sample_ms`) |
 | Ultrasonic measurement | 100 ms (`us_sample_ms`) |
+| Presence away timeout (current build profile) | 5000 ms (`APP_PRESENCE_DEBUG_TIMERS=1`) |
+| Presence stale timeout (current build profile) | 15000 ms (`APP_PRESENCE_DEBUG_TIMERS=1`) |
+| Pre-off dim duration (current build profile) | 5000 ms (`APP_PRESENCE_DEBUG_TIMERS=1`) |
 | OLED redraw (dirty) | Up to ~15 FPS (`ui_min_redraw_ms = 66 ms`) |
 | OLED refresh fallback | 1000 ms (`ui_refresh_ms`) |
-| OLED overlay timeout | 1200 ms from last encoder step, plus post-reach hold (~1000 ms) |
+| OLED overlay timeout | 1200 ms from last encoder step, plus post-reach hold (~750 ms) |
 | UART summary log | 1000 ms (`log_ms`) |
+
+Note: if `APP_PRESENCE_DEBUG_TIMERS` is set to `0`, the production timing profile becomes away `30000 ms`, stale `120000 ms`, and pre-off dim `10000 ms`.
 
 ## Known Bring-Up Note
 - A branch-level bring-up issue was observed with RGB on `PA5/PA6/PA7`: enabling those channels caused OLED I2C timeout/busy (`HAL_I2C` error `0x20`).

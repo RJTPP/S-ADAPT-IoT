@@ -29,12 +29,12 @@
 
 ### B1. Presence and mode behavior
 - [x] OFF->ON captures fallback reference then first valid filtered distance.
-- [x] Away rule: `distance > ref + 20` for ~30s triggers pre-off dim.
-- [x] Flat rule: low step-to-step movement (`abs(step)<=1`) for ~120s triggers pre-off dim.
+- [x] Away rule: `distance > ref + 20` for ~5s in debug-timer profile (`APP_PRESENCE_DEBUG_TIMERS=1`) triggers pre-off dim.
+- [x] Flat rule: low step-to-step movement (`abs(step)<=1`) for ~15s in debug-timer profile (`APP_PRESENCE_DEBUG_TIMERS=1`) triggers pre-off dim.
 - [x] Pre-off dim behavior: output becomes `min(current,15%)` and stays for configured duration.
 - [x] Recovery during pre-off cancels no-user transition.
 - [x] Away recovery: return near reference (`ref+10` band) and hold for ~1.5s resumes present.
-- [x] Flat recovery: single movement spike (`abs(step)>=1`) resumes present.
+- [x] Flat recovery: single movement spike (`abs(step)>=2`) resumes present.
 - [x] Auto mode computes brightness from LDR.
 - [x] Boot state keeps main light OFF until user single-click.
 - [x] Encoder single click toggles main light ON/OFF.
@@ -67,7 +67,7 @@
 - [x] Encoder rotation shows temporary offset overlay immediately.
 - [x] Overlay hides bullets while active.
 - [x] Overlay timeout starts at ~1200 ms from last encoder step.
-- [x] Overlay remains visible until animated offset reaches target, then holds ~1000 ms before returning.
+- [x] Overlay remains visible until animated offset reaches target, then holds ~750 ms before returning.
 - [x] Repeated encoder movement extends/resets overlay timeout correctly.
 
 ### B3. RGB status behavior
@@ -90,8 +90,3 @@
 | Toggle control | Single click toggles lamp ON/OFF reliably | [x] |
 | Offset control | Encoder rotation changes brightness smoothly | [x] |
 | Reset control | Double click resets to AUTO baseline brightness | [x] |
-
-## D. Test Log
-| Date | Firmware version/commit | Tester | Notes |
-|---|---|---|---|
-| 2026-02-21 | `dev` (`e62e2e6` + local uncommitted UI fixes) | Rajata | All checklist tests passed on board. Fixed edge case: overlay now still shows/extends when rotating at offset clamp limits. |

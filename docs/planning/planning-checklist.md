@@ -2,7 +2,7 @@
 
 Source references:
 - `docs/references/Project Proposal.md`
-- `docs/references/Schematic_S-ADAPT.png`
+- `docs/architecture/Schematic_S-ADAPT.png`
 - Feature summary and logic notes from latest planning input.
 - Firmware module layout refactor:
   - `S-ADAPT/Core/Inc/{app,bsp,sensors,input,support}`
@@ -16,7 +16,7 @@ Source references:
 - [x] LDR raw ADC driver is integrated and sampled in runtime loop.
 - [x] Switch input module is integrated with software debounce.
 - [x] Encoder input module is integrated (EXTI-based CLK path).
-- [x] Main LED PWM driver module is integrated (`TIM1_CH1`) with 1 s duty sweep debug.
+- [x] Main LED PWM driver module is integrated (`TIM1_CH1`) and driven by app control output policy.
 - [x] OLED init/debug path is available and can run in OLED-only debug mode.
 
 ### Pin and peripheral setup
@@ -56,7 +56,7 @@ Source references:
 - [ ] RGB status LED module:
 - [ ] State color mapping works:
 - [ ] Blue = Auto mode
-- [ ] Green = Manual mode
+- [ ] Green = manual offset active (non-zero offset)
 - [ ] Yellow = No user (while light ON)
 - [ ] Red = Manual OFF
 - [ ] Purple = Setup / special mode
@@ -106,11 +106,11 @@ Source references:
 
 ### Presence and safety logic
 - [x] Capture reference distance on each OFF->ON click.
-- [x] Away detection: `distance > ref + 20 cm` for 30s -> no-user candidate.
-- [x] Stale/flat detection from low step-to-step movement (`abs(step) <= 1 cm`) for 120s -> no-user candidate.
-- [x] Pre-off dim phase: `min(current,15%)` for 10s before no-user commit.
+- [x] Away detection: `distance > ref + 20 cm` for 5s in debug-timer profile (`APP_PRESENCE_DEBUG_TIMERS=1`) -> no-user candidate.
+- [x] Stale/flat detection from low step-to-step movement (`abs(step) <= 1 cm`) for 15s in debug-timer profile (`APP_PRESENCE_DEBUG_TIMERS=1`) -> no-user candidate.
+- [x] Pre-off dim phase: `min(current,15%)` for 5s in debug-timer profile (`APP_PRESENCE_DEBUG_TIMERS=1`) before no-user commit.
 - [x] Recovery from away/no-user near reference (`ref + 10 cm`) with short confirm delay.
-- [x] Recovery from flat/no-user on movement spike (`abs(step) >= 1 cm`).
+- [x] Recovery from flat/no-user on movement spike (`abs(step) >= 2 cm`).
 - [x] If `user_present = FALSE`, force `brightness = 0`.
 
 ### AUTO + offset logic
@@ -144,6 +144,8 @@ Source references:
 - [x] Overlay timeout resets on each new encoder step; page returns after timeout + overlay animation completion/hold.
 - [x] Status LED behavior is explicitly documented (kept for now).
 - [x] Optional UART debug output for tuning thresholds and filters.
+
+Note: production timing profile (`APP_PRESENCE_DEBUG_TIMERS=0`) is away `30s`, stale `120s`, pre-off dim `10s`.
 
 ### Acceptance checks
 - [x] Presence + low light test passes.
