@@ -12,6 +12,10 @@ typedef struct
 } app_ui_snapshot_t;
 
 static app_ui_snapshot_t s_ui_snapshot;
+static int32_t s_overlay_display_offset = 0;
+static uint8_t s_overlay_anim_initialized = 0U;
+
+#define APP_UI_OVERLAY_ANIM_STEP 2
 
 static const char *no_user_reason_to_string(uint8_t reason)
 {
@@ -142,9 +146,15 @@ static uint8_t app_view_changed_for_page(const display_view_t *last_view,
 static void app_update_ui_dirty_from_data(const display_view_t *current_view)
 {
     if (s_app.ui.overlay_active != 0U) {
+        if (s_overlay_anim_initialized == 0U) {
+            s_overlay_display_offset = s_app.ui.overlay_offset;
+            s_overlay_anim_initialized = 1U;
+        }
+
         if ((s_ui_snapshot.valid == 0U) ||
             (s_ui_snapshot.overlay_active == 0U) ||
-            (s_ui_snapshot.overlay_offset != s_app.ui.overlay_offset)) {
+            (s_ui_snapshot.overlay_offset != s_app.ui.overlay_offset) ||
+            (s_overlay_display_offset != s_app.ui.overlay_offset)) {
             s_app.ui.render_dirty = 1U;
         }
         return;
@@ -188,7 +198,25 @@ static void app_render_display(const display_view_t *view)
     }
 
     if (s_app.ui.overlay_active != 0U) {
-        display_show_offset_overlay(s_app.ui.overlay_offset);
+        int32_t target = s_app.ui.overlay_offset;
+
+        if (s_overlay_display_offset < target) {
+            int32_t delta = target - s_overlay_display_offset;
+            if (delta > APP_UI_OVERLAY_ANIM_STEP) {
+                s_overlay_display_offset += APP_UI_OVERLAY_ANIM_STEP;
+            } else {
+                s_overlay_display_offset = target;
+            }
+        } else if (s_overlay_display_offset > target) {
+            int32_t delta = s_overlay_display_offset - target;
+            if (delta > APP_UI_OVERLAY_ANIM_STEP) {
+                s_overlay_display_offset -= APP_UI_OVERLAY_ANIM_STEP;
+            } else {
+                s_overlay_display_offset = target;
+            }
+        }
+
+        display_show_offset_overlay(s_overlay_display_offset);
         return;
     }
 
