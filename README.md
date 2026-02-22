@@ -3,27 +3,44 @@
 `S-ADAPT` (Sensing-based Automated Dimming for Ambient-aware Presence-Tracked Lighting) is an STM32 firmware project for adaptive desk lighting on NUCLEO-L432KC, driven by ambient light and user presence.
 This repository is the implementation for the class project in `01204323 Electronic Laboratory for Embedded Systems` (Computer Engineering, Kasetsart University).
 
-## Release Status
+## 📚 Table of Contents
+
+- [💡S-ADAPT](#s-adapt)
+  - [📚 Table of Contents](#-table-of-contents)
+  - [🚀 Release Status](#-release-status)
+  - [🎓 Academic Context](#-academic-context)
+    - [👥 Team](#-team)
+  - [✨ Features](#-features)
+  - [🛠️ Hardware](#️-hardware)
+  - [🧩 Hardware Overview](#-hardware-overview)
+  - [📌 Pin Map (MCU + Nucleo Alias)](#-pin-map-mcu--nucleo-alias)
+  - [🖥️ Software Stack / Libraries](#️-software-stack--libraries)
+  - [🧭 Build](#-build)
+  - [⏱️ Runtime Overview](#️-runtime-overview)
+  - [📖 Documentation](#-documentation)
+
+
+## 🚀 Release Status
 
 - Current release target: `v1.1.0`
 - Runtime owner: `app` layer (`app_init`, `app_step`)
 - Hardware-first bring-up is complete, with integrated baseline business logic and OLED runtime UI.
 
-## Academic Context
+## 🎓 Academic Context
 
 - Project: `S-ADAPT` (Sensing-based Automated Dimming for Ambient-aware Presence-Tracked Lighting)
 - Course: `01204323 Electronic Laboratory for Embedded Systems`
 - Program: Computer Engineering, Kasetsart University
 - Academic term: Year 3, Term 2
 
-### Team
+### 👥 Team
 
 - `6610502218` Rajata Thamcharoensatit ([@RJTPP](https://github.com/RJTPP))
 - `6610502170` Phutthiphong Rodboung ([@PRennis](https://github.com/PRennis))
 - `6610505471` Pitiphum Yingwongwiwat
 - `6610505403` Tanapatr Karnjanarujivut ([@zennnne](https://github.com/zennnne))
 
-## Features (Current)
+## ✨ Features
 
 - Ambient sensing from LDR (ADC) with moving average filter.
 - Presence sensing from HC-SR04 ultrasonic with median filter and reference-based presence engine.
