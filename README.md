@@ -5,7 +5,7 @@ This repository is the implementation for the class project in `01204323 Electro
 
 ## Release Status
 
-- Current release target: `v1.1.0-rc1`
+- Current release target: `v1.1.0`
 - Runtime owner: `app` layer (`app_init`, `app_step`)
 - Hardware-first bring-up is complete, with integrated baseline business logic and OLED runtime UI.
 
@@ -76,7 +76,7 @@ This repository is the implementation for the class project in `01204323 Electro
 
 ## Software Stack / Libraries
 
-- STM32Cube HAL + CMSIS (`S-ADAPT/Drivers/`)
+- STM32Cube HAL + CMSIS ([`S-ADAPT/Drivers/`](S-ADAPT/Drivers/))
 - SSD1306 OLED library (adapted from [afiskon/stm32-ssd1306](https://github.com/afiskon/stm32-ssd1306)):
   - [`S-ADAPT/Core/Src/ssd1306.c`](S-ADAPT/Core/Src/ssd1306.c)
   - [`S-ADAPT/Core/Src/ssd1306_fonts.c`](S-ADAPT/Core/Src/ssd1306_fonts.c)
