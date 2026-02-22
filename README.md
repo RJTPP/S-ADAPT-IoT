@@ -60,7 +60,7 @@ This repository is the implementation for the class project in `01204323 Electro
   - explicit `Save` / `Reset` / `Exit` draft workflow
   - persistent user config in internal flash (append-only records with CRC)
 
-## Hardware
+## 🛠️ Hardware
 
 - MCU board: STM32 NUCLEO-L432KC
 - Ultrasonic: HC-SR04
@@ -69,11 +69,11 @@ This repository is the implementation for the class project in `01204323 Electro
 - Main light driver: isolated MOSFET module input (PWM control, shared lamp power rail)
 - Inputs: rotary encoder (`CLK/DT/SW`) + extra page button
 
-## Hardware Overview
+## 🧩 Hardware Overview
 
 ![S-ADAPT Schematic](docs/architecture/Schematic_S-ADAPT.png)
 
-## Pin Map (MCU + Nucleo Alias)
+## 📌 Pin Map (MCU + Nucleo Alias)
 
 | Function | MCU Pin | Nucleo Alias | Firmware Symbol |
 |---|---|---|---|
@@ -91,7 +91,7 @@ This repository is the implementation for the class project in `01204323 Electro
 | Encoder SW | `PA9` | `D1` | `ENCODER_PRESS_Pin` |
 | Page button | `PB0` | `D3` | `BUTTON_Pin` |
 
-## Software Stack / Libraries
+## 🖥️ Software Stack / Libraries
 
 - STM32Cube HAL + CMSIS ([`S-ADAPT/Drivers/`](S-ADAPT/Drivers/))
 - SSD1306 OLED library (adapted from [afiskon/stm32-ssd1306](https://github.com/afiskon/stm32-ssd1306)):
@@ -105,7 +105,7 @@ This repository is the implementation for the class project in `01204323 Electro
   - [`S-ADAPT/Core/Src/input`](S-ADAPT/Core/Src/input)
   - [`S-ADAPT/Core/Src/support`](S-ADAPT/Core/Src/support)
 
-## Build
+## 🧭 Build
 
 Preferred: STM32CubeIDE build ([`Debug`](S-ADAPT/Debug) / [`Release`](S-ADAPT/Release)) in [`S-ADAPT/`](S-ADAPT/).
 
@@ -137,7 +137,7 @@ Headless build (macOS app bundle path):
   -data "$PWD/.workspace" -import "$PWD/S-ADAPT" -build S-ADAPT/Debug
 ```
 
-## Runtime Overview
+## ⏱️ Runtime Overview
 
 - Control tick: `33 ms`
 - LDR sample: `50 ms` (decoupled)
@@ -148,7 +148,7 @@ Headless build (macOS app bundle path):
   - capped to ~15 FPS (`66 ms` minimum interval)
   - periodic fallback refresh `1 s`
 
-## Documentation
+## 📖 Documentation
 
 - Docs index: [`docs/README.md`](docs/README.md)
 - User guide: [`docs/user-guide.md`](docs/user-guide.md)
