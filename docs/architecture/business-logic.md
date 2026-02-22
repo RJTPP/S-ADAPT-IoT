@@ -135,7 +135,7 @@ Priority:
 1. `DIM` while pre-off is active.
 2. `AWAY` when no-user is committed with away reason.
 3. `IDLE` when no-user is committed with flat/stale reason.
-4. `LEAVE` during away progression/candidate phase before commit.
+4. `LEAVE` during away progression phase before pre-off.
 5. none otherwise.
 
 Typical sequences:

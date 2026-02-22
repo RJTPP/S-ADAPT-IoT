@@ -72,19 +72,18 @@ static display_badge_t app_select_main_badge(void)
         return DISPLAY_BADGE_DIM;
     }
 
-    if ((s_app.sensors.last_valid_presence == 0U) &&
-        (s_app.sensors.no_user_reason == APP_NO_USER_REASON_AWAY)) {
-        return DISPLAY_BADGE_AWAY;
+    if (s_app.sensors.last_valid_presence == 0U) {
+        switch (s_app.sensors.no_user_reason) {
+            case APP_NO_USER_REASON_AWAY:
+                return DISPLAY_BADGE_AWAY;
+            case APP_NO_USER_REASON_FLAT:
+                return DISPLAY_BADGE_IDLE;
+            default:
+                break;
+        }
     }
 
-    if ((s_app.sensors.last_valid_presence == 0U) &&
-        (s_app.sensors.no_user_reason == APP_NO_USER_REASON_FLAT)) {
-        return DISPLAY_BADGE_IDLE;
-    }
-
-    if ((s_app.sensors.away_streak_ms > 0U) ||
-        ((s_app.sensors.presence_candidate_no_user != 0U) &&
-         (s_app.sensors.no_user_reason == APP_NO_USER_REASON_AWAY))) {
+    if (s_app.sensors.away_streak_ms > 0U) {
         return DISPLAY_BADGE_LEAVE;
     }
 
