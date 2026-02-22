@@ -1,7 +1,7 @@
 # S-ADAPT Feature Matrix
 
 ## Overview
-This matrix summarizes implemented features and current status for the `v1.1.0-rc1` branch.
+This matrix summarizes implemented features and current status for the `v1.1.1` release.
 
 ## Core Runtime
 | Area | Feature | Status |

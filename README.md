@@ -22,7 +22,7 @@ This repository is the implementation for the class project in `01204323 Electro
 
 ## 🚀 Release Status
 
-- Current release target: `v1.1.0`
+- Current release target: `v1.1.1`
 - Runtime owner: `app` layer (`app_init`, `app_step`)
 - Hardware-first bring-up is complete, with integrated baseline business logic and OLED runtime UI.
 
