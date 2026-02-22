@@ -130,6 +130,18 @@ flowchart TD
 - if user returns/moves during this window, cancel pre-off and keep present.
 - On transient ultrasonic failure, keep last valid presence and do not advance timers.
 
+### MAIN Badge Flow (Top-Right)
+Priority:
+1. `DIM` while pre-off is active.
+2. `AWAY` when no-user is committed with away reason.
+3. `IDLE` when no-user is committed with flat/stale reason.
+4. `LEAVE` during away progression/candidate phase before commit.
+5. none otherwise.
+
+Typical sequences:
+- Route A (away): `LEAVE` -> `DIM` -> `AWAY`
+- Route B (flat/stale): `DIM` -> `IDLE`
+
 Note: if `APP_PRESENCE_DEBUG_TIMERS` is set to `0`, the production timing profile becomes away `30 s`, stale `120 s`, and pre-off dim `10 s`.
 
 ## RGB Mapping (Current)

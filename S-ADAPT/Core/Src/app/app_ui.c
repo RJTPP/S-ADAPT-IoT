@@ -68,16 +68,23 @@ static uint8_t app_compute_ldr_percent(uint16_t ldr_filtered_raw)
 
 static display_badge_t app_select_main_badge(void)
 {
-    if (s_app.sensors.away_streak_ms > 0U) {
-        return DISPLAY_BADGE_LEAVE;
-    }
-
     if (s_app.control.preoff_active != 0U) {
         return DISPLAY_BADGE_DIM;
     }
 
-    if ((s_app.sensors.presence_candidate_no_user != 0U) ||
-        (s_app.sensors.last_valid_presence == 0U)) {
+    if ((s_app.sensors.last_valid_presence == 0U) &&
+        (s_app.sensors.no_user_reason == APP_NO_USER_REASON_AWAY)) {
+        return DISPLAY_BADGE_AWAY;
+    }
+
+    if ((s_app.sensors.last_valid_presence == 0U) &&
+        (s_app.sensors.no_user_reason == APP_NO_USER_REASON_FLAT)) {
+        return DISPLAY_BADGE_IDLE;
+    }
+
+    if ((s_app.sensors.away_streak_ms > 0U) ||
+        ((s_app.sensors.presence_candidate_no_user != 0U) &&
+         (s_app.sensors.no_user_reason == APP_NO_USER_REASON_AWAY))) {
         return DISPLAY_BADGE_LEAVE;
     }
 
