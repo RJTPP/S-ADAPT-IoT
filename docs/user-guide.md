@@ -85,7 +85,15 @@ Saved settings are stored in internal flash and restored on reboot.
 - `Save` writes a new record.
 - `Exit` without save does not persist draft edits.
 
-## 7) Abbreviation / Short Word Meanings
+## 7) Status LED Color Meaning
+- `Purple` = boot/setup window.
+- `Red (solid)` = light manually OFF.
+- `Blue` = AUTO active (light ON, no manual offset).
+- `Green` = manual offset active (light ON, offset non-zero).
+- `Yellow` = no-user state while light is ON.
+- `Red (blinking)` = fatal fault indication.
+
+## 8) Abbreviation / Short Word Meanings
 ### OLED (Main/Sensor pages)
 - `MODE` = operating state (`ON`, `OFF`, `SLEEP`)
 - `LDR` = Light Dependent Resistor input as percentage
@@ -125,7 +133,7 @@ Badge flow (MAIN page, top-right):
 - `applied_out` = final output sent to PWM
 - `cfg_*` = active saved configuration values
 
-## 8) Quick Troubleshooting
+## 9) Quick Troubleshooting
 - Cannot enter settings:
   - hold `BUTTON` for about `1000 ms`.
 - Value changes but not kept after reboot:
