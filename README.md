@@ -90,12 +90,32 @@ This repository is the implementation for the class project in `01204323 Electro
 
 ## Build
 
-Preferred: STM32CubeIDE build (`Debug` / `Release`) in `S-ADAPT/`.
+Preferred: STM32CubeIDE build ([`Debug`](S-ADAPT/Debug) / [`Release`](S-ADAPT/Release)) in [`S-ADAPT/`](S-ADAPT/).
+
+> [!NOTE]
+> STM32CubeIDE compatibility:
+> - validated on `v1.19.0`.
+> - `v2.x.x` is currently untested in this repository. Starting with `v2.0.0`, STM32CubeMX is a separate standalone tool, so the workflow differs.
+
+Clone and enter the repository:
+
+```bash
+git clone https://github.com/RJTPP/S-ADAPT-IoT.git
+cd S-ADAPT-IoT
+```
 
 Headless build (if installed):
 
 ```bash
 stm32cubeide --launcher.suppressErrors -nosplash \
+  -application org.eclipse.cdt.managedbuilder.core.headlessbuild \
+  -data "$PWD/.workspace" -import "$PWD/S-ADAPT" -build S-ADAPT/Debug
+```
+
+Headless build (macOS app bundle path):
+
+```bash
+"/Applications/STM32CubeIDE.app/Contents/MacOS/stm32cubeide" --launcher.suppressErrors -nosplash \
   -application org.eclipse.cdt.managedbuilder.core.headlessbuild \
   -data "$PWD/.workspace" -import "$PWD/S-ADAPT" -build S-ADAPT/Debug
 ```
