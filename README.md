@@ -13,6 +13,7 @@ This repository is the implementation for the class project in `01204323 Electro
   - [✨ Features](#-features)
   - [🛠️ Hardware](#️-hardware)
   - [🧩 Hardware Overview](#-hardware-overview)
+    - [Power Topology Note](#power-topology-note)
   - [📌 Pin Map (MCU + Nucleo Alias)](#-pin-map-mcu--nucleo-alias)
   - [🖥️ Software Stack / Libraries](#️-software-stack--libraries)
   - [🧭 Build](#-build)
@@ -72,6 +73,16 @@ This repository is the implementation for the class project in `01204323 Electro
 ## 🧩 Hardware Overview
 
 ![S-ADAPT Schematic](docs/architecture/Schematic_S-ADAPT.png)
+
+### Power Topology Note
+
+- The reference build in this repo uses an **isolated MOSFET** module (`Q1`) for PWM control, with LED load supply and MCU board supply tied to the same `+5V` rail (common `GND`) for wiring simplicity.
+- You can keep this single-rail setup, or split MCU and LED into separate power rails.
+- A common reason to split rails is when the LED/load uses a different voltage (for example `12V` or `24V`) while MCU control remains at `5V`/`3.3V`.
+- For both options, keep common ground between MCU and LED driver so PWM control has a stable reference.
+- Place decoupling per domain:
+  - MCU decoupling near MCU supply input,
+  - bulk/load decoupling near LED driver/load path.
 
 ## 📌 Pin Map (MCU + Nucleo Alias)
 
