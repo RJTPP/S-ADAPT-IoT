@@ -21,7 +21,7 @@ Source references:
 - [x] RGB state mapping and fault indication path are validated.
 - [x] Encoder/button input behavior is validated (debounce + event semantics).
 - [x] Runtime build/flash behavior is validated in normal development flow.
-- [ ] Validate `470 uF` + `0.1 uF` decoupling performance (noise/brownout margin) during aggressive output transitions.
+- [x] Validate `470 uF` + `0.1 uF` decoupling performance (noise/brownout margin) during aggressive output transitions.
 
 ## 2. Business Logic
 

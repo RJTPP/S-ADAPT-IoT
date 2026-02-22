@@ -106,6 +106,10 @@ Saved settings are stored in internal flash and restored on reboot.
 - `AWAY` = away-related status
 - `IDLE` = idle-related status
 
+Badge flow (MAIN page, top-right):
+- Route A (away): `LEAVE` -> `DIM` -> `AWAY`
+- Route B (flat/stale): `DIM` -> `IDLE`
+
 ### Settings labels
 - `Away T` = away timeout (seconds)
 - `Flat T` = flat/stale timeout (seconds)
