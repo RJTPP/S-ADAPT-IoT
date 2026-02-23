@@ -38,7 +38,7 @@ This repository is the implementation for the class project in `01204323 Electro
 
 - `6610502218` Rajata Thamcharoensatit ([@RJTPP](https://github.com/RJTPP))
 - `6610502170` Phutthiphong Rodboung ([@PRennis](https://github.com/PRennis))
-- `6610505471` Pitiphum Yingwongwiwat
+- `6610505471` Pitiphum Yingwongwiwat ([@Kanomgenez](https://github.com/Kanomgenez))
 - `6610505403` Tanapatr Karnjanarujivut ([@zennnne](https://github.com/zennnne))
 
 ## ✨ Features
