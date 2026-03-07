@@ -129,8 +129,8 @@ Preferred: STM32CubeIDE build ([`Debug`](S-ADAPT/Debug) / [`Release`](S-ADAPT/Re
 Clone and enter the repository:
 
 ```bash
-git clone https://github.com/RJTPP/S-ADAPT-IoT.git
-cd S-ADAPT-IoT
+git clone https://github.com/RJTPP/S-ADAPT-STM32.git
+cd S-ADAPT-STM32
 ```
 
 Headless build (if installed):
