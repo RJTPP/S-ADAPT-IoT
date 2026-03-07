@@ -180,10 +180,10 @@ Note: if `APP_PRESENCE_DEBUG_TIMERS` is set to `0`, the production timing profil
 ## Target State Diagram (Planned)
 ```mermaid
 stateDiagram-v2
-    [*] --> AUTO_OFF
-    AUTO_OFF --> AUTO_ON: Single click (light ON)
-    AUTO_ON --> AUTO_OFF: Single click (light OFF)
-    AUTO_ON --> STANDBY: No user (timeout or immediate rule)
-    AUTO_OFF --> STANDBY: No user (optional policy)
-    STANDBY --> AUTO_OFF: User returns - wait for short click
+    [*] --> OFF
+    OFF --> ON: Single click (light ON)
+    ON --> OFF: Single click (light OFF)
+    ON --> STANDBY: No user (timeout or immediate rule)
+    STANDBY --> ON: User returns
+    STANDBY --> OFF: Single click (light OFF)
 ```
