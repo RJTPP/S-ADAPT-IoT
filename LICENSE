@@ -1,6 +1,21 @@
 MIT License
 
-Copyright (c) 2026 Rajata Thamcharoensatit, Phutthiphong Rodboung, Pitiphum Yingwongwiwat, Tanapatr Karnjanarujivut
+The MIT license below applies only to the original code and documentation
+authored for this repository by:
+
+Copyright (c) 2026 Rajata Thamcharoensatit, Phutthiphong Rodboung,
+Pitiphum Yingwongwiwat, Tanapatr Karnjanarujivut
+
+STM32Cube-generated files, STMicroelectronics HAL/device support files, CMSIS
+files, and any other third-party components included in this repository remain
+subject to their own copyright notices and license terms.
+
+In particular, see:
+- S-ADAPT/Drivers/STM32L4xx_HAL_Driver/LICENSE.txt
+- S-ADAPT/Drivers/CMSIS/LICENSE.txt
+- S-ADAPT/Drivers/CMSIS/Device/ST/STM32L4xx/LICENSE.txt
+- S-ADAPT/Drivers/CMSIS/Device/ST/STM32L4xx/License.md
+- Per-file headers under S-ADAPT/Core/ and S-ADAPT/Drivers/
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
