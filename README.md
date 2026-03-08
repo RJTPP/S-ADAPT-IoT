@@ -165,11 +165,11 @@ Headless build (macOS app bundle path):
 - Original project code and documentation in this repository are licensed under MIT. See [`LICENSE`](LICENSE).
 - STM32Cube-generated files, STM32 HAL drivers, CMSIS files, and other bundled third-party components keep their original copyright notices and licenses.
 - See:
-- [`S-ADAPT/Drivers/STM32L4xx_HAL_Driver/LICENSE.txt`](S-ADAPT/Drivers/STM32L4xx_HAL_Driver/LICENSE.txt) (`BSD-3-Clause` fallback)
-- [`S-ADAPT/Drivers/CMSIS/LICENSE.txt`](S-ADAPT/Drivers/CMSIS/LICENSE.txt) (`Apache-2.0`)
-- [`S-ADAPT/Drivers/CMSIS/Device/ST/STM32L4xx/LICENSE.txt`](S-ADAPT/Drivers/CMSIS/Device/ST/STM32L4xx/LICENSE.txt) (`Apache-2.0` fallback)
-- [`S-ADAPT/Drivers/CMSIS/Device/ST/STM32L4xx/License.md`](S-ADAPT/Drivers/CMSIS/Device/ST/STM32L4xx/License.md) (`Apache-2.0` text)
-- File headers under [`S-ADAPT/Core/`](S-ADAPT/Core/) and [`S-ADAPT/Drivers/`](S-ADAPT/Drivers/).
+  - [`S-ADAPT/Drivers/STM32L4xx_HAL_Driver/LICENSE.txt`](S-ADAPT/Drivers/STM32L4xx_HAL_Driver/LICENSE.txt) (`BSD-3-Clause` fallback)
+  - [`S-ADAPT/Drivers/CMSIS/LICENSE.txt`](S-ADAPT/Drivers/CMSIS/LICENSE.txt) (`Apache-2.0`)
+  - [`S-ADAPT/Drivers/CMSIS/Device/ST/STM32L4xx/LICENSE.txt`](S-ADAPT/Drivers/CMSIS/Device/ST/STM32L4xx/LICENSE.txt) (`Apache-2.0` fallback)
+  - [`S-ADAPT/Drivers/CMSIS/Device/ST/STM32L4xx/License.md`](S-ADAPT/Drivers/CMSIS/Device/ST/STM32L4xx/License.md) (`Apache-2.0` text)
+  - File headers under [`S-ADAPT/Core/`](S-ADAPT/Core/) and [`S-ADAPT/Drivers/`](S-ADAPT/Drivers/).
 
 ## 📖 Documentation
 
